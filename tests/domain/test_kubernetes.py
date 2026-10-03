@@ -289,6 +289,17 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, 'name = "A_B_C_D_E_F_G_H_I_J_K_L_M_N_O"')
 
+    def test_sanitize_name_attributes_keeps_escaped_quotes(self):
+        # The backslash of an escaped quote is the HCL escape, so it must stay or the string ends early
+        input_config = 'name = "Prod \\"Two\\""\nlocals { m = [for env in x : env if env.name == "Prod \\"Two\\""] }'
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, input_config)
+
+    def test_sanitize_name_attributes_still_replaces_other_backslashes(self):
+        input_config = 'name = "DOMAIN\\\\user and a/b"'
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, 'name = "DOMAIN__user and a_b"')
+
     def test_sanitize_name_attributes_allow_interpolation(self):
         # Input with slashes in name
         input_config = """

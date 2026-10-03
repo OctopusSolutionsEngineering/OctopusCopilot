@@ -1,4 +1,5 @@
 import os
+import hashlib
 import re
 import uuid
 
@@ -123,7 +124,13 @@ def sanitize_name_attributes(config):
         # rejects a name containing a slash.
         # Letters outside ASCII (Équipe, Café, emoji) are accepted by the API too, so only
         # the ASCII characters that are not in the allowed set are replaced.
-        line = re.sub(r'[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]', r"_", yaml_config)
+        # An escaped quote (\") is kept as it is: the backslash is the HCL escape, not part of the name, and
+        # replacing it leaves a bare quote that ends the string early.
+        line = re.sub(
+            r'\\"|[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]',
+            lambda match: match.group(0) if match.group(0) == '\\"' else "_",
+            yaml_config,
+        )
 
         fixed_config = fixed_config.replace(yaml_config, line)
 
@@ -1552,6 +1559,408 @@ def fix_cloudformation_dotted_property_names(config):
     return result
 
 
+TARGET_ROLES_LIST_REGEX = re.compile(r'(?m)^([ \t]*)"Octopus\.Action\.TargetRoles"[ \t]*=[ \t]*\[([^\]\n]*)\][ \t]*\n')
+
+
+def fix_target_roles_list(config):
+    """
+    The LLM writes the target roles of a step as a list, but the step properties map holds strings only:
+    Error: Incorrect attribute value type ... element "Octopus.Action.TargetRoles": string required, but have tuple.
+    An empty list is dropped (the step has no target role) and a list of roles becomes a comma separated string.
+    """
+
+    def fix_list(match):
+        roles = re.findall(r'"([^"]*)"', match.group(2))
+        if not roles:
+            return ""
+        return f'{match.group(1)}"Octopus.Action.TargetRoles" = "{",".join(roles)}"\n'
+
+    return TARGET_ROLES_LIST_REGEX.sub(fix_list, config)
+
+
+PACKAGE_DEPLOY_ON_TARGET_TYPES = (
+    "Octopus.TentaclePackage",
+    "Octopus.WindowsService",
+    "Octopus.IIS",
+    "Octopus.TomcatDeploy",
+)
+DEFAULT_TARGET_ROLE = "deploy-target"
+STEP_TYPE_REGEX = re.compile(r'(?m)^[ \t]*type[ \t]*=[ \t]*"([^"]+)"')
+STEP_TARGET_ROLES_REGEX = re.compile(r'"Octopus\.Action\.TargetRoles"[ \t]*=[ \t]*"[^"]+"')
+EMPTY_PROPERTIES_REGEX = re.compile(r"(?m)^([ \t]*)properties[ \t]*=[ \t]*\{[ \t]*\}[ \t]*$")
+OPEN_PROPERTIES_REGEX = re.compile(r"(?m)^([ \t]*)properties[ \t]*=[ \t]*\{[ \t]*$")
+EXECUTION_PROPERTIES_LINE_REGEX = re.compile(r"(?m)^([ \t]*)execution_properties[ \t]*=")
+
+
+def add_target_role_to_step_block(block):
+    role = f'"Octopus.Action.TargetRoles" = "{DEFAULT_TARGET_ROLE}"'
+
+    empty = EMPTY_PROPERTIES_REGEX.search(block)
+    if empty:
+        indent = empty.group(1)
+        return block[: empty.start()] + f"{indent}properties = {{\n{indent}  {role}\n{indent}}}" + block[empty.end() :]
+
+    opened = OPEN_PROPERTIES_REGEX.search(block)
+    if opened:
+        return block[: opened.end()] + f"\n{opened.group(1)}  {role}" + block[opened.end() :]
+
+    execution = EXECUTION_PROPERTIES_LINE_REGEX.search(block)
+    if execution:
+        indent = execution.group(1)
+        return (
+            block[: execution.start()]
+            + f"{indent}properties = {{\n{indent}  {role}\n{indent}}}\n"
+            + block[execution.start() :]
+        )
+
+    return None
+
+
+def add_missing_target_role_to_package_steps(config):
+    """
+    A package deployment step (Deploy a Package, Windows Service, IIS, Tomcat) runs on deployment targets, and Octopus
+    rejects it without a target role:
+    Octopus API error: [Please select one or more target tags that 'Deploy Pkg' step will apply to.]
+    When the prompt names no role the step gets a default one. As the step runs on the target it loses any worker pool
+    and container image, and is not run on the server.
+    """
+
+    if not config or "octopusdeploy_process_step" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        if (
+            not step_type
+            or step_type.group(1) not in PACKAGE_DEPLOY_ON_TARGET_TYPES
+            or STEP_TARGET_ROLES_REGEX.search(block)
+        ):
+            position = header.end()
+            continue
+
+        updated = add_target_role_to_step_block(block)
+        if updated is None:
+            position = header.end()
+            continue
+
+        updated = re.sub(r'("Octopus\.Action\.RunOnServer"[ \t]*=[ \t]*)"true"', r'\1"false"', updated)
+        updated = re.sub(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=.*\n", "", updated)
+        updated = remove_balanced_attribute(updated, CONTAINER_START_REGEX)
+        result = result[: header.start()] + updated + result[end:]
+        position = header.start() + len(updated)
+
+
+S3_PACKAGE_OPTIONS_PROPERTY = "Octopus.Action.Aws.S3.PackageOptions"
+UNSUPPORTED_S3_PROPERTIES = ("Octopus.Action.Aws.S3.PublicAccess", "Octopus.Action.Aws.S3.ObjectWriterOwnership")
+PACKAGE_ID_REGEX = re.compile(r'package_id\s*=\s*"([^"$]+)"')
+
+
+def add_missing_s3_package_options(config):
+    """
+    The LLM leaves the package options out of an Upload a package to an AWS S3 bucket step, and invents PublicAccess and
+    ObjectWriterOwnership properties instead:
+    Octopus API error: [Must provide package options]
+    The step gets the options an upload of the entire package needs, with a public-read canned ACL where the LLM asked
+    for public access, and the invented properties are removed.
+    """
+
+    if not config or "Octopus.AwsUploadS3" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        execution = EXECUTION_PROPERTIES_REGEX.search(block)
+        if (
+            not step_type
+            or step_type.group(1) != "Octopus.AwsUploadS3"
+            or S3_PACKAGE_OPTIONS_PROPERTY in block
+            or not execution
+        ):
+            position = header.end()
+            continue
+
+        public = re.search(r'"Octopus\.Action\.Aws\.S3\.PublicAccess"\s*=\s*"True"', block, re.IGNORECASE)
+        package_id = PACKAGE_ID_REGEX.search(block)
+        indent = execution.group(1)
+        options = (
+            f'{indent}  "{S3_PACKAGE_OPTIONS_PROPERTY}" = jsonencode({{\n'
+            f'{indent}    "bucketKeyBehaviour" = "Custom"\n'
+            f'{indent}    "storageClass" = "STANDARD"\n'
+            f'{indent}    "cannedAcl" = "{"public-read" if public else "private"}"\n'
+            f'{indent}    "bucketKey" = "{package_id.group(1) if package_id else "package"}"\n'
+            f'{indent}    "bucketKeyPrefix" = ""\n'
+            f'{indent}    "variableSubstitutionPatterns" = ""\n'
+            f'{indent}    "structuredVariableSubstitutionPatterns" = ""\n'
+            f'{indent}    "metadata" = []\n'
+            f'{indent}    "tags" = []\n'
+            f"{indent}  }})\n"
+        )
+        block = block[: execution.end()] + options + block[execution.end() :]
+        for unsupported in UNSUPPORTED_S3_PROPERTIES:
+            block = re.sub(rf'(?m)^[ \t]*"{re.escape(unsupported)}"[ \t]*=.*\n', "", block)
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+
+RELEASE_NOTES_TEMPLATE_RESOURCE_REGEX = re.compile(
+    r'(?m)^[ \t]*resource\s+"octopusdeploy_project_release_notes_template"\s+"\w+"\s*\{'
+)
+QUOTED_STRING_PATTERN = r'"(?:[^"\\]|\\.)*"'
+PROJECT_REFERENCE_REGEX = re.compile(r"octopusdeploy_project\.(\w+)")
+
+
+def move_release_notes_template_to_project(config):
+    """
+    The LLM invents an octopusdeploy_project_release_notes_template resource for a release notes template:
+    Error: Invalid resource type ... The provider octopusdeploy/octopusdeploy does not support resource type
+    "octopusdeploy_project_release_notes_template".
+    The template is the release_notes_template argument of the project, so the resource is removed and its template
+    is set on the project that it referred to, unless the project already has one.
+    """
+
+    if not config or "octopusdeploy_project_release_notes_template" not in config:
+        return config
+
+    result = config
+    while True:
+        header = RELEASE_NOTES_TEMPLATE_RESOURCE_REGEX.search(result)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        template = re.search(rf"(?m)^[ \t]*(?:template|release_notes_template)[ \t]*=[ \t]*({QUOTED_STRING_PATTERN})", block)
+        project = PROJECT_REFERENCE_REGEX.search(block)
+        result = result[: header.start()] + result[end:].lstrip("\n")
+
+        if not template or not project:
+            continue
+
+        project_header = re.search(
+            rf'resource\s+"octopusdeploy_project"\s+"{re.escape(project.group(1))}"\s*\{{[ \t]*\n', result
+        )
+        if not project_header:
+            continue
+        project_end = find_block_end(result, project_header.end())
+        if project_end is None or "release_notes_template" in result[project_header.end() : project_end]:
+            continue
+        indent_match = re.match(r"[ \t]*", result[project_header.end() :])
+        indent = indent_match.group(0) if indent_match else ""
+        result = (
+            result[: project_header.end()]
+            + f"{indent}release_notes_template = {template.group(1)}\n"
+            + result[project_header.end() :]
+        )
+
+
+VERSIONING_STRATEGY_REGEX = re.compile(
+    r'(?m)^[ \t]*resource\s+"octopusdeploy_project_versioning_strategy"\s+"\w+"\s*\{'
+)
+
+
+def remove_duplicate_versioning_strategies(config):
+    """
+    A project has one versioning strategy, but the LLM sometimes declares a second one for the same project (for
+    example while working out a release notes template). Only the first is kept.
+    """
+
+    if not config or config.count("octopusdeploy_project_versioning_strategy") < 2:
+        return config
+
+    result = config
+    seen = set()
+    position = 0
+    while True:
+        header = VERSIONING_STRATEGY_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        project = PROJECT_REFERENCE_REGEX.search(result[header.start() : end])
+        key = project.group(1) if project else None
+        if key is not None and key in seen:
+            result = result[: header.start()] + result[end:].lstrip("\n")
+            position = header.start()
+            continue
+        if key is not None:
+            seen.add(key)
+        position = end
+
+
+POLLING_TARGET_HEADER_REGEX = re.compile(
+    r'(?m)^[ \t]*resource\s+"octopusdeploy_polling_tentacle_deployment_target"\s+"\w+"\s*\{'
+)
+TENTACLE_URL_REGEX = re.compile(r'(tentacle_url\s*=\s*")([^"]*)(")')
+VALID_POLLING_SUBSCRIPTION_REGEX = re.compile(r"^poll://[a-z0-9]{20}/$")
+
+
+def fix_polling_tentacle_uri(config):
+    """
+    Octopus only accepts the URL of a polling tentacle written as poll:// followed by 20 lowercase letters or digits
+    and a trailing slash. The LLM writes poll://abc123/ or an https address, which fails the apply:
+    Octopus API error: [A polling tentacle URI should look like 'poll://nvpv4doqf2f3id45t1xn/']
+    An invalid URL is replaced with a valid subscription derived from it, so the same text always gives the same one.
+    """
+
+    if not config or "octopusdeploy_polling_tentacle_deployment_target" not in config:
+        return config
+
+    def fix_url(match):
+        if VALID_POLLING_SUBSCRIPTION_REGEX.match(match.group(2)):
+            return match.group(0)
+        digest = hashlib.sha1(match.group(2).encode("utf-8")).hexdigest()[:20]
+        return f"{match.group(1)}poll://{digest}/{match.group(3)}"
+
+    result = config
+    position = 0
+    while True:
+        header = POLLING_TARGET_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        block = TENTACLE_URL_REGEX.sub(fix_url, result[header.start() : end])
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+
+def fix_deployment_target_trigger_type(config):
+    """
+    The LLM names the deployment target trigger resource octopusdeploy_deployment_target_trigger, which the provider
+    does not have (the arguments it writes are right):
+    Error: Invalid resource type ... does not support resource type "octopusdeploy_deployment_target_trigger".
+    The resource is octopusdeploy_project_deployment_target_trigger.
+    """
+
+    return config.replace(
+        "octopusdeploy_deployment_target_trigger", "octopusdeploy_project_deployment_target_trigger"
+    )
+
+
+VALID_TRIGGER_EVENT_CATEGORIES = (
+    "MachineCleanupFailed",
+    "MachineAdded",
+    "MachineDeploymentRelatedPropertyWasUpdated",
+    "MachineDisabled",
+    "MachineEnabled",
+    "MachineHealthy",
+    "MachineUnavailable",
+    "MachineUnhealthy",
+    "MachineHasWarnings",
+)
+# Event group names the LLM writes as event categories, and the category that stands for them
+TRIGGER_EVENT_CATEGORY_ALIASES = {
+    "MachineAvailableForDeployment": "MachineHealthy",
+    "MachineHealthChanged": "MachineHealthy",
+    "MachineUnavailableForDeployment": "MachineUnavailable",
+    "MachineCritical": "MachineUnhealthy",
+    "Machine": "MachineAdded",
+}
+EVENT_CATEGORIES_REGEX = re.compile(r"(event_categories\s*=\s*)\[([^\]]*)\]")
+
+
+def fix_trigger_event_categories(config):
+    """
+    The LLM puts event group names (MachineAvailableForDeployment, MachineHealthChanged) in the event_categories of a
+    deployment target trigger, which only accepts categories:
+    invalid value for event_categories. MachineAvailableForDeployment not in [MachineCleanupFailed MachineAdded ...]
+    Group names are replaced by the category closest to them, unknown names are dropped, and a trigger left without
+    a category triggers when a machine is added.
+    """
+
+    if not config or "event_categories" not in config:
+        return config
+
+    def fix_categories(match):
+        names = re.findall(r'"([^"]*)"', match.group(2))
+        fixed = []
+        for name in names:
+            name = TRIGGER_EVENT_CATEGORY_ALIASES.get(name, name)
+            if name in VALID_TRIGGER_EVENT_CATEGORIES and name not in fixed:
+                fixed.append(name)
+        if not fixed:
+            fixed = ["MachineAdded"]
+        return match.group(1) + "[" + ", ".join(f'"{name}"' for name in fixed) + "]"
+
+    return EVENT_CATEGORIES_REGEX.sub(fix_categories, config)
+
+
+def remove_worker_pool_from_package_steps_with_roles(config):
+    """
+    A package deployment step (Deploy a Package, Windows Service, IIS, Tomcat) with target roles runs on the targets. The
+    LLM also gives it a worker pool, so the server sets Octopus.Action.RunOnServer, which the config does not have:
+    Provider produced inconsistent result after apply ... .execution_properties: new element
+    "Octopus.Action.RunOnServer" has appeared.
+    The worker pool and container image go, and the step is not run on the server. A step that sets RunOnServer to
+    "true" itself is left alone.
+    """
+
+    if not config or "octopusdeploy_process_step" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        if (
+            not step_type
+            or step_type.group(1) not in PACKAGE_DEPLOY_ON_TARGET_TYPES
+            or not STEP_TARGET_ROLES_REGEX.search(block)
+            or not re.search(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=", block)
+            or re.search(r'"Octopus\.Action\.RunOnServer"\s*=\s*"true"', block)
+        ):
+            position = header.end()
+            continue
+
+        updated = re.sub(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=.*\n", "", block)
+        updated = remove_balanced_attribute(updated, CONTAINER_START_REGEX)
+        if '"Octopus.Action.RunOnServer"' in updated:
+            updated = re.sub(r'("Octopus\.Action\.RunOnServer"\s*=\s*)"[^"]*"', r'\1"false"', updated)
+        else:
+            execution = EXECUTION_PROPERTIES_REGEX.search(updated)
+            if execution:
+                updated = (
+                    updated[: execution.end()]
+                    + f'{execution.group(1)}  "Octopus.Action.RunOnServer" = "false"\n'
+                    + updated[execution.end() :]
+                )
+        result = result[: header.start()] + updated + result[end:]
+        position = header.start() + len(updated)
+
+
 def fix_package_pre_deploy_script_property(config):
     """
     The LLM writes the pre-deployment script of a package step as Octopus.Action.Script.PreDeployPackageOnWorker, which
@@ -1862,6 +2271,293 @@ def remove_unsupported_trigger_description(config):
         body = "\n".join(kept)
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
+
+
+PRIMARY_PACKAGE_HEADER_REGEX = re.compile(r"\bprimary_package\s*=?\s*\{")
+PACKAGE_ID_REGEX = re.compile(r'\bpackage_id\s*=\s*"(?P<id>[^"\n]+)"')
+TRIGGER_PACKAGE_REFERENCE_REGEX = re.compile(r'(\bpackage_reference\s*=\s*)"(?P<ref>[^"\n]+)"')
+
+
+def fix_trigger_primary_package_reference(config):
+    """
+    A step with a primary package has an empty package reference name, but the LLM uses the package ID in the trigger:
+    Error: The specified package reference 'Trigger.App' for trigger 'New Package Release' does not exist on the
+    action 'Deploy App'.
+    The reference is only replaced when it is a primary package ID and not also the key of a packages map entry.
+    """
+
+    primary_ids = set()
+    for header in PRIMARY_PACKAGE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        id_match = PACKAGE_ID_REGEX.search(config[header.end() : end])
+        if id_match:
+            primary_ids.add(id_match.group("id"))
+    if not primary_ids:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = EXTERNAL_FEED_TRIGGER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        def replace_reference(match):
+            reference = match.group("ref")
+            if reference in primary_ids and not re.search(
+                rf'^\s*"?{re.escape(reference)}"?\s*=\s*\{{', result, re.MULTILINE
+            ):
+                return match.group(1) + '""'
+            return match.group(0)
+
+        body = TRIGGER_PACKAGE_REFERENCE_REGEX.sub(replace_reference, result[header.end() : end])
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+PARENTHESIS_OCTOPUS_VARIABLE_REGEX = re.compile(r"\$\((Octopus\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\)")
+
+
+def fix_parenthesis_octopus_variable_syntax(config):
+    """
+    The LLM writes system variables in scripts with PowerShell subexpression syntax, like $(Octopus.Environment.Name),
+    which is never replaced by Octopus and fails at runtime. The Octopus syntax is #{Octopus.Environment.Name}.
+    """
+
+    return PARENTHESIS_OCTOPUS_VARIABLE_REGEX.sub(r"#{\1}", config)
+
+
+VARIABLE_CONDITION_REGEX = re.compile(r'(\bcondition\s*=\s*)"Variable"')
+VARIABLE_CONDITION_EXPRESSION_REGEX = re.compile(r'"Octopus\.Step\.ConditionVariableExpression"\s*=\s*"(?P<expression>[^"\n]*)"')
+
+
+def fix_variable_condition_without_expression(config):
+    """
+    The LLM sets condition = "Variable" but omits the expression (or leaves it empty), and Octopus rejects the step:
+    Octopus API error: ... [Please add a variable expression for your variable run condition.]
+    The condition falls back to Success, which is the default.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        expression = VARIABLE_CONDITION_EXPRESSION_REGEX.search(body)
+        if VARIABLE_CONDITION_REGEX.search(body) and (expression is None or not expression.group("expression").strip()):
+            body = VARIABLE_CONDITION_REGEX.sub(r'\1"Success"', body)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+DONOR_PACKAGE_BLOCK_REGEX = re.compile(r"(?m)^([ \t]*)donor_package[ \t]*\{")
+
+
+def fix_donor_package_attribute(config):
+    """
+    donor_package of octopusdeploy_project_versioning_strategy is an attribute, but the LLM writes it as a block:
+    Error: Unsupported block type ... Blocks of type "donor_package" are not expected here.
+    Did you mean to define argument "donor_package"? If so, use the equals sign to assign it a value.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = VERSIONING_STRATEGY_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = DONOR_PACKAGE_BLOCK_REGEX.sub(r"\1donor_package = {", result[header.end() : end])
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+UNESCAPED_TEMPLATE_DIRECTIVE_REGEX = re.compile(r"(?<!%)%\{(?!~?\s*(?:if|else|endif|for|endfor)\b)")
+
+
+def escape_invalid_template_directives(config):
+    """
+    A percent sign followed by a brace starts a Terraform template directive, so literal text in a variable value like
+    "%{not.a.directive}" fails the init:
+    Error: Invalid template control keyword ... "not" is not a valid template control keyword.
+    The literal form is %%{. Real directives (if, else, endif, for, endfor) are left alone.
+    """
+
+    return UNESCAPED_TEMPLATE_DIRECTIVE_REGEX.sub("%%{", config)
+
+
+WORKER_POOL_ATTRIBUTE_REGEX = re.compile(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=")
+RUN_ON_SERVER_PROPERTY_REGEX = re.compile(r'"Octopus\.Action\.RunOnServer"')
+
+
+def add_run_on_server_to_worker_pool_steps(config):
+    """
+    A step with a worker pool but without Octopus.Action.RunOnServer fails the apply and the recovery loses the steps:
+    Error: Provider produced inconsistent result after apply ... .execution_properties: new element
+    "Octopus.Action.RunOnServer" has appeared.
+    The server runs a step with a worker pool on the server, so the property is added as true.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        execution = EXECUTION_PROPERTIES_REGEX.search(block)
+        if (
+            not execution
+            or not WORKER_POOL_ATTRIBUTE_REGEX.search(block)
+            or RUN_ON_SERVER_PROPERTY_REGEX.search(block)
+        ):
+            position = header.end()
+            continue
+
+        updated = (
+            block[: execution.end()]
+            + f'{execution.group(1)}  "Octopus.Action.RunOnServer" = "true"\n'
+            + block[execution.end() :]
+        )
+        result = result[: header.start()] + updated + result[end:]
+        position = header.start() + len(updated)
+
+
+CHANNEL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_channel"\s+"(?P<label>\w+)"\s*\{')
+CHANNEL_REFERENCE_REGEX = re.compile(r"octopusdeploy_channel\.(?P<label>\w+)")
+DEPENDS_ON_REGEX = re.compile(r"(?P<head>\bdepends_on\s*=\s*\[)(?P<items>[^\]]*)(?P<tail>\])")
+STEPS_ORDER_REFERENCE_REGEX = re.compile(r"octopusdeploy_process_steps_order\.")
+
+
+def remove_steps_order_dependency_from_referenced_channels(config):
+    """
+    A channel that depends on the steps order, with a step that is scoped to that channel, is a cycle:
+    Error: Cycle: octopusdeploy_process_step.x, octopusdeploy_process_steps_order.y, octopusdeploy_channel.z
+    The steps order dependency is removed from the channels that a step refers to.
+    """
+
+    referenced = set()
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(config, position)
+        if not header:
+            break
+        end = find_block_end(config, header.end())
+        if end is None:
+            break
+        referenced.update(match.group("label") for match in CHANNEL_REFERENCE_REGEX.finditer(config[header.end() : end]))
+        position = end
+
+    if not referenced:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        if header.group("label") in referenced:
+
+            def remove_steps_order(match):
+                items = [item for item in match.group("items").split(",") if item.strip()]
+                kept = [item for item in items if not STEPS_ORDER_REFERENCE_REGEX.search(item)]
+                return match.group("head") + ",".join(kept) + match.group("tail")
+
+            body = DEPENDS_ON_REGEX.sub(remove_steps_order, body)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+STEP_ENVIRONMENTS_REGEX = re.compile(r"(?m)^([ \t]*)environments([ \t]*=[ \t]*)")
+STEP_EXCLUDED_ENVIRONMENTS_REGEX = re.compile(r"(?m)^[ \t]*excluded_environments[ \t]*=[ \t]*")
+
+
+def find_attribute_value_end(text, start):
+    """
+    Returns the index after the value that starts at start: a null, or a list closed by its matching bracket.
+    """
+
+    if text.startswith("null", start):
+        return start + 4
+    if not text.startswith("[", start):
+        return None
+
+    depth = 0
+    for index in range(start, len(text)):
+        if text[index] == "[":
+            depth += 1
+        elif text[index] == "]":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+    return None
+
+
+def attribute_has_items(text, start):
+    end = find_attribute_value_end(text, start)
+    if end is None:
+        return False
+    value = text[start:end]
+    return value != "null" and bool(value[1:-1].strip())
+
+
+def remove_environments_when_excluded_environments_are_set(config):
+    """
+    A step cannot include and exclude environments at the same time:
+    Octopus API error: ... [You cannot both conditionally include and exclude environments for a deployment step.]
+    The excluded environments are the explicit request ("skipped in Dev and Test"), so the included list is dropped.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        included = STEP_ENVIRONMENTS_REGEX.search(block)
+        excluded = STEP_EXCLUDED_ENVIRONMENTS_REGEX.search(block)
+        if (
+            not included
+            or not excluded
+            or not attribute_has_items(block, included.end())
+            or not attribute_has_items(block, excluded.end())
+        ):
+            position = header.end()
+            continue
+
+        value_end = find_attribute_value_end(block, included.end())
+        updated = block[: included.end()] + "null" + block[value_end:]
+        result = result[: header.start()] + updated + result[end:]
+        position = header.start() + len(updated)
 
 
 FOR_OVER_INDEXED_LOOKUP_REGEX = re.compile(

@@ -1463,6 +1463,7 @@ resource "octopusdeploy_project" "project_deploy_to_production" {
 }
 ```
 * Never split "release_notes_template" over two lines (no line break after `=`); keep the value on the same line.
+* **A prompt-supplied release notes template or deployment changes template MUST be emitted, never dropped.** Both are plain string attributes of the `octopusdeploy_project` resource: `release_notes_template = "Changes for #{Octopus.Release.Number}"` and `deployment_changes_template = "#{each change in Octopus.Deployment.Changes}#{change.Version}#{/each}"`. Copy the quoted text verbatim; there is no separate resource for either.
 
 ## Octopus Project Trigger Instructions
 

@@ -64,9 +64,26 @@ from domain.sanitizers.terraform import (
     fix_lifecycle_phase_without_environments,
     fix_package_pre_deploy_script_property,
     fix_cloudformation_dotted_property_names,
+    add_missing_s3_package_options,
+    fix_deployment_target_trigger_type,
+    fix_trigger_event_categories,
+    remove_worker_pool_from_package_steps_with_roles,
+    fix_polling_tentacle_uri,
+    move_release_notes_template_to_project,
+    remove_duplicate_versioning_strategies,
+    add_missing_target_role_to_package_steps,
+    fix_target_roles_list,
     fix_manual_intervention_templated_step,
     replace_unverified_community_templated_step,
     remove_unsupported_trigger_description,
+    fix_trigger_primary_package_reference,
+    fix_parenthesis_octopus_variable_syntax,
+    fix_variable_condition_without_expression,
+    fix_donor_package_attribute,
+    escape_invalid_template_directives,
+    add_run_on_server_to_worker_pool_steps,
+    remove_steps_order_dependency_from_referenced_channels,
+    remove_environments_when_excluded_environments_are_set,
     replace_slash_in_project_name,
     remove_unused_step_template_data,
     fix_project_description_heredoc,
@@ -905,11 +922,28 @@ def sanitize_configuration(configuration):
     configuration = fix_for_expression_over_empty_lookup(configuration)
     # A manual intervention is a built in step type, not a templated step
     configuration = fix_cloudformation_dotted_property_names(configuration)
+    configuration = fix_target_roles_list(configuration)
+    configuration = add_missing_target_role_to_package_steps(configuration)
+    configuration = add_missing_s3_package_options(configuration)
+    configuration = fix_polling_tentacle_uri(configuration)
+    configuration = fix_deployment_target_trigger_type(configuration)
+    configuration = fix_trigger_event_categories(configuration)
+    configuration = remove_worker_pool_from_package_steps_with_roles(configuration)
+    configuration = move_release_notes_template_to_project(configuration)
+    configuration = remove_duplicate_versioning_strategies(configuration)
     configuration = fix_manual_intervention_templated_step(configuration)
     configuration = replace_unverified_community_templated_step(configuration)
     configuration = remove_unused_step_template_data(configuration)
     # The create release trigger has no description argument
     configuration = remove_unsupported_trigger_description(configuration)
+    configuration = fix_trigger_primary_package_reference(configuration)
+    configuration = fix_parenthesis_octopus_variable_syntax(configuration)
+    configuration = fix_variable_condition_without_expression(configuration)
+    configuration = fix_donor_package_attribute(configuration)
+    configuration = escape_invalid_template_directives(configuration)
+    configuration = add_run_on_server_to_worker_pool_steps(configuration)
+    configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
+    configuration = remove_environments_when_excluded_environments_are_set(configuration)
     # The server rejects a project name with a forward slash
     configuration = replace_slash_in_project_name(configuration)
     # A lifecycle phase with no environments means all remaining environments, and only one phase may

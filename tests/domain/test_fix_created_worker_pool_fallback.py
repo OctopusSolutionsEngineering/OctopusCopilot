@@ -9,6 +9,10 @@ except ImportError:
         sys.modules[name] = MagicMock()
 
 from domain.sanitizers.terraform import (  # noqa: E402
+    add_missing_s3_package_options,
+    move_release_notes_template_to_project,
+    remove_duplicate_versioning_strategies,
+    add_missing_target_role_to_package_steps,
     fix_bare_data_lookup_reference,
     fix_cloudformation_dotted_property_names,
     fix_arm_template_source,
@@ -18,12 +22,25 @@ from domain.sanitizers.terraform import (  # noqa: E402
     fix_lifecycle_phase_without_environments,
     fix_manual_intervention_templated_step,
     fix_package_pre_deploy_script_property,
+    fix_deployment_target_trigger_type,
+    fix_trigger_event_categories,
+    remove_worker_pool_from_package_steps_with_roles,
+    fix_polling_tentacle_uri,
+    fix_target_roles_list,
     fix_invalid_octopus_variable_type,
     fix_literal_variable_template_id,
     fix_lookup_worker_pool_default_fallback,
     fix_process_step_container_block,
     fix_project_description_heredoc,
     remove_unsupported_trigger_description,
+    fix_trigger_primary_package_reference,
+    fix_parenthesis_octopus_variable_syntax,
+    fix_variable_condition_without_expression,
+    fix_donor_package_attribute,
+    escape_invalid_template_directives,
+    add_run_on_server_to_worker_pool_steps,
+    remove_steps_order_dependency_from_referenced_channels,
+    remove_environments_when_excluded_environments_are_set,
     remove_unused_step_template_data,
     replace_json_key,
     replace_slash_in_project_name,
@@ -748,5 +765,540 @@ class TestFixCloudformationDottedPropertyNames(unittest.TestCase):
         self.assertEqual(fix_cloudformation_dotted_property_names(config), config)
 
 
+class TestFixTargetRolesList(unittest.TestCase):
+    def test_empty_list_is_removed(self):
+        config = '  properties = {\n      "Octopus.Action.TargetRoles" = []\n    }\n'
+        result = fix_target_roles_list(config)
+        self.assertNotIn("TargetRoles", result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_list_becomes_comma_separated_string(self):
+        config = '      "Octopus.Action.TargetRoles" = ["web", "api"]\n'
+        self.assertEqual(fix_target_roles_list(config), '      "Octopus.Action.TargetRoles" = "web,api"\n')
+
+    def test_string_value_is_left_alone(self):
+        config = '      "Octopus.Action.TargetRoles" = "web"\n'
+        self.assertEqual(fix_target_roles_list(config), config)
+
+
+PACKAGE_STEP = """resource "octopusdeploy_process_step" "process_step_deploy_pkg" {
+  name                  = "Deploy Pkg"
+  type                  = "Octopus.TentaclePackage"
+  worker_pool_id        = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+  properties            = {
+  }
+  execution_properties  = {
+    "Octopus.Action.RunOnServer" = "true"
+  }
+}
+"""
+
+
+class TestAddMissingTargetRoleToPackageSteps(unittest.TestCase):
+    def test_adds_role_and_drops_worker_pool(self):
+        result = add_missing_target_role_to_package_steps(PACKAGE_STEP)
+        self.assertIn('"Octopus.Action.TargetRoles" = "deploy-target"', result)
+        self.assertNotIn("worker_pool_id", result)
+        self.assertIn('"Octopus.Action.RunOnServer" = "false"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_handles_single_line_empty_properties(self):
+        config = PACKAGE_STEP.replace("properties            = {\n  }", "properties            = {}")
+        result = add_missing_target_role_to_package_steps(config)
+        self.assertIn('"Octopus.Action.TargetRoles" = "deploy-target"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_adds_properties_when_missing(self):
+        config = PACKAGE_STEP.replace("  properties            = {\n  }\n", "")
+        result = add_missing_target_role_to_package_steps(config)
+        self.assertIn('"Octopus.Action.TargetRoles" = "deploy-target"', result)
+        self.assertLess(result.index("TargetRoles"), result.index("execution_properties"))
+
+    def test_leaves_step_with_role_alone(self):
+        config = PACKAGE_STEP.replace("properties            = {\n  }", 'properties = { "Octopus.Action.TargetRoles" = "web" }')
+        self.assertEqual(add_missing_target_role_to_package_steps(config), config)
+
+    def test_leaves_script_step_alone(self):
+        config = PACKAGE_STEP.replace("Octopus.TentaclePackage", "Octopus.Script")
+        self.assertEqual(add_missing_target_role_to_package_steps(config), config)
+
+
+S3_STEP = """resource "octopusdeploy_process_step" "process_step_upload_site" {
+  name = "Upload Site"
+  type = "Octopus.AwsUploadS3"
+  primary_package = {
+    package_id = "Site.Web"
+  }
+  execution_properties = {
+    "Octopus.Action.Aws.Region" = "us-west-2"
+    "Octopus.Action.Aws.S3.PublicAccess" = "True"
+    "Octopus.Action.Aws.S3.ObjectWriterOwnership" = "False"
+    "Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"
+  }
+}
+"""
+
+
+class TestAddMissingS3PackageOptions(unittest.TestCase):
+    def test_adds_package_options_and_removes_invented_properties(self):
+        result = add_missing_s3_package_options(S3_STEP)
+        self.assertIn('"Octopus.Action.Aws.S3.PackageOptions" = jsonencode({', result)
+        self.assertIn('"cannedAcl" = "public-read"', result)
+        self.assertIn('"bucketKey" = "Site.Web"', result)
+        self.assertNotIn("PublicAccess", result)
+        self.assertNotIn("ObjectWriterOwnership", result)
+        self.assertIn('"Octopus.Action.Aws.S3.TargetMode" = "EntirePackage"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_private_acl_without_public_access(self):
+        config = S3_STEP.replace('"Octopus.Action.Aws.S3.PublicAccess" = "True"', '"Octopus.Action.Aws.S3.PublicAccess" = "False"')
+        self.assertIn('"cannedAcl" = "private"', add_missing_s3_package_options(config))
+
+    def test_existing_options_are_left_alone(self):
+        config = S3_STEP.replace(
+            '"Octopus.Action.Aws.Region" = "us-west-2"',
+            '"Octopus.Action.Aws.Region" = "us-west-2"\n    "Octopus.Action.Aws.S3.PackageOptions" = jsonencode({})',
+        )
+        self.assertEqual(add_missing_s3_package_options(config), config)
+
+    def test_other_step_types_are_left_alone(self):
+        config = S3_STEP.replace("Octopus.AwsUploadS3", "Octopus.Script")
+        self.assertEqual(add_missing_s3_package_options(config), config)
+
+
+RELEASE_NOTES_CONFIG = """resource "octopusdeploy_project" "project_settings_heavy" {
+  count = 1
+  name  = "Settings Heavy"
+}
+resource "octopusdeploy_project_release_notes_template" "project_settings_heavy" {
+  count      = 1
+  project_id = "${octopusdeploy_project.project_settings_heavy[0].id}"
+  template   = "Release #{Octopus.Release.Number} by \\"me\\""
+}
+resource "octopusdeploy_project_group" "group" {
+  name = "g"
+}
+"""
+
+
+class TestMoveReleaseNotesTemplateToProject(unittest.TestCase):
+    def test_moves_template_to_project(self):
+        result = move_release_notes_template_to_project(RELEASE_NOTES_CONFIG)
+        self.assertNotIn("octopusdeploy_project_release_notes_template", result)
+        self.assertIn('release_notes_template = "Release #{Octopus.Release.Number} by \\"me\\""', result)
+        self.assertIn('resource "octopusdeploy_project_group" "group"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_existing_project_template_is_kept(self):
+        config = RELEASE_NOTES_CONFIG.replace('  name  = "Settings Heavy"', '  name  = "Settings Heavy"\n  release_notes_template = "kept"')
+        result = move_release_notes_template_to_project(config)
+        self.assertNotIn("octopusdeploy_project_release_notes_template", result)
+        self.assertEqual(result.count("release_notes_template"), 1)
+        self.assertIn('release_notes_template = "kept"', result)
+
+    def test_config_without_resource_is_unchanged(self):
+        self.assertEqual(move_release_notes_template_to_project("resource \"a\" \"b\" {\n}\n"), "resource \"a\" \"b\" {\n}\n")
+
+
+class TestRemoveDuplicateVersioningStrategies(unittest.TestCase):
+    STRATEGIES = """resource "octopusdeploy_project_versioning_strategy" "one" {
+  project_id = "${octopusdeploy_project.p[0].id}"
+  template   = "1"
+}
+resource "octopusdeploy_project_versioning_strategy" "two" {
+  project_id = "${octopusdeploy_project.p[0].id}"
+  template   = "2"
+}
+resource "octopusdeploy_project_versioning_strategy" "other" {
+  project_id = "${octopusdeploy_project.q[0].id}"
+  template   = "3"
+}
+"""
+
+    def test_keeps_first_strategy_per_project(self):
+        result = remove_duplicate_versioning_strategies(self.STRATEGIES)
+        self.assertIn('"one"', result)
+        self.assertNotIn('"two"', result)
+        self.assertIn('"other"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_single_strategy_is_unchanged(self):
+        single = self.STRATEGIES.split('resource "octopusdeploy_project_versioning_strategy" "two"')[0]
+        self.assertEqual(remove_duplicate_versioning_strategies(single), single)
+
+
+POLLING_TARGET = """resource "octopusdeploy_polling_tentacle_deployment_target" "target_poll_01" {
+  name         = "poll-01"
+  tentacle_url = "URL"
+  thumbprint   = "0123456789ABCDEF0123456789ABCDEF01234567"
+}
+resource "octopusdeploy_listening_tentacle_deployment_target" "target_win_01" {
+  tentacle_url = "https://win01.example.com:10933"
+}
+"""
+
+
+class TestFixPollingTentacleUri(unittest.TestCase):
+    def test_invalid_subscription_is_replaced_with_a_valid_one(self):
+        result = fix_polling_tentacle_uri(POLLING_TARGET.replace("URL", "poll://abc123/"))
+        self.assertRegex(result, r'tentacle_url = "poll://[a-z0-9]{20}/"')
+
+    def test_https_address_is_replaced_in_a_polling_target(self):
+        result = fix_polling_tentacle_uri(POLLING_TARGET.replace("URL", "https://poll01.example.com:10934"))
+        self.assertRegex(result, r'tentacle_url = "poll://[a-z0-9]{20}/"')
+        self.assertIn('tentacle_url = "https://win01.example.com:10933"', result)
+
+    def test_replacement_is_stable(self):
+        config = POLLING_TARGET.replace("URL", "poll://my-subscription/")
+        self.assertEqual(fix_polling_tentacle_uri(config), fix_polling_tentacle_uri(config))
+
+    def test_valid_subscription_is_left_alone(self):
+        config = POLLING_TARGET.replace("URL", "poll://nvpv4doqf2f3id45t1xn/")
+        self.assertEqual(fix_polling_tentacle_uri(config), config)
+
+    def test_config_without_a_polling_target_is_unchanged(self):
+        config = 'resource "a" "b" {\n  tentacle_url = "https://x"\n}\n'
+        self.assertEqual(fix_polling_tentacle_uri(config), config)
+
+
+class TestFixDeploymentTargetTriggerType(unittest.TestCase):
+    def test_renames_resource_and_references(self):
+        config = (
+            'resource "octopusdeploy_deployment_target_trigger" "t" {\n  name = "x"\n}\n'
+            "depends_on = [octopusdeploy_deployment_target_trigger.t]\n"
+        )
+        result = fix_deployment_target_trigger_type(config)
+        self.assertIn('resource "octopusdeploy_project_deployment_target_trigger" "t"', result)
+        self.assertIn("octopusdeploy_project_deployment_target_trigger.t]", result)
+        self.assertNotIn("octopusdeploy_deployment_target_trigger", result)
+
+    def test_correct_type_is_left_alone(self):
+        config = 'resource "octopusdeploy_project_deployment_target_trigger" "t" {\n}\n'
+        self.assertEqual(fix_deployment_target_trigger_type(config), config)
+
+    def test_deployment_targets_data_source_is_left_alone(self):
+        config = 'data "octopusdeploy_deployment_targets" "t" {\n}\n'
+        self.assertEqual(fix_deployment_target_trigger_type(config), config)
+
+
+class TestFixTriggerEventCategories(unittest.TestCase):
+    def test_group_names_become_categories(self):
+        config = 'event_categories = ["MachineAvailableForDeployment", "MachineHealthChanged"]'
+        self.assertEqual(fix_trigger_event_categories(config), 'event_categories = ["MachineHealthy"]')
+
+    def test_valid_categories_are_kept_and_unknown_dropped(self):
+        config = 'event_categories = ["MachineAdded", "Bogus", "MachineUnhealthy"]'
+        self.assertEqual(fix_trigger_event_categories(config), 'event_categories = ["MachineAdded", "MachineUnhealthy"]')
+
+    def test_empty_result_defaults_to_machine_added(self):
+        self.assertEqual(fix_trigger_event_categories('event_categories = ["Bogus"]'), 'event_categories = ["MachineAdded"]')
+
+    def test_event_groups_are_left_alone(self):
+        config = 'event_groups = ["Machine", "MachineHealthChanged"]'
+        self.assertEqual(fix_trigger_event_categories(config), config)
+
+
+ROLE_STEP = """resource "octopusdeploy_process_step" "process_step_deploy_app" {
+  name = "Deploy App"
+  type = "Octopus.TentaclePackage"
+  worker_pool_id = "${data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"
+  properties = {
+    "Octopus.Action.TargetRoles" = "app-server"
+  }
+  execution_properties = {
+    "Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"
+  }
+}
+"""
+
+
+class TestRemoveWorkerPoolFromPackageStepsWithRoles(unittest.TestCase):
+    def test_removes_worker_pool_and_sets_run_on_server_false(self):
+        result = remove_worker_pool_from_package_steps_with_roles(ROLE_STEP)
+        self.assertNotIn("worker_pool_id", result)
+        self.assertIn('"Octopus.Action.RunOnServer" = "false"', result)
+        self.assertEqual(result.count("{"), result.count("}"))
+
+    def test_existing_run_on_server_false_is_kept(self):
+        config = ROLE_STEP.replace(
+            '"Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"',
+            '"Octopus.Action.RunOnServer" = "false"',
+        )
+        result = remove_worker_pool_from_package_steps_with_roles(config)
+        self.assertNotIn("worker_pool_id", result)
+        self.assertEqual(result.count("RunOnServer"), 1)
+
+    def test_step_that_runs_on_the_server_is_left_alone(self):
+        config = ROLE_STEP.replace(
+            '"Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"',
+            '"Octopus.Action.RunOnServer" = "true"',
+        )
+        self.assertEqual(remove_worker_pool_from_package_steps_with_roles(config), config)
+
+    def test_step_without_roles_is_left_alone(self):
+        config = ROLE_STEP.replace('"Octopus.Action.TargetRoles" = "app-server"', '"Other" = "x"')
+        self.assertEqual(remove_worker_pool_from_package_steps_with_roles(config), config)
+
+
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestFixTriggerPrimaryPackageReference(unittest.TestCase):
+    STEP = """
+resource "octopusdeploy_process_step" "deploy" {
+  primary_package = {
+    package_id = "Trigger.App"
+    feed_id    = "Feeds-1"
+  }
+}
+"""
+    TRIGGER = """
+resource "octopusdeploy_external_feed_create_release_trigger" "t" {
+  name = "New Package Release"
+  package {
+    deployment_action_slug = "deploy-app"
+    package_reference      = "Trigger.App"
+  }
+}
+"""
+
+    def test_replaces_primary_package_id_with_empty_reference(self):
+        result = fix_trigger_primary_package_reference(self.STEP + self.TRIGGER)
+        self.assertIn('package_reference      = ""', result)
+        self.assertNotIn('package_reference      = "Trigger.App"', result)
+        self.assertIn('package_id = "Trigger.App"', result)
+
+    def test_handles_interpolation_inside_primary_package(self):
+        step = self.STEP.replace('"Feeds-1"', '"${length(x.feeds) != 0 ? x.feeds[0].id : y.id}"')
+        result = fix_trigger_primary_package_reference(step + self.TRIGGER)
+        self.assertIn('package_reference      = ""', result)
+
+    def test_keeps_reference_matching_packages_map_key(self):
+        config = self.STEP + self.TRIGGER + 'packages = {\n  "Trigger.App" = {\n  }\n}\n'
+        self.assertEqual(fix_trigger_primary_package_reference(config), config)
+
+    def test_keeps_reference_without_primary_package(self):
+        self.assertEqual(fix_trigger_primary_package_reference(self.TRIGGER), self.TRIGGER)
+
+    def test_keeps_other_references(self):
+        config = self.STEP + self.TRIGGER.replace('"Trigger.App"', '"webapp"')
+        self.assertEqual(fix_trigger_primary_package_reference(config), config)
+
+
+class TestFixParenthesisOctopusVariableSyntax(unittest.TestCase):
+    def test_replaces_system_variable(self):
+        result = fix_parenthesis_octopus_variable_syntax('$rg = "rg-$(Octopus.Environment.Name)-$(Octopus.Release.Number)"')
+        self.assertEqual(result, '$rg = "rg-#{Octopus.Environment.Name}-#{Octopus.Release.Number}"')
+
+    def test_keeps_powershell_subexpressions(self):
+        config = '$x = $(Get-Date) ; $y = "$(Other.Name)" ; $z = $($env:HOME)'
+        self.assertEqual(fix_parenthesis_octopus_variable_syntax(config), config)
+
+    def test_keeps_correct_syntax(self):
+        config = 'name = "#{Octopus.Environment.Name}"'
+        self.assertEqual(fix_parenthesis_octopus_variable_syntax(config), config)
+
+
+class TestFixVariableConditionWithoutExpression(unittest.TestCase):
+    def step(self, properties):
+        return (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            '  name      = "Show"\n'
+            '  condition = "Variable"\n'
+            f"  properties = {{\n{properties}\n  }}\n"
+            "}\n"
+        )
+
+    def test_missing_expression_falls_back_to_success(self):
+        result = fix_variable_condition_without_expression(self.step('    "Octopus.Action.TargetRoles" = "web"'))
+        self.assertIn('condition = "Success"', result)
+        self.assertNotIn('"Variable"', result)
+
+    def test_empty_expression_falls_back_to_success(self):
+        result = fix_variable_condition_without_expression(self.step('    "Octopus.Step.ConditionVariableExpression" = ""'))
+        self.assertIn('condition = "Success"', result)
+
+    def test_keeps_condition_with_expression(self):
+        config = self.step('    "Octopus.Step.ConditionVariableExpression" = "#{Release.Mode}"')
+        self.assertEqual(fix_variable_condition_without_expression(config), config)
+
+    def test_only_changes_the_step_missing_the_expression(self):
+        good = self.step('    "Octopus.Step.ConditionVariableExpression" = "#{Release.Mode}"')
+        bad = self.step("").replace('"s"', '"t"')
+        result = fix_variable_condition_without_expression(good + bad)
+        self.assertEqual(result.count('condition = "Variable"'), 1)
+        self.assertEqual(result.count('condition = "Success"'), 1)
+
+
+class TestFixDonorPackageAttribute(unittest.TestCase):
+    BLOCK = """
+resource "octopusdeploy_project_versioning_strategy" "p" {
+  project_id = "Projects-1"
+
+  donor_package {
+    deployment_action = "Run Tuner"
+    package_reference = ""
+  }
+  depends_on = [octopusdeploy_process_step.s]
+}
+"""
+
+    def test_converts_block_to_attribute(self):
+        result = fix_donor_package_attribute(self.BLOCK)
+        self.assertIn("  donor_package = {\n", result)
+        self.assertNotIn("donor_package {", result)
+        self.assertIn('deployment_action = "Run Tuner"', result)
+
+    def test_keeps_attribute_form(self):
+        config = self.BLOCK.replace("donor_package {", "donor_package = {")
+        self.assertEqual(fix_donor_package_attribute(config), config)
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_project" "p" {\n  donor_package {\n  }\n}\n'
+        self.assertEqual(fix_donor_package_attribute(config), config)
+
+
+class TestEscapeInvalidTemplateDirectives(unittest.TestCase):
+    def test_escapes_literal_percent_brace(self):
+        result = escape_invalid_template_directives('value = "100%% done $${not.terraform} %{not.either}"')
+        self.assertEqual(result, 'value = "100%% done $${not.terraform} %%{not.either}"')
+
+    def test_keeps_real_directives(self):
+        config = 'value = "%{ if var.x }a%{ else }b%{ endif }%{~ for i in var.l ~}${i}%{~ endfor ~}"'
+        self.assertEqual(escape_invalid_template_directives(config), config)
+
+    def test_keeps_already_escaped(self):
+        config = 'value = "%%{literal}"'
+        self.assertEqual(escape_invalid_template_directives(config), config)
+
+    def test_escapes_keyword_prefixed_text(self):
+        result = escape_invalid_template_directives('value = "%{iffy}"')
+        self.assertEqual(result, 'value = "%%{iffy}"')
+
+
+class TestAddRunOnServerToWorkerPoolSteps(unittest.TestCase):
+    STEP = """resource "octopusdeploy_process_step" "s" {
+  name           = "Do Work"
+  type           = "Octopus.Script"
+  worker_pool_id = "${data.octopusdeploy_worker_pools.w.worker_pools[0].id}"
+  execution_properties = {
+    "Octopus.Action.Script.ScriptBody" = "echo work"
+  }
+}
+"""
+
+    def test_adds_property_when_missing(self):
+        result = add_run_on_server_to_worker_pool_steps(self.STEP)
+        self.assertIn('"Octopus.Action.RunOnServer" = "true"', result)
+        self.assertIn('"Octopus.Action.Script.ScriptBody" = "echo work"', result)
+
+    def test_keeps_existing_property(self):
+        config = self.STEP.replace('"echo work"\n', '"echo work"\n    "Octopus.Action.RunOnServer" = "false"\n')
+        self.assertEqual(add_run_on_server_to_worker_pool_steps(config), config)
+
+    def test_ignores_step_without_worker_pool(self):
+        config = self.STEP.replace("  worker_pool_id", "  # none")
+        self.assertEqual(add_run_on_server_to_worker_pool_steps(config), config)
+
+    def test_handles_worker_pool_variable_and_multiple_steps(self):
+        second = self.STEP.replace('"s"', '"t"').replace("worker_pool_id ", "worker_pool_variable ")
+        result = add_run_on_server_to_worker_pool_steps(self.STEP + second)
+        self.assertEqual(result.count('"Octopus.Action.RunOnServer" = "true"'), 2)
+
+
+class TestRemoveStepsOrderDependencyFromReferencedChannels(unittest.TestCase):
+    CONFIG = """
+resource "octopusdeploy_process_step" "s" {
+  name     = "Build Docs"
+  channels = ["${octopusdeploy_channel.channel_p_hotfix[0].id}"]
+}
+resource "octopusdeploy_channel" "channel_p_hotfix" {
+  name       = "Hotfix"
+  depends_on = [octopusdeploy_process_steps_order.order, octopusdeploy_project.p]
+}
+resource "octopusdeploy_channel" "channel_p_other" {
+  name       = "Other"
+  depends_on = [octopusdeploy_process_steps_order.order]
+}
+"""
+
+    def test_removes_steps_order_from_referenced_channel(self):
+        result = remove_steps_order_dependency_from_referenced_channels(self.CONFIG)
+        self.assertIn("depends_on = [ octopusdeploy_project.p]", result)
+
+    def test_keeps_unreferenced_channel_dependency(self):
+        result = remove_steps_order_dependency_from_referenced_channels(self.CONFIG)
+        self.assertIn('name       = "Other"\n  depends_on = [octopusdeploy_process_steps_order.order]', result)
+
+    def test_leaves_empty_list_when_only_steps_order(self):
+        config = self.CONFIG.replace(", octopusdeploy_project.p", "")
+        result = remove_steps_order_dependency_from_referenced_channels(config)
+        self.assertIn("depends_on = []", result)
+
+    def test_no_change_without_channel_reference(self):
+        config = self.CONFIG.replace("octopusdeploy_channel.channel_p_hotfix[0].id", "x")
+        self.assertEqual(remove_steps_order_dependency_from_referenced_channels(config), config)
+
+
+class TestRemoveEnvironmentsWhenExcludedEnvironmentsAreSet(unittest.TestCase):
+    def step(self, environments, excluded):
+        return (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            '  name                  = "Prod Only"\n'
+            f"  environments          = {environments}\n"
+            f"  excluded_environments = {excluded}\n"
+            '  condition             = "Success"\n'
+            "}\n"
+        )
+
+    def test_drops_included_environments_when_both_set(self):
+        result = remove_environments_when_excluded_environments_are_set(
+            self.step('["${octopusdeploy_environment.p.id}"]', '["${octopusdeploy_environment.d.id}"]')
+        )
+        self.assertIn("  environments          = null\n", result)
+        self.assertIn('excluded_environments = ["${octopusdeploy_environment.d.id}"]', result)
+
+    def test_keeps_included_when_excluded_is_null(self):
+        config = self.step('["${octopusdeploy_environment.p.id}"]', "null")
+        self.assertEqual(remove_environments_when_excluded_environments_are_set(config), config)
+
+    def test_keeps_excluded_when_included_is_null_or_empty(self):
+        for included in ("null", "[]"):
+            config = self.step(included, '["${octopusdeploy_environment.d.id}"]')
+            self.assertEqual(remove_environments_when_excluded_environments_are_set(config), config)
+
+    def test_empty_excluded_list_changes_nothing(self):
+        config = self.step('["${octopusdeploy_environment.p.id}"]', "[]")
+        self.assertEqual(remove_environments_when_excluded_environments_are_set(config), config)
+
+
+class TestRemoveEnvironmentsWithMultilineLists(unittest.TestCase):
+    def test_multiline_excluded_list_and_ternary_included_list(self):
+        config = """resource "octopusdeploy_process_step" "s" {
+  name                  = "Prod Only"
+  environments         = ["${length(local.p) != 0 ? local.p[0].id : octopusdeploy_environment.p[0].id}"]
+  excluded_environments = [
+    "${octopusdeploy_environment.d.id}",
+    "${octopusdeploy_environment.t.id}"
+  ]
+  condition             = "Failure"
+}
+"""
+        result = remove_environments_when_excluded_environments_are_set(config)
+        self.assertIn("environments         = null\n  excluded_environments = [\n", result)
+        self.assertIn('"${octopusdeploy_environment.t.id}"\n  ]', result)
+        self.assertIn('condition             = "Failure"', result)
+
+    def test_multiline_included_list_is_replaced_completely(self):
+        config = """resource "octopusdeploy_process_step" "s" {
+  environments = [
+    "a",
+    "b"
+  ]
+  excluded_environments = ["c"]
+}
+"""
+        result = remove_environments_when_excluded_environments_are_set(config)
+        self.assertIn("environments = null\n  excluded_environments", result)
+        self.assertNotIn('"a"', result)
