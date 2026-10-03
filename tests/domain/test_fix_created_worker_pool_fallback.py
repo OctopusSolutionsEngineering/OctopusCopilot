@@ -10,6 +10,7 @@ except ImportError:
 
 from domain.sanitizers.terraform import (  # noqa: E402
     fix_bare_data_lookup_reference,
+    fix_cloudformation_dotted_property_names,
     fix_arm_template_source,
     fix_empty_strings,
     fix_created_worker_pool_fallback,
@@ -96,6 +97,10 @@ class TestFixLookupWorkerPoolDefaultFallback(unittest.TestCase):
             ),
             1,
         )
+
+    def test_hosted_ubuntu_lookup_does_not_fall_back_to_itself(self):
+        config = VARIABLE.replace("workerpool_dns_workers", "workerpool_hosted_ubuntu")
+        self.assertEqual(fix_lookup_worker_pool_default_fallback(config), config)
 
     def test_created_pool_unchanged(self):
         config = CREATED_POOL + VARIABLE
@@ -720,6 +725,27 @@ class TestReplaceUnverifiedCommunityTemplatedStep(unittest.TestCase):
 
     def test_empty_config(self):
         self.assertEqual(replace_unverified_community_templated_step(""), "")
+
+
+class TestFixCloudformationDottedPropertyNames(unittest.TestCase):
+    def test_renames_dotted_stack_name_and_template(self):
+        config = (
+            '"Octopus.Action.Aws.CloudFormation.StackName" = "web-stack"\n'
+            '"Octopus.Action.Aws.CloudFormation.Template" = "Resources: {}"\n'
+            '"Octopus.Action.Aws.CloudFormation.TemplateParameters" = "[]"\n'
+        )
+        result = fix_cloudformation_dotted_property_names(config)
+        self.assertIn('"Octopus.Action.Aws.CloudFormationStackName" = "web-stack"', result)
+        self.assertIn('"Octopus.Action.Aws.CloudFormationTemplate" = "Resources: {}"', result)
+        self.assertIn('"Octopus.Action.Aws.CloudFormationTemplateParameters" = "[]"', result)
+        self.assertNotIn("CloudFormation.", result)
+
+    def test_leaves_valid_properties_alone(self):
+        config = (
+            '"Octopus.Action.Aws.CloudFormationStackName" = "a"\n'
+            '"Octopus.Action.Aws.CloudFormation.ChangeSet.Arn" = "change"\n'
+        )
+        self.assertEqual(fix_cloudformation_dotted_property_names(config), config)
 
 
 if __name__ == "__main__":

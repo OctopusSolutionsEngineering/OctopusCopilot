@@ -121,7 +121,9 @@ def sanitize_name_attributes(config):
         # runbook and worker pool, so replacing them corrupts a name the prompt
         # asked for. Forward and back slashes are still replaced, because the API
         # rejects a name containing a slash.
-        line = re.sub(r'[^a-zA-Z0-9.,:_#&()"\'= \-${}\[\]]', r"_", yaml_config)
+        # Letters outside ASCII (Équipe, Café, emoji) are accepted by the API too, so only
+        # the ASCII characters that are not in the allowed set are replaced.
+        line = re.sub(r'[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]', r"_", yaml_config)
 
         fixed_config = fixed_config.replace(yaml_config, line)
 
@@ -945,7 +947,9 @@ def fix_lookup_worker_pool_default_fallback(config):
 
     def replace_fallback(match):
         name = match.group(2)
-        if re.search(
+        # Hosted Ubuntu with a Default Worker Pool fallback is the pattern from the system prompt. Replacing the
+        # fallback would leave both branches indexing the same lookup.
+        if name == hosted_ubuntu or re.search(
             rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(name)}"', config
         ):
             return match.group(0)
@@ -1524,6 +1528,27 @@ def replace_unverified_community_templated_step(config):
             )
             position = header.start() + len(block)
 
+    return result
+
+
+CLOUDFORMATION_DOTTED_PROPERTIES = (
+    ("Octopus.Action.Aws.CloudFormation.StackName", "Octopus.Action.Aws.CloudFormationStackName"),
+    ("Octopus.Action.Aws.CloudFormation.TemplateParameters", "Octopus.Action.Aws.CloudFormationTemplateParameters"),
+    ("Octopus.Action.Aws.CloudFormation.Template", "Octopus.Action.Aws.CloudFormationTemplate"),
+)
+
+
+def fix_cloudformation_dotted_property_names(config):
+    """
+    The LLM writes the CloudFormation step properties with a dot (Octopus.Action.Aws.CloudFormation.StackName). The
+    server only reads the names without it (Octopus.Action.Aws.CloudFormationStackName), so the step fails with:
+    Octopus API error: [Please provide the CloudFormation stack name.]
+    Octopus.Action.Aws.CloudFormation.ChangeSet.Arn is a real property and is left alone.
+    """
+
+    result = config
+    for wrong, right in CLOUDFORMATION_DOTTED_PROPERTIES:
+        result = result.replace(f'"{wrong}"', f'"{right}"')
     return result
 
 

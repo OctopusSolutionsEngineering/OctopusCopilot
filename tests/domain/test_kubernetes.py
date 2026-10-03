@@ -255,6 +255,40 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_name_attributes_keeps_non_ascii_letters(self):
+        # Accented letters and emoji are valid in Octopus names, so they are not replaced
+        input_config = """
+        resource "octopusdeploy_project_group" "group" {
+          name = "Équipe Paris ☕"
+        }
+        resource "octopusdeploy_process_step" "step" {
+          name = "Étape 1: Préparer"
+        }
+        resource "octopusdeploy_environment" "environment" {
+          name = "Développement/QA"
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project_group" "group" {
+          name = "Équipe Paris ☕"
+        }
+        resource "octopusdeploy_process_step" "step" {
+          name = "Étape 1: Préparer"
+        }
+        resource "octopusdeploy_environment" "environment" {
+          name = "Développement_QA"
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
+    def test_sanitize_name_attributes_replaces_other_ascii_symbols(self):
+        input_config = 'name = "A!B%C*D+E;F<G>H?I@J\\K^L`M|N~O"'
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, 'name = "A_B_C_D_E_F_G_H_I_J_K_L_M_N_O"')
+
     def test_sanitize_name_attributes_allow_interpolation(self):
         # Input with slashes in name
         input_config = """

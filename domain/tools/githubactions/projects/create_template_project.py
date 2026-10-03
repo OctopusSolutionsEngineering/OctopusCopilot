@@ -63,6 +63,7 @@ from domain.sanitizers.terraform import (
     fix_for_expression_over_empty_lookup,
     fix_lifecycle_phase_without_environments,
     fix_package_pre_deploy_script_property,
+    fix_cloudformation_dotted_property_names,
     fix_manual_intervention_templated_step,
     replace_unverified_community_templated_step,
     remove_unsupported_trigger_description,
@@ -903,6 +904,7 @@ def sanitize_configuration(configuration):
     # A for expression over an element of an empty lookup fails the plan in a fresh space
     configuration = fix_for_expression_over_empty_lookup(configuration)
     # A manual intervention is a built in step type, not a templated step
+    configuration = fix_cloudformation_dotted_property_names(configuration)
     configuration = fix_manual_intervention_templated_step(configuration)
     configuration = replace_unverified_community_templated_step(configuration)
     configuration = remove_unused_step_template_data(configuration)
