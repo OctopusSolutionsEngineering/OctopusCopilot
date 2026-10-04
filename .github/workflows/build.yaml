@@ -11,7 +11,7 @@ name: Python Build
     - cron: '0 0 1 * *'
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     steps:
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -31,7 +31,7 @@ jobs:
         run: find . -path ./domain/sanitizers/stringlifier -prune -o -path ./tests -prune -o -path ./venv -prune -o -path ./.venv -prune -o -name "*.py" -print0 | xargs -0 -n1 xenon --max-absolute C
   test:
     name: Test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     timeout-minutes: 90
     needs: validate
     strategy:
@@ -244,7 +244,7 @@ jobs:
 
   test-results:
     needs: test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     continue-on-error: true
     steps:
       - name: Set up Python
@@ -363,7 +363,7 @@ jobs:
   build:
     name: Build
     needs: test-results
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-26.04
     if: github.event_name != 'schedule' && github.ref == 'refs/heads/main'
     steps:
       - name: Login to Octopus Deploy
