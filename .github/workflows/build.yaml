@@ -27,11 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install tools
         run: |
           pip install pytest coverage setuptools radon xenon
@@ -55,12 +55,12 @@ jobs:
         uses: hashicorp/setup-terraform@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       # The a--skipApiVersionCheck might need to be  added to the Azurite command line to skip the error:
       # The API version 2025-07-05 is not supported by Azurite. Please upgrade Azurite to latest version and retry. If you are using Azurite in Visual Studio, please check you have installed latest Visual Studio patch. Azurite command line parameter "--skipApiVersionCheck" or Visual Studio Code configuration "Skip Api Version Check" can skip this error.
@@ -261,12 +261,12 @@ jobs:
     continue-on-error: true
     steps:
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -384,11 +384,11 @@ jobs:
         with:
           server: https://mattc.octopus.app
           service_account_id: ad1576ef-b053-4c85-b983-c0607045ae1f
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: '0'
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           # Need 3.11 because of https://stackoverflow.com/questions/77364550/attributeerror-module-pkgutil-has-no-attribute-impimporter-did-you-mean
           python-version: 3.11
