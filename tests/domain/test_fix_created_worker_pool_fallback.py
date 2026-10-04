@@ -2027,4 +2027,3 @@ class TestFixAwsEcrFeedAttributes(unittest.TestCase):
     def test_ignores_other_feeds(self):
         config = 'resource "octopusdeploy_docker_container_registry" "f" {\n  feed_uri = "https://x"\n}\n'
         self.assertEqual(fix_aws_ecr_feed_attributes(config), config)
-
