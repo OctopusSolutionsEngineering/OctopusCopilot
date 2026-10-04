@@ -39,8 +39,21 @@ from domain.sanitizers.terraform import (  # noqa: E402
     fix_donor_package_attribute,
     escape_invalid_template_directives,
     add_run_on_server_to_worker_pool_steps,
+    add_steps_order_dependency_to_channels_with_rules,
+    remove_default_channel_resources,
+    enforce_exact_environment_name_matches,
+    remove_case_insensitive_duplicate_environments,
+    fix_steps_order_project_id,
+    trim_name_variable_defaults,
+    replace_template_characters_in_step_names,
+    fix_null_channel_fallback,
+    declare_missing_worker_pool_data_sources,
+    quote_dotted_package_keys,
+    remove_named_packages_from_package_deploy_steps,
+    remove_duplicate_variables_with_same_name_and_scope,
     remove_steps_order_dependency_from_referenced_channels,
     remove_environments_when_excluded_environments_are_set,
+    fix_stray_bracket_before_interpolation_end,
     remove_unused_step_template_data,
     replace_json_key,
     replace_slash_in_project_name,
@@ -1302,3 +1315,362 @@ class TestRemoveEnvironmentsWithMultilineLists(unittest.TestCase):
         result = remove_environments_when_excluded_environments_are_set(config)
         self.assertIn("environments = null\n  excluded_environments", result)
         self.assertNotIn('"a"', result)
+
+
+class TestFixStrayBracketBeforeInterpolationEnd(unittest.TestCase):
+    def test_removes_stray_bracket(self):
+        config = 'process_id = "${length(d.projects) != 0 ? null : octopusdeploy_process.p[0].id]}"'
+        self.assertEqual(
+            fix_stray_bracket_before_interpolation_end(config),
+            'process_id = "${length(d.projects) != 0 ? null : octopusdeploy_process.p[0].id}"',
+        )
+
+    def test_keeps_valid_references(self):
+        config = 'ids = ["${octopusdeploy_environment.e[0].id}", "${data.x.y.z[0].id}"]'
+        self.assertEqual(fix_stray_bracket_before_interpolation_end(config), config)
+
+    def test_keeps_lists_that_end_with_a_brace_after_the_bracket(self):
+        config = 'value = { list = ["${a[0].id}"] }'
+        self.assertEqual(fix_stray_bracket_before_interpolation_end(config), config)
+
+
+class TestAddStepsOrderDependencyToChannelsWithRules(unittest.TestCase):
+    ORDER = 'resource "octopusdeploy_process_steps_order" "process_step_order_my_app" {\n  steps = []\n}\n'
+    CHANNEL = """resource "octopusdeploy_channel" "channel_my_app_beta" {
+  name       = "Beta"
+  project_id = "${octopusdeploy_project.project_my_app[0].id}"
+  rule {
+    tag           = "^beta"
+    version_range = "[2.0,)"
+  }
+}
+"""
+
+    def test_adds_depends_on(self):
+        result = add_steps_order_dependency_to_channels_with_rules(self.ORDER + self.CHANNEL)
+        self.assertIn("depends_on = [octopusdeploy_process_steps_order.process_step_order_my_app]", result)
+
+    def test_appends_to_existing_depends_on(self):
+        channel = self.CHANNEL.replace("  rule {", "  depends_on = [octopusdeploy_lifecycle.l]\n  rule {")
+        result = add_steps_order_dependency_to_channels_with_rules(self.ORDER + channel)
+        self.assertIn(
+            "depends_on = [octopusdeploy_lifecycle.l, octopusdeploy_process_steps_order.process_step_order_my_app]",
+            result,
+        )
+
+    def test_keeps_channel_without_rules(self):
+        channel = 'resource "octopusdeploy_channel" "c" {\n  name = "Plain"\n  project_id = "${octopusdeploy_project.project_my_app.id}"\n}\n'
+        config = self.ORDER + channel
+        self.assertEqual(add_steps_order_dependency_to_channels_with_rules(config), config)
+
+    def test_keeps_channel_that_already_depends_on_the_steps_order(self):
+        channel = self.CHANNEL.replace(
+            "  rule {", "  depends_on = [octopusdeploy_process_steps_order.process_step_order_my_app]\n  rule {"
+        )
+        config = self.ORDER + channel
+        self.assertEqual(add_steps_order_dependency_to_channels_with_rules(config), config)
+
+    def test_no_steps_order_means_no_change(self):
+        self.assertEqual(add_steps_order_dependency_to_channels_with_rules(self.CHANNEL), self.CHANNEL)
+
+
+class TestRemoveDefaultChannelResources(unittest.TestCase):
+    CONFIG = """resource "octopusdeploy_channel" "channel_p_default" {
+  name = "Default"
+  rule {
+    version_range = "[1.0,2.0)"
+  }
+}
+resource "octopusdeploy_channel" "channel_p_beta" {
+  name       = "Beta"
+  depends_on = [octopusdeploy_channel.channel_p_default[0], octopusdeploy_process_steps_order.o]
+}
+"""
+
+    def test_removes_default_channel_and_its_references(self):
+        result = remove_default_channel_resources(self.CONFIG)
+        self.assertNotIn('name = "Default"', result)
+        self.assertNotIn("channel_p_default", result)
+        self.assertIn('name       = "Beta"', result)
+        self.assertIn("octopusdeploy_process_steps_order.o", result)
+
+    def test_keeps_other_channels(self):
+        config = 'resource "octopusdeploy_channel" "c" {\n  name = "Hotfix"\n}\n'
+        self.assertEqual(remove_default_channel_resources(config), config)
+
+    def test_keeps_names_that_only_contain_default(self):
+        config = 'resource "octopusdeploy_channel" "c" {\n  name = "Default Hotfix"\n}\n'
+        self.assertEqual(remove_default_channel_resources(config), config)
+
+
+class TestEnforceExactEnvironmentNameMatches(unittest.TestCase):
+    PLAIN = """data "octopusdeploy_environments" "environment_dev" {
+  ids          = null
+  partial_name = "Dev"
+  skip         = 0
+  take         = 1
+}
+resource "octopusdeploy_environment" "environment_dev" {
+  count = "${length(data.octopusdeploy_environments.environment_dev.environments) != 0 ? 0 : 1}"
+  name  = "Dev"
+}
+resource "octopusdeploy_lifecycle" "l" {
+  phase {
+    optional_deployment_targets = ["${length(data.octopusdeploy_environments.environment_dev.environments) != 0 ? data.octopusdeploy_environments.environment_dev.environments[0].id : octopusdeploy_environment.environment_dev[0].id}"]
+  }
+}
+"""
+
+    def test_adds_exact_match_local_and_rewrites_references(self):
+        result = enforce_exact_environment_name_matches(self.PLAIN)
+        self.assertIn('environment_dev_matches = [for env in data.octopusdeploy_environments.environment_dev.environments : env if env.name == "Dev"]', result)
+        self.assertIn('count = "${length(local.environment_dev_matches) != 0 ? 0 : 1}"', result)
+        self.assertIn("local.environment_dev_matches[0].id", result)
+        self.assertIn("take         = 100", result)
+        self.assertNotIn("environments[0]", result.replace("local.environment_dev_matches[0]", ""))
+
+    def test_keeps_existing_local_and_does_not_add_a_second_one(self):
+        config = self.PLAIN + 'locals {\n  environment_dev_matches = [for env in data.octopusdeploy_environments.environment_dev.environments : env if env.name == "Dev"]\n}\n'
+        result = enforce_exact_environment_name_matches(config)
+        self.assertEqual(result.count("environment_dev_matches ="), 1)
+        self.assertIn("local.environment_dev_matches[0].id", result)
+
+    def test_handles_several_environments(self):
+        config = self.PLAIN + self.PLAIN.replace("environment_dev", "environment_prod").replace('"Dev"', '"Prod"')
+        result = enforce_exact_environment_name_matches(config)
+        self.assertIn('env if env.name == "Prod"', result)
+        self.assertIn('env if env.name == "Dev"', result)
+        self.assertEqual(result.count("locals {"), 1)
+
+    def test_no_environment_lookup_means_no_change(self):
+        config = 'resource "octopusdeploy_environment" "e" {\n  name = "Dev"\n}\n'
+        self.assertEqual(enforce_exact_environment_name_matches(config), config)
+
+
+class TestRemoveCaseInsensitiveDuplicateEnvironments(unittest.TestCase):
+    CONFIG = """resource "octopusdeploy_environment" "environment_dev" {
+  name = "Dev"
+}
+resource "octopusdeploy_environment" "environment_dev_2" {
+  name = "dev"
+}
+resource "octopusdeploy_lifecycle" "l" {
+  phase {
+    optional_deployment_targets = ["${octopusdeploy_environment.environment_dev.id}", "${octopusdeploy_environment.environment_dev_2[0].id}"]
+  }
+}
+"""
+
+    def test_removes_later_duplicate_and_redirects_references(self):
+        result = remove_case_insensitive_duplicate_environments(self.CONFIG)
+        self.assertNotIn('"environment_dev_2"', result)
+        self.assertNotIn("environment_dev_2", result)
+        self.assertEqual(result.count("octopusdeploy_environment.environment_dev"), 2)
+        self.assertIn('name = "Dev"', result)
+
+    def test_trimmed_names_are_duplicates_too(self):
+        config = self.CONFIG.replace('name = "dev"', 'name = "  Dev "')
+        self.assertNotIn("environment_dev_2", remove_case_insensitive_duplicate_environments(config))
+
+    def test_different_names_are_kept(self):
+        config = self.CONFIG.replace('name = "dev"', 'name = "Development"')
+        self.assertEqual(remove_case_insensitive_duplicate_environments(config), config)
+
+
+class TestFixStepsOrderProjectId(unittest.TestCase):
+    def test_renames_project_id_to_process_id(self):
+        config = (
+            'resource "octopusdeploy_process_steps_order" "o" {\n'
+            '  project_id = "${octopusdeploy_process.p[0].id}"\n'
+            "  steps      = []\n}\n"
+        )
+        result = fix_steps_order_project_id(config)
+        self.assertIn('process_id = "${octopusdeploy_process.p[0].id}"', result)
+        self.assertNotIn("project_id", result)
+
+    def test_keeps_correct_process_id(self):
+        config = (
+            'resource "octopusdeploy_process_steps_order" "o" {\n'
+            '  process_id = "${octopusdeploy_process.p.id}"\n'
+            "  steps      = []\n}\n"
+        )
+        self.assertEqual(fix_steps_order_project_id(config), config)
+
+    def test_does_not_touch_other_resources(self):
+        config = 'resource "octopusdeploy_process" "p" {\n  project_id = "x"\n}\n'
+        self.assertEqual(fix_steps_order_project_id(config), config)
+
+
+class TestTrimNameVariableDefaults(unittest.TestCase):
+    def test_trims_default_of_name_variable(self):
+        config = 'variable "project_x_name" {\n  type    = string\n  default = "  Spaces \\"Q\\"  "\n}\n'
+        self.assertIn('default = "Spaces \\"Q\\""', trim_name_variable_defaults(config))
+
+    def test_keeps_other_variables(self):
+        config = 'variable "project_x_description" {\n  default = "  keep  "\n}\n'
+        self.assertEqual(trim_name_variable_defaults(config), config)
+
+    def test_keeps_already_trimmed_names(self):
+        config = 'variable "project_group_x_name" {\n  default = "Group"\n}\n'
+        self.assertEqual(trim_name_variable_defaults(config), config)
+
+
+class TestReplaceTemplateCharactersInStepNames(unittest.TestCase):
+    def step(self, name):
+        return f'resource "octopusdeploy_process_step" "s" {{\n  name = "{name}"\n  slug = "echo"\n}}\n'
+
+    def test_replaces_dollar_and_braces(self):
+        result = replace_template_characters_in_step_names(self.step("Echo ${Name}"))
+        self.assertIn('name = "Echo __Name_"', result)
+
+    def test_keeps_plain_names(self):
+        config = self.step("Deploy (Blue) - v1.2, ok_#1")
+        self.assertEqual(replace_template_characters_in_step_names(config), config)
+
+    def test_keeps_references_to_variables_and_locals(self):
+        config = self.step("${var.step_name}")
+        self.assertEqual(replace_template_characters_in_step_names(config), config)
+
+    def test_only_touches_process_steps(self):
+        config = 'resource "octopusdeploy_project_group" "g" {\n  name = "Edge ${x}"\n}\n'
+        self.assertEqual(replace_template_characters_in_step_names(config), config)
+
+
+class TestFixNullChannelFallback(unittest.TestCase):
+    CONFIG = """resource "octopusdeploy_channel" "channel_phantom" {
+  count = 1
+  name  = "Phantom"
+}
+resource "octopusdeploy_process_step" "s" {
+  channels = ["${length(data.octopusdeploy_channels.channel_phantom.channels) != 0 ? data.octopusdeploy_channels.channel_phantom.channels[0].id : null}"]
+}
+"""
+
+    def test_uses_channel_resource_when_it_exists(self):
+        result = fix_null_channel_fallback(self.CONFIG)
+        self.assertIn("channels[0].id : octopusdeploy_channel.channel_phantom[0].id}", result)
+        self.assertNotIn(": null}", result)
+
+    def test_no_index_without_count(self):
+        result = fix_null_channel_fallback(self.CONFIG.replace("  count = 1\n", ""))
+        self.assertIn(": octopusdeploy_channel.channel_phantom.id}", result)
+
+    def test_keeps_null_when_the_channel_is_not_created(self):
+        config = self.CONFIG.split("resource \"octopusdeploy_process_step\"")[1]
+        config = 'resource "octopusdeploy_process_step"' + config
+        self.assertEqual(fix_null_channel_fallback(config), config)
+
+
+class TestRemoveDuplicateVariablesWithSameNameAndScope(unittest.TestCase):
+    def variable(self, label, name, scope=""):
+        return (
+            f'resource "octopusdeploy_variable" "{label}" {{\n'
+            f'  owner_id = "${{octopusdeploy_project.p.id}}"\n'
+            f'  name     = "{name}"\n'
+            f"{scope}}}\n"
+        )
+
+    def test_removes_later_duplicate(self):
+        config = self.variable("a", "Secret") + self.variable("b", "Secret")
+        result = remove_duplicate_variables_with_same_name_and_scope(config)
+        self.assertIn('"a"', result)
+        self.assertNotIn('"b"', result)
+
+    def test_keeps_variables_with_different_scope(self):
+        scope = "  scope {\n    environments = [\"e\"]\n  }\n"
+        config = self.variable("a", "Url") + self.variable("b", "Url", scope)
+        self.assertEqual(remove_duplicate_variables_with_same_name_and_scope(config), config)
+
+    def test_keeps_same_name_in_another_owner(self):
+        config = self.variable("a", "Secret") + self.variable("b", "Secret").replace("project.p", "project.q")
+        self.assertEqual(remove_duplicate_variables_with_same_name_and_scope(config), config)
+
+
+class TestDeclareMissingWorkerPoolDataSources(unittest.TestCase):
+    STEP = """resource "octopusdeploy_process_step" "s" {
+  worker_pool_id = "${length(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools) != 0 ? data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id : data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools[0].id}"
+}
+"""
+
+    def test_declares_both_missing_lookups(self):
+        result = declare_missing_worker_pool_data_sources(self.STEP)
+        self.assertIn('data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {', result)
+        self.assertIn('partial_name = "Hosted Ubuntu"', result)
+        self.assertIn('data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {', result)
+        self.assertIn('partial_name = "Default Worker Pool"', result)
+
+    def test_keeps_declared_lookups(self):
+        declared = (
+            'data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {\n  partial_name = "Hosted Ubuntu"\n}\n'
+            'data "octopusdeploy_worker_pools" "workerpool_default_worker_pool" {\n  partial_name = "Default Worker Pool"\n}\n'
+        )
+        config = self.STEP + declared
+        self.assertEqual(declare_missing_worker_pool_data_sources(config), config)
+
+    def test_declares_only_the_missing_one(self):
+        declared = 'data "octopusdeploy_worker_pools" "workerpool_hosted_ubuntu" {\n  partial_name = "Hosted Ubuntu"\n}\n'
+        result = declare_missing_worker_pool_data_sources(self.STEP + declared)
+        self.assertEqual(result.count('"workerpool_hosted_ubuntu" {'), 1)
+        self.assertEqual(result.count('"workerpool_default_worker_pool" {'), 1)
+
+    def test_no_references_means_no_change(self):
+        config = 'resource "octopusdeploy_environment" "e" {\n  name = "Dev"\n}\n'
+        self.assertEqual(declare_missing_worker_pool_data_sources(config), config)
+
+
+class TestQuoteDottedPackageKeys(unittest.TestCase):
+    def test_quotes_dotted_key(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            "  packages = {\n"
+            "    Acme.Extras = {\n"
+            '      package_id = "Acme.Extras"\n'
+            "    }\n"
+            "  }\n}\n"
+        )
+        result = quote_dotted_package_keys(config)
+        self.assertIn('    "Acme.Extras" = {', result)
+        self.assertIn('package_id = "Acme.Extras"', result)
+
+    def test_keeps_quoted_and_plain_keys(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            "  packages = {\n"
+            '    "Acme.Extras" = { package_id = "a" }\n'
+            '    extras = { package_id = "b" }\n'
+            "  }\n}\n"
+        )
+        self.assertEqual(quote_dotted_package_keys(config), config)
+
+    def test_ignores_dotted_names_outside_packages(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  name = "x"\n  other = {\n    a.b = 1\n  }\n}\n'
+        self.assertEqual(quote_dotted_package_keys(config), config)
+
+
+class TestRemoveNamedPackagesFromPackageDeploySteps(unittest.TestCase):
+    def step(self, step_type):
+        return (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            f'  type = "{step_type}"\n'
+            '  primary_package = { package_id = "Acme.App", feed_id = "${f.id}" }\n'
+            "  packages = {\n"
+            '    "Acme.Extras" = { package_id = "Acme.Extras", feed_id = "${f.id}" }\n'
+            "  }\n"
+            '  slug = "x"\n}\n'
+        )
+
+    def test_removes_named_packages_from_a_package_step(self):
+        result = remove_named_packages_from_package_deploy_steps(self.step("Octopus.TentaclePackage"))
+        self.assertNotIn("packages = {", result)
+        self.assertNotIn("Acme.Extras", result)
+        self.assertIn("primary_package", result)
+        self.assertIn('slug = "x"', result)
+
+    def test_keeps_named_packages_on_script_steps(self):
+        config = self.step("Octopus.Script")
+        self.assertEqual(remove_named_packages_from_package_deploy_steps(config), config)
+
+    def test_handles_other_package_deploy_types(self):
+        for step_type in ("Octopus.WindowsService", "Octopus.IIS", "Octopus.TomcatDeploy"):
+            result = remove_named_packages_from_package_deploy_steps(self.step(step_type))
+            self.assertNotIn("Acme.Extras", result)

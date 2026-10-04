@@ -255,6 +255,24 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_name_attributes_trims_surrounding_spaces(self):
+        # Octopus trims names, so the surrounding spaces are removed up front
+        input_config = """
+        resource "octopusdeploy_project" "project" {
+          name = "  Spaces & Quotes  "
+          partial_name = " keep "
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_project" "project" {
+          name = "Spaces & Quotes"
+          partial_name = " keep "
+        }
+        """
+
+        self.assertEqual(sanitize_name_attributes(input_config), expected_output)
+
     def test_sanitize_name_attributes_keeps_non_ascii_letters(self):
         # Accented letters and emoji are valid in Octopus names, so they are not replaced
         input_config = """

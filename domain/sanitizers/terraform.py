@@ -132,6 +132,12 @@ def sanitize_name_attributes(config):
             yaml_config,
         )
 
+        # Octopus trims the name, so leading and trailing spaces make the provider report an inconsistent result:
+        # Provider produced inconsistent result after apply ... .name was cty.StringVal("  My Name  "), but now ...
+        quoted = re.match(r'^(\bname\s*=\s*")(.*?)("\s*)$', line)
+        if quoted and quoted.group(2) != quoted.group(2).strip():
+            line = quoted.group(1) + quoted.group(2).strip() + quoted.group(3)
+
         fixed_config = fixed_config.replace(yaml_config, line)
 
     return fixed_config
@@ -2558,6 +2564,448 @@ def remove_environments_when_excluded_environments_are_set(config):
         updated = block[: included.end()] + "null" + block[value_end:]
         result = result[: header.start()] + updated + result[end:]
         position = header.start() + len(updated)
+
+
+STRAY_BRACKET_BEFORE_INTERPOLATION_END_REGEX = re.compile(r"(\[\d+\](?:\.\w+)+)\](\})")
+
+
+def fix_stray_bracket_before_interpolation_end(config):
+    """
+    The LLM sometimes closes an indexed reference with an extra bracket before the end of the interpolation:
+    "${length(x.projects) != 0 ? null : octopusdeploy_process.p[0].id]}"
+    Error: Extra characters after interpolation expression ... Expected a closing brace to end the interpolation.
+    """
+
+    return STRAY_BRACKET_BEFORE_INTERPOLATION_END_REGEX.sub(r"\1\2", config)
+
+
+STEPS_ORDER_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_process_steps_order"\s+"(?P<label>\w+)"\s*\{')
+CHANNEL_RULE_REGEX = re.compile(r"(?m)^[ \t]*rule\s*\{")
+PROJECT_REFERENCE_LABEL_REGEX = re.compile(r"octopusdeploy_project\.project_(?P<label>\w+?)(?:\[|\.|\b)")
+
+
+def add_steps_order_dependency_to_channels_with_rules(config):
+    """
+    A channel version rule names a step, so the channel must be created after the deployment process:
+    Octopus API error: ... [Channel version rule references step 'Deploy Lib' which does not exist in the deployment
+    process.]
+    The channel gets a depends_on for the steps order of its project.
+    """
+
+    labels = [match.group("label") for match in STEPS_ORDER_HEADER_REGEX.finditer(config)]
+    if not labels:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        if not CHANNEL_RULE_REGEX.search(body):
+            position = header.end()
+            continue
+
+        label = None
+        project = PROJECT_REFERENCE_LABEL_REGEX.search(body)
+        if project and f"process_step_order_{project.group('label')}" in labels:
+            label = f"process_step_order_{project.group('label')}"
+        elif len(labels) == 1:
+            label = labels[0]
+        if not label or f"octopusdeploy_process_steps_order.{label}" in body:
+            position = header.end()
+            continue
+
+        reference = f"octopusdeploy_process_steps_order.{label}"
+        depends_on = DEPENDS_ON_REGEX.search(body)
+        if depends_on:
+            items = depends_on.group("items").strip()
+            replacement = depends_on.group("head") + (f"{items}, {reference}" if items else reference) + depends_on.group("tail")
+            body = body[: depends_on.start()] + replacement + body[depends_on.end() :]
+        else:
+            body = f"\n  depends_on = [{reference}]" + body
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+DEFAULT_CHANNEL_NAME_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"Default"[ \t]*$')
+
+
+def remove_default_channel_resources(config):
+    """
+    Every project already has a channel called Default, so a channel resource with that name fails the apply:
+    Octopus API error: ... [A channel with this name already exists for this project. Please choose a different name.]
+    The resource and the references to it in depends_on lists are removed.
+    """
+
+    result = config
+    labels = []
+    position = 0
+    while True:
+        header = CHANNEL_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if end is None:
+            break
+        if DEFAULT_CHANNEL_NAME_REGEX.search(result[header.end() : end]):
+            labels.append(header.group("label"))
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            position = end
+
+    for label in labels:
+        reference = re.compile(rf"octopusdeploy_channel\.{re.escape(label)}(?:\[\d+\])?(?!\w)")
+
+        def remove_reference(match):
+            items = [item for item in match.group("items").split(",") if item.strip()]
+            kept = [item for item in items if not reference.search(item)]
+            return match.group("head") + ",".join(kept) + match.group("tail")
+
+        result = DEPENDS_ON_REGEX.sub(remove_reference, result)
+    return result
+
+
+ENVIRONMENT_DATA_HEADER_REGEX = re.compile(r'data\s+"octopusdeploy_environments"\s+"(?P<label>\w+)"\s*\{')
+ENVIRONMENT_PARTIAL_NAME_REGEX = re.compile(r'partial_name\s*=\s*"(?P<name>(?:[^"\\\n]|\\.)*)"')
+
+
+def enforce_exact_environment_name_matches(config):
+    """
+    partial_name is a substring match, so the lookup of the environment Dev also finds Development, the count of the
+    environment resource becomes 0 and the lifecycle, steps and triggers silently use Development instead of Dev.
+    Every lookup is filtered to the exact name in a local, and every use of the lookup goes through that local.
+    """
+
+    if not config or "octopusdeploy_environments" not in config:
+        return config
+
+    result = config
+    new_locals = []
+    for header in list(ENVIRONMENT_DATA_HEADER_REGEX.finditer(config)):
+        label = header.group("label")
+        end = find_block_end(result, result.index(header.group(0)) + len(header.group(0)))
+        start = result.index(header.group(0))
+        if end is None:
+            continue
+        block = result[start:end]
+        partial = ENVIRONMENT_PARTIAL_NAME_REGEX.search(block)
+        if not partial or not partial.group("name"):
+            continue
+
+        if not re.search(rf"\b{label}_matches\s*=", result):
+            new_locals.append(
+                f"  {label}_matches = [for env in data.octopusdeploy_environments.{label}.environments : "
+                f'env if env.name == "{partial.group("name")}"]'
+            )
+
+        updated = re.sub(r"(\btake\s*=\s*)\d+", r"\g<1>100", block)
+        result = result[:start] + updated + result[end:]
+        result = result.replace(
+            f"length(data.octopusdeploy_environments.{label}.environments)", f"length(local.{label}_matches)"
+        )
+        result = result.replace(f"data.octopusdeploy_environments.{label}.environments[0]", f"local.{label}_matches[0]")
+
+    if new_locals:
+        result = result.rstrip("\n") + "\n\nlocals {\n" + "\n".join(new_locals) + "\n}\n"
+    return result
+
+
+ENVIRONMENT_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_environment"\s+"(?P<label>\w+)"\s*\{')
+ENVIRONMENT_NAME_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<name>[^"\n]*)"[ \t]*$')
+
+
+def remove_case_insensitive_duplicate_environments(config):
+    """
+    Octopus names are case insensitive and trimmed, so environments called Dev and dev are one environment and the
+    second fails the apply:
+    Octopus API error: ... [An environment with this name already exists in this space. Please choose a different name.]
+    The later duplicate is removed and references to it point to the first one.
+    """
+
+    seen = {}
+    duplicates = {}
+    for header in ENVIRONMENT_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        name = ENVIRONMENT_NAME_REGEX.search(config[header.end() : end])
+        if not name:
+            continue
+        key = name.group("name").strip().lower()
+        if key in seen:
+            duplicates[header.group("label")] = seen[key]
+        else:
+            seen[key] = header.group("label")
+
+    result = config
+    for removed, kept in duplicates.items():
+        header = re.search(rf'resource\s+"octopusdeploy_environment"\s+"{re.escape(removed)}"\s*\{{', result)
+        if not header:
+            continue
+        block_removed = remove_block(result, header)
+        if block_removed is None:
+            continue
+        result = re.sub(
+            rf"octopusdeploy_environment\.{re.escape(removed)}(?!\w)", f"octopusdeploy_environment.{kept}", block_removed
+        )
+    return result
+
+
+def fix_steps_order_project_id(config):
+    """
+    octopusdeploy_process_steps_order takes a process_id, but the LLM sometimes writes project_id:
+    Error: Missing required argument ... The argument "process_id" is required
+    Error: Unsupported argument ... An argument named "project_id" is not expected here.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        if not re.search(r"(?m)^[ \t]*process_id[ \t]*=", body):
+            body = re.sub(r"(?m)^([ \t]*)project_id([ \t]*=)", r"\1process_id\2", body, count=1)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+NAME_VARIABLE_HEADER_REGEX = re.compile(r'variable\s+"(?P<label>\w+_name)"\s*\{')
+VARIABLE_DEFAULT_STRING_REGEX = re.compile(r'(?m)^([ \t]*default[ \t]*=[ \t]*")((?:[^"\\\n]|\\.)*)(")[ \t]*$')
+
+
+def trim_name_variable_defaults(config):
+    """
+    Octopus trims the names of resources, and the name of a project or project group is read from a variable whose
+    default holds the name, so surrounding spaces in the default make the provider report an inconsistent result:
+    Provider produced inconsistent result after apply ... .name was cty.StringVal("  My Name  "), but now ...
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = NAME_VARIABLE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = VARIABLE_DEFAULT_STRING_REGEX.sub(
+            lambda match: match.group(1) + match.group(2).strip() + match.group(3), result[header.end() : end]
+        )
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+STEP_NAME_ATTRIBUTE_REGEX = re.compile(r'(?m)^([ \t]*name[ \t]*=[ \t]*")((?:[^"\\\n]|\\.)*)(")[ \t]*$')
+STEP_NAME_REFERENCE_REGEX = re.compile(r"^\$\{\s*(?:var|local|data|octopusdeploy_)")
+
+
+def replace_template_characters_in_step_names(config):
+    """
+    The name of a step only accepts letters, numbers, periods, commas, dashes, underscores and hashes, so a name like
+    "Echo ${Name}" fails the step:
+    Octopus API error: ... ['Echo ${Name}' contains invalid characters. Names can only contain letters, numbers, ...]
+    The dollar sign and the braces are replaced with underscores, except in a reference to a variable or local.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        name = STEP_NAME_ATTRIBUTE_REGEX.search(body)
+        if name and not STEP_NAME_REFERENCE_REGEX.match(name.group(2)) and re.search(r"[${}]", name.group(2)):
+            fixed = re.sub(r"[${}]", "_", name.group(2))
+            body = body[: name.start(2)] + fixed + body[name.end(2) :]
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+NULL_CHANNEL_FALLBACK_REGEX = re.compile(
+    r"(?P<lookup>data\.octopusdeploy_channels\.(?P<label>\w+)\.channels\[0\]\.id\s*:\s*)null(?=\s*\})"
+)
+
+
+def fix_null_channel_fallback(config):
+    """
+    A step is scoped to a channel with a lookup that falls back to null when the channel is not found, and the channel
+    is created by the same configuration, so the apply scopes the step to nothing:
+    Octopus API error: ... [value (Parameter 'Tiny types should never be empty or whitespace. ...')]
+    The fallback is the channel resource.
+    """
+
+    def replace(match):
+        label = match.group("label")
+        header = re.search(rf'resource\s+"octopusdeploy_channel"\s+"{re.escape(label)}"\s*\{{', config)
+        if not header:
+            return match.group(0)
+        end = find_block_end(config, header.end())
+        body = config[header.end() : end] if end is not None else ""
+        index = "[0]" if re.search(r"(?m)^[ \t]*count[ \t]*=", body) else ""
+        return f"{match.group('lookup')}octopusdeploy_channel.{label}{index}.id"
+
+    return NULL_CHANNEL_FALLBACK_REGEX.sub(replace, config)
+
+
+VARIABLE_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_variable"\s+"(?P<label>\w+)"\s*\{')
+VARIABLE_OWNER_REGEX = re.compile(r"(?m)^[ \t]*owner_id[ \t]*=[ \t]*(?P<value>.+?)[ \t]*$")
+VARIABLE_NAME_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<value>(?:[^"\\\n]|\\.)*)"[ \t]*$')
+
+
+def remove_duplicate_variables_with_same_name_and_scope(config):
+    """
+    Two variables of a project with the same name and scope fail the apply:
+    Octopus API error: ... [These variables have the same name and scope. Remove the duplicates before saving: 'Secret'
+    scoped to []]
+    The later variable is removed.
+    """
+
+    seen = set()
+    duplicates = []
+    for header in VARIABLE_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        body = config[header.end() : end]
+        owner = VARIABLE_OWNER_REGEX.search(body)
+        name = VARIABLE_NAME_REGEX.search(body)
+        if not owner or not name:
+            continue
+        scope = re.search(r"(?m)^[ \t]*scope[ \t]*\{", body)
+        scope_text = ""
+        if scope:
+            scope_end = find_block_end(body, scope.end())
+            scope_text = re.sub(r"\s+", "", body[scope.end() : scope_end]) if scope_end is not None else ""
+        key = (owner.group("value"), name.group("value"), scope_text)
+        if key in seen:
+            duplicates.append(header.group("label"))
+        else:
+            seen.add(key)
+
+    result = config
+    for label in duplicates:
+        header = re.search(rf'resource\s+"octopusdeploy_variable"\s+"{re.escape(label)}"\s*\{{', result)
+        removed = remove_block(result, header) if header else None
+        if removed is not None:
+            result = removed
+    return result
+
+
+WORKER_POOL_DATA_REFERENCE_REGEX = re.compile(r"data\.octopusdeploy_worker_pools\.(?P<label>workerpool_\w+?)(?=\.worker_pools)")
+WORKER_POOL_DATA_DECLARATION_REGEX = re.compile(r'data\s+"octopusdeploy_worker_pools"\s+"(?P<label>\w+)"')
+
+
+def declare_missing_worker_pool_data_sources(config):
+    """
+    A step refers to a worker pool lookup that the LLM did not declare:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_worker_pools"
+    "workerpool_hosted_ubuntu" definition in the root module.
+    The lookup is declared with the pool name taken from the label (workerpool_hosted_ubuntu looks up Hosted Ubuntu).
+    """
+
+    declared = {match.group("label") for match in WORKER_POOL_DATA_DECLARATION_REGEX.finditer(config)}
+    missing = []
+    for match in WORKER_POOL_DATA_REFERENCE_REGEX.finditer(config):
+        label = match.group("label")
+        if label not in declared and label not in missing:
+            missing.append(label)
+
+    if not missing:
+        return config
+
+    blocks = []
+    for label in missing:
+        name = " ".join(word.capitalize() for word in label[len("workerpool_") :].split("_"))
+        blocks.append(
+            f'data "octopusdeploy_worker_pools" "{label}" {{\n'
+            f"  ids          = null\n"
+            f'  partial_name = "{name}"\n'
+            f"  skip         = 0\n"
+            f"  take         = 1\n"
+            f"}}\n"
+        )
+    return config.rstrip("\n") + "\n\n" + "\n".join(blocks)
+
+
+PACKAGES_MAP_REGEX = re.compile(r"\bpackages\s*=\s*\{")
+UNQUOTED_DOTTED_KEY_REGEX = re.compile(r"(?m)^([ \t]*)([A-Za-z_]\w*(?:\.\w+)+)([ \t]*=)")
+
+
+def quote_dotted_package_keys(config):
+    """
+    The key of an additional package in the packages map is the package reference name, and the LLM writes a name with
+    a dot (a package ID like Acme.Extras) without quotes, which HCL reads as a reference:
+    Error: Reference to undeclared resource ... There is no managed resource "Acme" "Extras" definition in the root
+    module.
+    """
+
+    result = config
+    position = 0
+    while True:
+        match = PACKAGES_MAP_REGEX.search(result, position)
+        if not match:
+            return result
+        end = find_block_end(result, match.end())
+        if end is None:
+            return result
+
+        body = UNQUOTED_DOTTED_KEY_REGEX.sub(r'\1"\2"\3', result[match.end() : end])
+        result = result[: match.end()] + body + result[end:]
+        position = match.end() + len(body)
+
+
+NAMED_PACKAGES_START_REGEX = re.compile(r"(?m)^[ \t]*packages[ \t]*=[ \t]*\{")
+
+
+def remove_named_packages_from_package_deploy_steps(config):
+    """
+    A package deployment step (Deploy a Package, Windows Service, IIS, Tomcat) takes one package, and the LLM adds the
+    additional packages of the prompt as named packages, which the server rejects:
+    Octopus API error: ... [This deployment step does not support named package references]
+    The named packages are removed and the primary package stays.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) in PACKAGE_DEPLOY_ON_TARGET_TYPES
+            and NAMED_PACKAGES_START_REGEX.search(block)
+        ):
+            block = remove_balanced_attribute(block, NAMED_PACKAGES_START_REGEX)
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
 
 
 FOR_OVER_INDEXED_LOOKUP_REGEX = re.compile(

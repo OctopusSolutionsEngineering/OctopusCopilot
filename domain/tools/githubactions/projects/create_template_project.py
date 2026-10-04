@@ -82,8 +82,21 @@ from domain.sanitizers.terraform import (
     fix_donor_package_attribute,
     escape_invalid_template_directives,
     add_run_on_server_to_worker_pool_steps,
+    add_steps_order_dependency_to_channels_with_rules,
+    remove_default_channel_resources,
+    enforce_exact_environment_name_matches,
+    remove_case_insensitive_duplicate_environments,
+    fix_steps_order_project_id,
+    trim_name_variable_defaults,
+    replace_template_characters_in_step_names,
+    fix_null_channel_fallback,
+    declare_missing_worker_pool_data_sources,
+    quote_dotted_package_keys,
+    remove_named_packages_from_package_deploy_steps,
+    remove_duplicate_variables_with_same_name_and_scope,
     remove_steps_order_dependency_from_referenced_channels,
     remove_environments_when_excluded_environments_are_set,
+    fix_stray_bracket_before_interpolation_end,
     replace_slash_in_project_name,
     remove_unused_step_template_data,
     fix_project_description_heredoc,
@@ -942,8 +955,21 @@ def sanitize_configuration(configuration):
     configuration = fix_donor_package_attribute(configuration)
     configuration = escape_invalid_template_directives(configuration)
     configuration = add_run_on_server_to_worker_pool_steps(configuration)
+    configuration = trim_name_variable_defaults(configuration)
+    configuration = replace_template_characters_in_step_names(configuration)
+    configuration = fix_null_channel_fallback(configuration)
+    configuration = declare_missing_worker_pool_data_sources(configuration)
+    configuration = quote_dotted_package_keys(configuration)
+    configuration = remove_named_packages_from_package_deploy_steps(configuration)
+    configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
+    configuration = fix_steps_order_project_id(configuration)
+    configuration = remove_case_insensitive_duplicate_environments(configuration)
+    configuration = enforce_exact_environment_name_matches(configuration)
+    configuration = remove_default_channel_resources(configuration)
+    configuration = add_steps_order_dependency_to_channels_with_rules(configuration)
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
     configuration = remove_environments_when_excluded_environments_are_set(configuration)
+    configuration = fix_stray_bracket_before_interpolation_end(configuration)
     # The server rejects a project name with a forward slash
     configuration = replace_slash_in_project_name(configuration)
     # A lifecycle phase with no environments means all remaining environments, and only one phase may
