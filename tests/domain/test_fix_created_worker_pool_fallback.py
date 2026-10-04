@@ -10,6 +10,15 @@ except ImportError:
 
 from domain.sanitizers.terraform import (  # noqa: E402
     add_missing_s3_package_options,
+    fill_empty_terraform_template,
+    add_missing_script_body,
+    fix_aws_ecr_feed_attributes,
+    add_missing_terraform_template,
+    remove_duplicate_lifecycle_phases,
+    fix_blank_resource_names,
+    add_missing_git_credential_username,
+    fix_quoted_condition_expression,
+    remove_type_from_templated_steps,
     move_release_notes_template_to_project,
     remove_duplicate_versioning_strategies,
     add_missing_target_role_to_package_steps,
@@ -49,6 +58,7 @@ from domain.sanitizers.terraform import (  # noqa: E402
     fix_null_channel_fallback,
     declare_missing_worker_pool_data_sources,
     quote_dotted_package_keys,
+    remove_container_with_only_null_values,
     remove_named_packages_from_package_deploy_steps,
     remove_duplicate_variables_with_same_name_and_scope,
     remove_steps_order_dependency_from_referenced_channels,
@@ -1674,3 +1684,347 @@ class TestRemoveNamedPackagesFromPackageDeploySteps(unittest.TestCase):
         for step_type in ("Octopus.WindowsService", "Octopus.IIS", "Octopus.TomcatDeploy"):
             result = remove_named_packages_from_package_deploy_steps(self.step(step_type))
             self.assertNotIn("Acme.Extras", result)
+
+
+class TestRemoveContainerWithOnlyNullValues(unittest.TestCase):
+    def test_removes_container_with_only_null_values(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            "  container           = { dockerfile = null, feed_id = null, git_url = null, image = null }\n"
+            '  slug                = "x"\n}\n'
+        )
+        result = remove_container_with_only_null_values(config)
+        self.assertNotIn("container", result)
+        self.assertIn('slug                = "x"', result)
+
+    def test_keeps_container_with_an_image(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            '  container = { dockerfile = null, feed_id = "${f.id}", git_url = null, image = "ghcr.io/x/y" }\n}\n'
+        )
+        self.assertEqual(remove_container_with_only_null_values(config), config)
+
+    def test_keeps_container_with_only_an_image(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  container = { feed_id = null, image = "alpine" }\n}\n'
+        self.assertEqual(remove_container_with_only_null_values(config), config)
+
+
+class TestFillEmptyTerraformTemplate(unittest.TestCase):
+    def test_fills_empty_heredoc(self):
+        config = (
+            "  execution_properties = {\n"
+            '    "Octopus.Action.Terraform.Template" = <<EOT\n'
+            "EOT\n"
+            '    "Octopus.Action.Terraform.TemplateParameters" = jsonencode({})\n'
+            "  }\n"
+        )
+        result = fill_empty_terraform_template(config)
+        self.assertIn("<<EOT\n# Add the Terraform configuration for this step here.\nEOT\n", result)
+        self.assertIn("TemplateParameters", result)
+
+    def test_fills_heredoc_with_only_blank_lines(self):
+        config = '    "Octopus.Action.Terraform.Template" = <<-HCL\n\n  \nHCL\n'
+        result = fill_empty_terraform_template(config)
+        self.assertIn("# Add the Terraform configuration for this step here.", result)
+
+    def test_fills_empty_string(self):
+        config = '    "Octopus.Action.Terraform.Template" = ""\n'
+        result = fill_empty_terraform_template(config)
+        self.assertEqual(
+            result,
+            '    "Octopus.Action.Terraform.Template" = "# Add the Terraform configuration for this step here."\n',
+        )
+
+    def test_keeps_template_with_content(self):
+        config = '    "Octopus.Action.Terraform.Template" = <<EOT\nresource "null_resource" "x" {}\nEOT\n'
+        self.assertEqual(fill_empty_terraform_template(config), config)
+
+
+class TestAddMissingScriptBody(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_check" {\n'
+        '  name = "Check"\n'
+        '  type = "Octopus.Script"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.RunOnServer" = "true"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_adds_inline_body_to_script_step_without_one(self):
+        result = add_missing_script_body(self.STEP)
+        self.assertIn('"Octopus.Action.Script.ScriptSource" = "Inline"', result)
+        self.assertIn('"Octopus.Action.Script.Syntax" = "Bash"', result)
+        self.assertIn('"Octopus.Action.Script.ScriptBody" = "echo \\"No script was provided for this step.\\""', result)
+        self.assertIn('"Octopus.Action.RunOnServer" = "true"', result)
+
+    def test_keeps_existing_script_body(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.RunOnServer" = "true"\n',
+            '"Octopus.Action.RunOnServer" = "true"\n    "Octopus.Action.Script.ScriptBody" = "echo hi"\n',
+        )
+        self.assertEqual(add_missing_script_body(config), config)
+
+    def test_keeps_package_script_source(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.RunOnServer" = "true"\n',
+            '"Octopus.Action.Script.ScriptSource" = "Package"\n    "Octopus.Action.Script.ScriptFileName" = "run.sh"\n',
+        )
+        self.assertEqual(add_missing_script_body(config), config)
+
+    def test_ignores_other_step_types(self):
+        config = self.STEP.replace("Octopus.Script", "Octopus.Manual")
+        self.assertEqual(add_missing_script_body(config), config)
+
+    def test_only_changes_the_step_missing_a_body(self):
+        good = (
+            'resource "octopusdeploy_process_step" "process_step_good" {\n'
+            '  name = "Good"\n'
+            '  type = "Octopus.Script"\n'
+            "  execution_properties = {\n"
+            '    "Octopus.Action.Script.ScriptBody" = "echo ok"\n'
+            "  }\n"
+            "}\n"
+        )
+        result = add_missing_script_body(good + self.STEP)
+        self.assertTrue(result.startswith(good))
+        self.assertEqual(result.count("ScriptBody"), 2)
+
+
+class TestRemoveTypeFromTemplatedSteps(unittest.TestCase):
+    def test_removes_type_from_templated_step(self):
+        config = (
+            'resource "octopusdeploy_process_templated_step" "process_step_check" {\n'
+            '  name        = "Check"\n'
+            '  type        = "Octopus.CheckBlueGreenDeployment"\n'
+            '  template_id = "${x.id}"\n'
+            "}\n"
+        )
+        result = remove_type_from_templated_steps(config)
+        self.assertNotIn("type ", result)
+        self.assertIn('template_id = "${x.id}"', result)
+
+    def test_keeps_type_on_regular_steps(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  name = "A"\n  type = "Octopus.Script"\n}\n'
+        self.assertEqual(remove_type_from_templated_steps(config), config)
+
+    def test_only_changes_templated_steps(self):
+        regular = 'resource "octopusdeploy_process_step" "s" {\n  type = "Octopus.Script"\n}\n'
+        templated = 'resource "octopusdeploy_process_templated_step" "t" {\n  type = "Octopus.X"\n  name = "T"\n}\n'
+        result = remove_type_from_templated_steps(regular + templated)
+        self.assertTrue(result.startswith(regular))
+        self.assertNotIn("Octopus.X", result)
+        self.assertIn('name = "T"', result)
+
+
+class TestFixQuotedConditionExpression(unittest.TestCase):
+    LOOKUP = (
+        'data "octopusdeploy_feeds" "feed_built_in" {\n'
+        "  lifecycle {\n"
+        "    postcondition {\n"
+        '      error_message = "Failed to resolve a feed called \\"BuiltIn\\"."\n'
+        '      condition     = "length(data.octopusdeploy_feeds.feed_built_in.feeds) == 0"\n'
+        "    }\n"
+        "  }\n"
+        "}\n"
+    )
+
+    def test_unquotes_condition_and_uses_self(self):
+        result = fix_quoted_condition_expression(self.LOOKUP)
+        self.assertIn("condition     = length(self.feeds) != 0", result)
+        self.assertNotIn('condition     = "', result)
+
+    def test_keeps_the_comparison_when_the_message_is_not_a_failed_lookup(self):
+        config = self.LOOKUP.replace("Failed to resolve", "Something else")
+        result = fix_quoted_condition_expression(config)
+        self.assertIn("condition     = length(self.feeds) == 0", result)
+
+    def test_keeps_an_expression_condition(self):
+        config = self.LOOKUP.replace(
+            '"length(data.octopusdeploy_feeds.feed_built_in.feeds) == 0"', "length(self.feeds) != 0"
+        )
+        self.assertEqual(fix_quoted_condition_expression(config), config)
+
+    def test_ignores_step_conditions(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  condition = "Success"\n  name = "A"\n}\n'
+        self.assertEqual(fix_quoted_condition_expression(config), config)
+
+    def test_keeps_references_to_other_resources(self):
+        config = self.LOOKUP.replace("data.octopusdeploy_feeds.feed_built_in.feeds", "data.octopusdeploy_feeds.other.feeds")
+        result = fix_quoted_condition_expression(config)
+        self.assertIn("data.octopusdeploy_feeds.other.feeds", result)
+
+
+class TestAddMissingGitCredentialUsername(unittest.TestCase):
+    def test_adds_username_when_missing(self):
+        config = (
+            'resource "octopusdeploy_git_credential" "gitcredential_x" {\n'
+            '  name = "X"\n'
+            '  password = "Change Me!"\n'
+            "}\n"
+        )
+        result = add_missing_git_credential_username(config)
+        self.assertIn('username = "git-user"', result)
+        self.assertIn('name = "X"', result)
+        self.assertEqual(result.count("username"), 1)
+
+    def test_keeps_existing_username(self):
+        config = (
+            'resource "octopusdeploy_git_credential" "gitcredential_x" {\n'
+            '  name = "X"\n'
+            '  username = "patchbot"\n'
+            "}\n"
+        )
+        self.assertEqual(add_missing_git_credential_username(config), config)
+
+    def test_fixes_every_credential_missing_a_username(self):
+        template = 'resource "octopusdeploy_git_credential" "{label}" {{\n  name = "N"\n}}\n'
+        config = template.format(label="a") + template.format(label="b")
+        result = add_missing_git_credential_username(config)
+        self.assertEqual(result.count('username = "git-user"'), 2)
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_nuget_feed" "f" {\n  name = "F"\n}\n'
+        self.assertEqual(add_missing_git_credential_username(config), config)
+
+
+class TestFixBlankResourceNames(unittest.TestCase):
+    def test_names_a_blank_runbook_after_its_label(self):
+        config = 'resource "octopusdeploy_runbook" "runbook_no_name" {\n  name = ""\n  project_id = "x"\n}\n'
+        result = fix_blank_resource_names(config)
+        self.assertIn('name = "Runbook No Name"', result)
+        self.assertIn('project_id = "x"', result)
+
+    def test_names_a_whitespace_only_name(self):
+        config = 'resource "octopusdeploy_environment" "environment_qa" {\n  name   = "  "\n}\n'
+        self.assertIn('name   = "Environment Qa"', fix_blank_resource_names(config))
+
+    def test_keeps_a_real_name(self):
+        config = 'resource "octopusdeploy_runbook" "r" {\n  name = "Restart"\n}\n'
+        self.assertEqual(fix_blank_resource_names(config), config)
+
+    def test_only_fixes_the_blank_resource(self):
+        config = (
+            'resource "octopusdeploy_runbook" "a" {\n  name = "A"\n}\n'
+            'resource "octopusdeploy_runbook" "b_blank" {\n  name = ""\n}\n'
+        )
+        result = fix_blank_resource_names(config)
+        self.assertIn('name = "A"', result)
+        self.assertIn('name = "B Blank"', result)
+
+    def test_ignores_other_resource_types(self):
+        config = 'resource "octopusdeploy_project" "p" {\n  name = ""\n}\n'
+        self.assertEqual(fix_blank_resource_names(config), config)
+
+
+class TestRemoveDuplicateLifecyclePhases(unittest.TestCase):
+    @staticmethod
+    def phase(name):
+        return (
+            "  phase {\n"
+            f'    name = "{name}"\n'
+            '    optional_deployment_targets = ["${octopusdeploy_environment.e.id}"]\n'
+            "  }\n"
+        )
+
+    def lifecycle(self, *names):
+        return 'resource "octopusdeploy_lifecycle" "l" {\n  name = "L"\n' + "".join(self.phase(n) for n in names) + "}\n"
+
+    def test_removes_case_insensitive_duplicate_phase(self):
+        result = remove_duplicate_lifecycle_phases(self.lifecycle("Dev", "dev", "Production"))
+        self.assertEqual(result, self.lifecycle("Dev", "Production"))
+
+    def test_trims_names_when_comparing(self):
+        result = remove_duplicate_lifecycle_phases(self.lifecycle("Dev", " Dev "))
+        self.assertEqual(result, self.lifecycle("Dev"))
+
+    def test_keeps_distinct_phases(self):
+        config = self.lifecycle("Dev", "Test", "Production")
+        self.assertEqual(remove_duplicate_lifecycle_phases(config), config)
+
+    def test_tracks_names_per_lifecycle(self):
+        config = self.lifecycle("Dev") + self.lifecycle("Dev")
+        self.assertEqual(remove_duplicate_lifecycle_phases(config), config)
+
+
+class TestAddMissingTerraformTemplate(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_destroy" {\n'
+        '  name = "Destroy"\n'
+        '  type = "Octopus.TerraformDestroy"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.Terraform.ManagedAccount" = "None"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_adds_inline_template_when_missing(self):
+        result = add_missing_terraform_template(self.STEP)
+        self.assertIn('"Octopus.Action.Script.ScriptSource" = "Inline"', result)
+        self.assertIn(
+            '"Octopus.Action.Terraform.Template" = "# Add the Terraform configuration for this step here."', result
+        )
+        self.assertIn('"Octopus.Action.Terraform.ManagedAccount" = "None"', result)
+
+    def test_keeps_an_existing_template(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.Terraform.ManagedAccount" = "None"\n',
+            '"Octopus.Action.Terraform.Template" = "resource \\"null_resource\\" \\"x\\" {}"\n',
+        )
+        self.assertEqual(add_missing_terraform_template(config), config)
+
+    def test_keeps_package_sources(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.Terraform.ManagedAccount" = "None"\n',
+            '"Octopus.Action.Script.ScriptSource" = "Package"\n',
+        )
+        self.assertEqual(add_missing_terraform_template(config), config)
+
+    def test_does_not_add_a_second_script_source(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.Terraform.ManagedAccount" = "None"\n',
+            '"Octopus.Action.Script.ScriptSource" = "Inline"\n',
+        )
+        self.assertEqual(add_missing_terraform_template(config).count("ScriptSource"), 1)
+
+    def test_ignores_other_step_types(self):
+        config = self.STEP.replace("Octopus.TerraformDestroy", "Octopus.Script")
+        self.assertEqual(add_missing_terraform_template(config), config)
+
+
+class TestFixAwsEcrFeedAttributes(unittest.TestCase):
+    FEED = (
+        'resource "octopusdeploy_aws_elastic_container_registry" "feed_ecr" {\n'
+        '  name = "ECR"\n'
+        '  feed_uri = "https://123456789012.dkr.ecr.eu-west-2.amazonaws.com"\n'
+        '  access_key = "AKIA"\n'
+        "}\n"
+    )
+
+    def test_removes_feed_uri_and_reads_the_region_from_it(self):
+        result = fix_aws_ecr_feed_attributes(self.FEED)
+        self.assertNotIn("feed_uri", result)
+        self.assertIn('region = "eu-west-2"', result)
+        self.assertIn('access_key = "AKIA"', result)
+
+    def test_falls_back_to_us_east_1(self):
+        config = self.FEED.replace("https://123456789012.dkr.ecr.eu-west-2.amazonaws.com", "https://ecr.example.com")
+        self.assertIn('region = "us-east-1"', fix_aws_ecr_feed_attributes(config))
+
+    def test_keeps_an_existing_region(self):
+        config = self.FEED + ""
+        config = config.replace('  access_key = "AKIA"\n', '  region = "ap-southeast-2"\n')
+        result = fix_aws_ecr_feed_attributes(config)
+        self.assertEqual(result.count("region"), 1)
+        self.assertIn('region = "ap-southeast-2"', result)
+
+    def test_ignores_a_correct_feed(self):
+        config = (
+            'resource "octopusdeploy_aws_elastic_container_registry" "f" {\n  name = "E"\n  region = "us-east-1"\n}\n'
+        )
+        self.assertEqual(fix_aws_ecr_feed_attributes(config), config)
+
+    def test_ignores_other_feeds(self):
+        config = 'resource "octopusdeploy_docker_container_registry" "f" {\n  feed_uri = "https://x"\n}\n'
+        self.assertEqual(fix_aws_ecr_feed_attributes(config), config)
+

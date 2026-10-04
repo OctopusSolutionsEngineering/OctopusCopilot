@@ -92,6 +92,16 @@ from domain.sanitizers.terraform import (
     fix_null_channel_fallback,
     declare_missing_worker_pool_data_sources,
     quote_dotted_package_keys,
+    remove_container_with_only_null_values,
+    fill_empty_terraform_template,
+    add_missing_script_body,
+    fix_aws_ecr_feed_attributes,
+    add_missing_terraform_template,
+    remove_duplicate_lifecycle_phases,
+    fix_blank_resource_names,
+    add_missing_git_credential_username,
+    fix_quoted_condition_expression,
+    remove_type_from_templated_steps,
     remove_named_packages_from_package_deploy_steps,
     remove_duplicate_variables_with_same_name_and_scope,
     remove_steps_order_dependency_from_referenced_channels,
@@ -960,6 +970,12 @@ def sanitize_configuration(configuration):
     configuration = fix_null_channel_fallback(configuration)
     configuration = declare_missing_worker_pool_data_sources(configuration)
     configuration = quote_dotted_package_keys(configuration)
+    configuration = remove_container_with_only_null_values(configuration)
+    configuration = fill_empty_terraform_template(configuration)
+    configuration = add_missing_terraform_template(configuration)
+    configuration = add_missing_script_body(configuration)
+    configuration = fix_quoted_condition_expression(configuration)
+    configuration = remove_type_from_templated_steps(configuration)
     configuration = remove_named_packages_from_package_deploy_steps(configuration)
     configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
     configuration = fix_steps_order_project_id(configuration)
@@ -1012,6 +1028,10 @@ def sanitize_configuration(configuration):
     configuration = fix_script_source(configuration)
     # Remove empty string default values
     configuration = fix_empty_strings(configuration)
+    configuration = fix_blank_resource_names(configuration)
+    configuration = fix_aws_ecr_feed_attributes(configuration)
+    configuration = remove_duplicate_lifecycle_phases(configuration)
+    configuration = add_missing_git_credential_username(configuration)
     # Escape unescaped variables
     configuration = fix_unescaped_variables(configuration)
     # Add a placeholder filename for YAML steps referencing files from git repos

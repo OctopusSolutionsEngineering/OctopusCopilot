@@ -3008,6 +3008,383 @@ def remove_named_packages_from_package_deploy_steps(config):
         position = end
 
 
+TERRAFORM_TEMPLATE_PLACEHOLDER = "# Add the Terraform configuration for this step here."
+EMPTY_TERRAFORM_TEMPLATE_HEREDOC_REGEX = re.compile(
+    r'(?m)^(?P<head>[ \t]*"Octopus\.Action\.Terraform\.Template"[ \t]*=[ \t]*<<-?(?P<tag>[A-Za-z_][A-Za-z0-9_]*)[ \t]*\n)'
+    r"(?P<body>(?:[ \t]*\n)*)(?P<end>[ \t]*(?P=tag)[ \t]*$)"
+)
+EMPTY_TERRAFORM_TEMPLATE_STRING_REGEX = re.compile(
+    r'(?m)^(?P<head>[ \t]*"Octopus\.Action\.Terraform\.Template"[ \t]*=[ \t]*)""[ \t]*$'
+)
+
+
+def fill_empty_terraform_template(config):
+    """
+    The Terraform plan, apply, and destroy steps fail with "Please provide the Terraform template" when the inline
+    template is empty. Because one failing step makes the recovery pass strip the whole deployment process, an empty
+    template is replaced with a placeholder comment so the project is still created and the template can be edited.
+    """
+
+    def fill_heredoc(match):
+        return match.group("head") + TERRAFORM_TEMPLATE_PLACEHOLDER + "\n" + match.group("end")
+
+    def fill_string(match):
+        return match.group("head") + '"' + TERRAFORM_TEMPLATE_PLACEHOLDER + '"'
+
+    config = EMPTY_TERRAFORM_TEMPLATE_HEREDOC_REGEX.sub(fill_heredoc, config)
+    return EMPTY_TERRAFORM_TEMPLATE_STRING_REGEX.sub(fill_string, config)
+
+
+TEMPLATED_STEP_TYPE_LINE_REGEX = re.compile(r'(?m)^[ \t]*type[ \t]*=[ \t]*"[^"\n]*"[ \t]*\n')
+
+
+def remove_type_from_templated_steps(config):
+    """
+    The type of a templated step comes from its step template, so the provider marks the `type` attribute of an
+    octopusdeploy_process_templated_step as read only and rejects the plan with "Invalid Configuration for Read-Only
+    Attribute". LLMs copy the `type` line over from regular steps, so it is removed.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        fixed = TEMPLATED_STEP_TYPE_LINE_REGEX.sub("", block)
+        result = result[: header.start()] + fixed + result[end:]
+        position = header.start() + len(fixed)
+
+    return result
+
+
+QUOTED_CONDITION_REGEX = re.compile(r'(?m)^(?P<indent>[ \t]*)condition[ \t]*=[ \t]*"(?P<expression>(?:[^"\\\n]|\\.)*)"[ \t]*$')
+RESOURCE_OR_DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*(?:resource|data)[ \t]+"(?P<type>\w+)"[ \t]+"(?P<label>\w+)"[ \t]*\{')
+
+
+def fix_quoted_condition_expression(config):
+    """
+    A postcondition `condition` is an expression, but LLMs write it as a string, e.g.
+    `condition = "length(data.octopusdeploy_feeds.feed_x.feeds) == 0"`, which OpenTofu rejects during init with
+    "Invalid postcondition expression" because a literal string refers to nothing. The string is turned back into an
+    expression, a reference to the enclosing data source becomes `self` (a postcondition may not name its own
+    resource), and a lookup that fails with "Failed to resolve" has its inverted `== 0` check flipped to `!= 0`.
+    """
+
+    def fix(match):
+        # Only the condition of a postcondition or precondition is an expression. A step's condition = "Success" is not
+        block_start = match.string.rfind("{", 0, match.start())
+        if block_start == -1 or not match.string[:block_start].rstrip().endswith(("postcondition", "precondition")):
+            return match.group(0)
+
+        expression = match.group("expression").replace('\\"', '"')
+        header = None
+        for header in RESOURCE_OR_DATA_HEADER_REGEX.finditer(match.string, 0, match.start()):
+            pass
+        if header:
+            expression = re.sub(
+                rf"data\.{re.escape(header.group('type'))}\.{re.escape(header.group('label'))}(?!\w)", "self", expression
+            )
+        block_end = match.string.find("}", match.end())
+        block = match.string[block_start : block_end if block_end != -1 else len(match.string)]
+        if "Failed to resolve" in block:
+            expression = re.sub(r"(length\(self\.\w+\))\s*==\s*0", r"\1 != 0", expression)
+        return f"{match.group('indent')}condition     = {expression}"
+
+    return QUOTED_CONDITION_REGEX.sub(fix, config)
+
+
+GIT_CREDENTIAL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_git_credential"\s+"\w+"\s*\{[ \t]*\n')
+GIT_CREDENTIAL_PLACEHOLDER_USERNAME = "git-user"
+
+
+def add_missing_git_credential_username(config):
+    """
+    The username of an octopusdeploy_git_credential is required, but LLMs leave it empty (fix_empty_strings drops an
+    empty username, which is right for feeds and accounts) or omit it, which fails the plan with "Missing required
+    argument". A placeholder username is added.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = GIT_CREDENTIAL_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end() - 1)
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        if re.search(r"(?m)^[ \t]*username[ \t]*=", block):
+            position = end
+            continue
+
+        line = f'  username = "{GIT_CREDENTIAL_PLACEHOLDER_USERNAME}"\n'
+        result = result[: header.end()] + line + result[header.end() :]
+        position = end + len(line)
+
+    return result
+
+
+NAMED_RESOURCE_TYPES = (
+    "octopusdeploy_runbook",
+    "octopusdeploy_environment",
+    "octopusdeploy_project_group",
+    "octopusdeploy_tag_set",
+    "octopusdeploy_channel",
+    "octopusdeploy_lifecycle",
+)
+NAMED_RESOURCE_HEADER_REGEX = re.compile(
+    r'resource\s+"(?P<type>' + "|".join(NAMED_RESOURCE_TYPES) + r')"\s+"(?P<label>\w+)"\s*\{'
+)
+BLANK_NAME_LINE_REGEX = re.compile(r'(?m)^(?P<head>[ \t]*name[ \t]*=[ \t]*)"[ \t]*"[ \t]*$')
+
+
+def fix_blank_resource_names(config):
+    """
+    The provider rejects a blank name with "Attribute name expected value to not be an empty string or whitespace",
+    and one invalid resource fails the whole plan. LLMs return a blank name when the prompt asks for something without
+    a name (e.g. "a runbook with no name"), so the blank name is replaced with one built from the resource label.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = NAMED_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        name = " ".join(word.capitalize() for word in header.group("label").split("_") if word)
+        fixed = BLANK_NAME_LINE_REGEX.sub(lambda match: f'{match.group("head")}"{name}"', block, count=1)
+        result = result[: header.start()] + fixed + result[end:]
+        position = header.start() + len(fixed)
+
+    return result
+
+
+LIFECYCLE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_lifecycle"\s+"\w+"\s*\{')
+LIFECYCLE_PHASE_REGEX = re.compile(r"(?m)^[ \t]*phase[ \t]*\{[ \t]*\n")
+PHASE_NAME_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<name>[^"\n]*)"')
+
+
+def remove_duplicate_lifecycle_phases(config):
+    """
+    Phase names are case insensitive and trimmed, so phases called Dev and dev collide when the lifecycle is created:
+    Octopus API error: ... [The following phase name has been used more than once: dev]
+    Only the first phase of each name is kept.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = LIFECYCLE_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        seen = set()
+        phase_position = 0
+        while True:
+            phase = LIFECYCLE_PHASE_REGEX.search(block, phase_position)
+            if not phase:
+                break
+            phase_end = find_block_end(block, phase.end() - 1)
+            if not phase_end:
+                break
+            name = PHASE_NAME_REGEX.search(block[phase.end() : phase_end])
+            key = name.group("name").strip().lower() if name else None
+            if key is not None and key in seen:
+                trailing = 1 if block[phase_end : phase_end + 1] == "\n" else 0
+                block = block[: phase.start()] + block[phase_end + trailing :]
+                phase_position = phase.start()
+                continue
+            if key is not None:
+                seen.add(key)
+            phase_position = phase_end
+
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+TERRAFORM_STEP_TYPES = (
+    "Octopus.TerraformApply",
+    "Octopus.TerraformDestroy",
+    "Octopus.TerraformPlan",
+    "Octopus.TerraformPlanDestroy",
+)
+
+
+def add_missing_terraform_template(config):
+    """
+    A Terraform apply, plan, or destroy step that has no inline template fails with "Please provide the Terraform
+    template", and one failing step makes the recovery pass strip the whole process. LLMs leave the template out of
+    steps they have nothing to say about, such as the destroy step of a runbook. Package and Git sources, which read the
+    template from files, are left alone, and a placeholder comment is added otherwise.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        properties = EXECUTION_PROPERTIES_REGEX.search(block)
+        source = SCRIPT_SOURCE_VALUE_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) in TERRAFORM_STEP_TYPES
+            and properties
+            and '"Octopus.Action.Terraform.Template"' not in block
+            and (not source or source.group(1) == "Inline")
+        ):
+            indent = properties.group(1) + "  "
+            lines = ""
+            if not source:
+                lines += f'{indent}"Octopus.Action.Script.ScriptSource" = "Inline"\n'
+            lines += f'{indent}"Octopus.Action.Terraform.Template" = "{TERRAFORM_TEMPLATE_PLACEHOLDER}"\n'
+            block = block[: properties.end()] + lines + block[properties.end() :]
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
+
+
+ECR_FEED_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_aws_elastic_container_registry"\s+"\w+"\s*\{[ \t]*\n')
+ECR_FEED_URI_LINE_REGEX = re.compile(r'(?m)^[ \t]*feed_uri[ \t]*=[ \t]*"(?P<uri>[^"\n]*)"[ \t]*\n')
+ECR_REGION_IN_URI_REGEX = re.compile(r"\.ecr\.(?P<region>[a-z]{2}(?:-[a-z]+)+-\d+)\.amazonaws\.com")
+ECR_DEFAULT_REGION = "us-east-1"
+
+
+def fix_aws_ecr_feed_attributes(config):
+    """
+    An octopusdeploy_aws_elastic_container_registry has no feed_uri (the registry is found through the region) and
+    requires a region, so the plan fails with "Unsupported argument" and "Missing required argument". LLMs write the
+    registry URL as a feed_uri. The feed_uri is removed and, when no region is set, the region is read from the URL
+    (123456789012.dkr.ecr.us-east-1.amazonaws.com) with us-east-1 as the fallback.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = ECR_FEED_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end() - 1)
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        uri = ECR_FEED_URI_LINE_REGEX.search(block)
+        fixed = ECR_FEED_URI_LINE_REGEX.sub("", block)
+        if not re.search(r"(?m)^[ \t]*region[ \t]*=", fixed):
+            region = ECR_REGION_IN_URI_REGEX.search(uri.group("uri")) if uri else None
+            region_name = region.group("region") if region else ECR_DEFAULT_REGION
+            insert_at = fixed.index("\n") + 1
+            fixed = fixed[:insert_at] + f'  region = "{region_name}"\n' + fixed[insert_at:]
+        result = result[: header.start()] + fixed + result[end:]
+        position = header.start() + len(fixed)
+
+    return result
+
+
+MISSING_SCRIPT_BODY_PLACEHOLDER = 'echo "No script was provided for this step."'
+SCRIPT_SOURCE_VALUE_REGEX = re.compile(r'"Octopus\.Action\.Script\.ScriptSource"[ \t]*=[ \t]*"([^"]*)"')
+
+
+def add_missing_script_body(config):
+    """
+    A script step with no script body fails with "Please provide the script body to run", and one failing step makes
+    the recovery pass strip the whole deployment process. LLMs leave the body out when they imitate a community step
+    template as a plain script step, so an inline placeholder body is added. Package and Git script sources, which
+    run a file rather than a body, are left alone.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        properties = EXECUTION_PROPERTIES_REGEX.search(block)
+        source = SCRIPT_SOURCE_VALUE_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) == "Octopus.Script"
+            and properties
+            and "Octopus.Action.Script.ScriptBody" not in block
+            and "Octopus.Action.Script.ScriptFileName" not in block
+            and (not source or source.group(1) == "Inline")
+        ):
+            indent = properties.group(1) + "  "
+            lines = ""
+            if not source:
+                lines += f'{indent}"Octopus.Action.Script.ScriptSource" = "Inline"\n'
+            if "Octopus.Action.Script.Syntax" not in block:
+                lines += f'{indent}"Octopus.Action.Script.Syntax" = "Bash"\n'
+            lines += f'{indent}"Octopus.Action.Script.ScriptBody" = "{MISSING_SCRIPT_BODY_PLACEHOLDER.replace(chr(34), chr(92) + chr(34))}"\n'
+            block = block[: properties.end()] + lines + block[properties.end() :]
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
+
+
+ALL_NULL_CONTAINER_REGEX = re.compile(r"(?m)^[ \t]*container[ \t]*=[ \t]*\{(?P<body>[^{}\n]*)\}[ \t]*\n")
+
+
+def remove_container_with_only_null_values(config):
+    """
+    A step with container = { dockerfile = null, feed_id = null, git_url = null, image = null } fails the apply, as the
+    provider returns empty strings for the nulls:
+    Error: Provider produced inconsistent result after apply ... .container.feed_id: was null, but now cty.StringVal("").
+    A container with no values is no container, so the attribute is removed.
+    """
+
+    def remove(match):
+        values = [pair.split("=", 1)[1].strip() for pair in match.group("body").split(",") if "=" in pair]
+        if values and all(value == "null" for value in values):
+            return ""
+        return match.group(0)
+
+    return ALL_NULL_CONTAINER_REGEX.sub(remove, config)
+
+
 FOR_OVER_INDEXED_LOOKUP_REGEX = re.compile(
     r"(\bin\s+)(data\.octopusdeploy_\w+\.\w+\.\w+\[0\]\.\w+)(\s*:)"
 )
