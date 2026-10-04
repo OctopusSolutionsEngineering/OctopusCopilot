@@ -56,20 +56,20 @@ jobs:
         run: docker run -d -p 10000:10000 -p 10001:10001 -p 10002:10002 --restart unless-stopped mcr.microsoft.com/azure-storage/azurite azurite --skipApiVersionCheck --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0
         shell: bash
 
-      - uses: robinraju/release-downloader@v1.9
+      - uses: robinraju/release-downloader@v1.13
         with:
           repository: "OctopusSolutionsEngineering/OctopusTerraformExport"
           latest: true
           fileName: "octoterra_linux_amd64_azure.zip"
 
-      - uses: robinraju/release-downloader@v1.9
+      - uses: robinraju/release-downloader@v1.13
         with:
           repository: "OctopusSolutionsEngineering/OctopusRecommendationEngine"
           latest: true
           fileName: "octolint_linux_amd64_azure.zip"
 
 
-      - uses: robinraju/release-downloader@v1.9
+      - uses: robinraju/release-downloader@v1.13
         with:
           repository: "OctopusSolutionsEngineering/OctoAISpaceBuilder"
           latest: true
@@ -229,14 +229,14 @@ jobs:
         shell: /usr/bin/bash --noprofile --norc {0}
 
       - name: Upload coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage${{ matrix.group }}
           include-hidden-files: true
           path: .coverage
 
       - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: junit-test-summary-${{ matrix.group }}
           path: results.xml
@@ -266,14 +266,14 @@ jobs:
           coverage html --omit="./domain/sanitizers/stringlifier/*" --fail-under=80
 
       - name: Upload combined coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage
           include-hidden-files: true
           path: .coverage
 
       - name: Upload coverage xml
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage.xml
           include-hidden-files: true
@@ -392,7 +392,7 @@ jobs:
         run: pip install pipdeptree; pipdeptree > dependencies.txt
         shell: bash
       - name: Collect Dependencies
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Dependencies
           path: dependencies.txt
@@ -400,7 +400,7 @@ jobs:
         run: python3 -m pip list --outdated --format=json | jq -r '.[] | .name+"="+.latest_version' > dependencyUpdates.txt || true
         shell: bash
       - name: Collect Dependency Updates
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Dependencies Updates
           path: dependencyUpdates.txt
