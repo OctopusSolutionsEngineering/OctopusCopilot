@@ -2128,4 +2128,3 @@ class TestDisableVersionControlledProjects(unittest.TestCase):
     def test_ignores_other_resources(self):
         config = 'resource "octopusdeploy_environment" "e" {\n  is_version_controlled = true\n}\n'
         self.assertEqual(disable_version_controlled_projects(config), config)
-
