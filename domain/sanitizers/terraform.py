@@ -3805,6 +3805,16 @@ def remove_deploy_release_steps_without_project(config):
     removed together with its entries in the steps order and the depends_on of other steps.
     """
 
+    result, removed = _remove_deploy_release_step_blocks(config)
+    for label in removed:
+        reference = re.compile(rf"(?<![\w.])octopusdeploy_process_step\.{re.escape(label)}(?![\w])")
+        result = _remove_reference_from_steps_orders(result, reference)
+        result = _remove_reference_from_depends_on(result, reference)
+
+    return result
+
+
+def _remove_deploy_release_step_blocks(config):
     result = config
     removed = []
     position = 0
@@ -3830,49 +3840,54 @@ def remove_deploy_release_steps_without_project(config):
         else:
             position = end
 
-    for label in removed:
-        reference = re.compile(rf"(?<![\w.])octopusdeploy_process_step\.{re.escape(label)}(?![\w])")
-        position = 0
-        while True:
-            header = STEPS_ORDER_HEADER_REGEX.search(result, position)
-            if not header:
-                break
-            end = find_block_end(result, header.end())
-            if not end:
-                position = header.end()
-                continue
+    return result, removed
 
-            block = result[header.start() : end]
-            start = STEPS_LIST_START_REGEX.search(block)
-            if start:
-                depth = 1
-                close = start.end()
-                while close < len(block) and depth > 0:
-                    if block[close] == "[":
-                        depth += 1
-                    elif block[close] == "]":
-                        depth -= 1
-                    close += 1
-                close = close - 1 if depth == 0 else -1
-                body = block[start.end() : close] if close != -1 else ""
-                entries = QUOTED_STRING_REGEX.findall(body)
-                kept = [entry for entry in entries if not reference.search(entry)]
-                if close != -1 and len(kept) != len(entries):
-                    block = block[: start.end()] + ", ".join(kept) + block[close:]
-            result = result[: header.start()] + block + result[end:]
-            position = header.start() + len(block)
 
-        result = re.sub(
-            rf"(?m)^([ \t]*depends_on[ \t]*=[ \t]*\[)(.*)\]",
-            lambda match: match.group(0)
-            if not reference.search(match.group(2))
-            else match.group(1)
-            + ", ".join(item for item in re.split(r"\s*,\s*", match.group(2).strip()) if item and not reference.search(item))
-            + "]",
-            result,
-        )
+def _find_list_close(block, index):
+    depth = 1
+    while index < len(block) and depth > 0:
+        if block[index] == "[":
+            depth += 1
+        elif block[index] == "]":
+            depth -= 1
+        index += 1
+    return index - 1 if depth == 0 else -1
+
+
+def _remove_reference_from_steps_orders(config, reference):
+    result = config
+    position = 0
+    while True:
+        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        start = STEPS_LIST_START_REGEX.search(block)
+        close = _find_list_close(block, start.end()) if start else -1
+        if close != -1:
+            entries = QUOTED_STRING_REGEX.findall(block[start.end() : close])
+            kept = [entry for entry in entries if not reference.search(entry)]
+            if len(kept) != len(entries):
+                block = block[: start.end()] + ", ".join(kept) + block[close:]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
 
     return result
+
+
+def _remove_reference_from_depends_on(config, reference):
+    def strip_reference(match):
+        if not reference.search(match.group(2)):
+            return match.group(0)
+        items = [item for item in re.split(r"\s*,\s*", match.group(2).strip()) if item and not reference.search(item)]
+        return match.group(1) + ", ".join(items) + "]"
+
+    return re.sub(r"(?m)^([ \t]*depends_on[ \t]*=[ \t]*\[)(.*)\]", strip_reference, config)
 
 
 COMMUNITY_TEMPLATE_RESOURCE_REFERENCE_REGEX = re.compile(r"(?<![\w.])octopusdeploy_community_step_template\.(?P<label>\w+)\[0\]")
