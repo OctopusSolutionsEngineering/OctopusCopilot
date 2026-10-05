@@ -3724,7 +3724,10 @@ def move_condition_expression_to_properties(config):
             if line:
                 value = line.group("value")
                 block = block[: line.start()] + block[line.end() :]
-                entry = lambda indent: f'{indent}"Octopus.Step.ConditionVariableExpression" = {value}\n'
+
+                def entry(indent):
+                    return f'{indent}"Octopus.Step.ConditionVariableExpression" = {value}\n'
+
                 properties = PROPERTIES_BLOCK_OPEN_REGEX.search(block)
                 if properties and properties.group("close"):
                     indent = properties.group("indent")

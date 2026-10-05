@@ -2583,7 +2583,6 @@ class TestDisableVersionControlledProjects(unittest.TestCase):
         self.assertEqual(disable_version_controlled_projects(config), config)
 
 
-
 class TestFixProjectDescriptionWithExtraText(unittest.TestCase):
     CONFIG = (
         'variable "project_x_description" {\n'
@@ -2781,4 +2780,3 @@ class TestMoveEnvironmentsFromStepChannels(unittest.TestCase):
         result = move_environments_from_step_channels(config)
         self.assertIn("channels = null", result)
         self.assertIn('environments = ["x"]', result)
-
