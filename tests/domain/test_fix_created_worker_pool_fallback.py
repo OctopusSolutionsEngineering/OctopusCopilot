@@ -457,6 +457,17 @@ class TestReplaceSlashInProjectName(unittest.TestCase):
         self.assertIn('name = "A-B Project"', result)
         self.assertIn('description = "x/y"', result)
 
+    def test_indented_resource_name_slash_becomes_dash(self):
+        config = 'resource "octopusdeploy_project" "p" {\n    name = "A/B"\n    }\n'
+        self.assertIn('name = "A-B"', replace_slash_in_project_name(config))
+
+    def test_slash_after_the_project_block_unchanged(self):
+        config = (
+            'resource "octopusdeploy_project" "p" {\n  name = "A"\n  }\n'
+            'resource "octopusdeploy_environment" "e" {\n  name = "A/B"\n}\n'
+        )
+        self.assertEqual(replace_slash_in_project_name(config), config)
+
     def test_project_group_name_unchanged(self):
         config = (
             'variable "project_group_rd_labs_name" {\n  default = "R&D / Labs"\n}\n'

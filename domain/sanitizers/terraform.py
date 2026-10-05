@@ -807,6 +807,9 @@ def fix_default_guided_failure_mode(config):
     )
 
 
+PROJECT_DESCRIPTION_VARIABLE_HEADER_REGEX = re.compile(r'variable\s+"project_[A-Za-z0-9_-]+_description"\s*\{')
+
+
 def add_missing_project_description_default(config):
     """
     The LLM sometimes writes the project description into the description attribute of the
@@ -815,22 +818,29 @@ def add_missing_project_description_default(config):
     Reuse the description text as the default.
     """
 
-    def add_default(match):
-        body = match.group(2)
+    result = config
+    position = 0
+    while True:
+        header = PROJECT_DESCRIPTION_VARIABLE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            position = header.end()
+            continue
+
+        body = result[header.end() : end - 1]
         if re.search(r"^\s*default\s*=", body, re.MULTILINE):
-            return match.group(0)
+            position = end
+            continue
+
         description = re.search(
             r'^\s*description\s*=\s*"((?:[^"\\]|\\.)*)"', body, re.MULTILINE
         )
         default = description.group(1) if description else "Project description"
-        return f'{match.group(1)}{body}\n  default     = "{default}"\n}}'
-
-    return re.sub(
-        r'(variable\s+"project_[A-Za-z0-9_-]+_description"\s*\{)(.*?)\n\}',
-        add_default,
-        config,
-        flags=re.DOTALL,
-    )
+        block = f'{header.group(0)}{body.rstrip()}\n  default     = "{default}"\n}}'
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
 
 
 def fix_underscore_quoted_strings(config):
@@ -2209,10 +2219,7 @@ def fix_lifecycle_phase_without_environments(config):
 PROJECT_NAME_VARIABLE_REGEX = re.compile(
     r'(variable\s+"project_(?!group_)\w+_name"\s*\{[^{}]*?\bdefault\s*=\s*")([^"\n]*)(")'
 )
-PROJECT_RESOURCE_NAME_REGEX = re.compile(
-    r'(resource\s+"octopusdeploy_project"\s+"\w+"\s*\{(?:(?!\n\}).)*?\n[ \t]*name[ \t]*=[ \t]*")([^"\n$]*)(")',
-    re.DOTALL,
-)
+PROJECT_RESOURCE_NAME_REGEX = re.compile(r'^([ \t]*name[ \t]*=[ \t]*")([^"\n$]*)(")', re.MULTILINE)
 
 
 def replace_slash_in_project_name(config):
@@ -2227,7 +2234,22 @@ def replace_slash_in_project_name(config):
         return match.group(1) + match.group(2).replace("/", "-") + match.group(3)
 
     config = PROJECT_NAME_VARIABLE_REGEX.sub(dash, config)
-    return PROJECT_RESOURCE_NAME_REGEX.sub(dash, config)
+
+    result = config
+    position = 0
+    while True:
+        header = PROJECT_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            position = header.end()
+            continue
+
+        block = result[header.end() : end]
+        new_block = PROJECT_RESOURCE_NAME_REGEX.sub(dash, block, count=1)
+        result = result[: header.end()] + new_block + result[end:]
+        position = header.end() + len(new_block)
 
 
 def find_block_end(text, open_brace_end):
