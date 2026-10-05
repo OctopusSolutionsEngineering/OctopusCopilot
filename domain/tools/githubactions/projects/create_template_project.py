@@ -61,6 +61,9 @@ from domain.sanitizers.terraform import (
     fix_process_step_container_block,
     fix_arm_template_source,
     fix_for_expression_over_empty_lookup,
+    add_missing_referenced_project_resources,
+    fix_bare_environment_match_references,
+    fix_channel_count_depending_on_new_project,
     fix_lifecycle_phase_without_environments,
     fix_package_pre_deploy_script_property,
     fix_cloudformation_dotted_property_names,
@@ -81,6 +84,7 @@ from domain.sanitizers.terraform import (
     fix_variable_condition_without_expression,
     fix_donor_package_attribute,
     escape_invalid_template_directives,
+    escape_template_directives_in_script_bodies,
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
     remove_default_channel_resources,
@@ -94,7 +98,18 @@ from domain.sanitizers.terraform import (
     quote_dotted_package_keys,
     remove_container_with_only_null_values,
     fill_empty_terraform_template,
+    add_missing_azure_account_to_azure_steps,
+    add_missing_azure_account_variable_to_terraform_steps,
+    add_missing_git_script_source,
     add_missing_script_body,
+    add_missing_community_step_template_resource,
+    move_environments_from_step_channels,
+    quote_dotted_keys_in_jsonencode,
+    remove_deploy_release_steps_without_project,
+    remove_non_step_references_from_steps_order,
+    remove_project_id_from_process_steps_order,
+    move_condition_expression_to_properties,
+    fix_project_description_with_extra_text,
     disable_version_controlled_projects,
     remove_template_parameters_from_execution_properties,
     fix_aws_ecr_feed_attributes,
@@ -966,6 +981,7 @@ def sanitize_configuration(configuration):
     configuration = fix_variable_condition_without_expression(configuration)
     configuration = fix_donor_package_attribute(configuration)
     configuration = escape_invalid_template_directives(configuration)
+    configuration = escape_template_directives_in_script_bodies(configuration)
     configuration = add_run_on_server_to_worker_pool_steps(configuration)
     configuration = trim_name_variable_defaults(configuration)
     configuration = replace_template_characters_in_step_names(configuration)
@@ -975,6 +991,9 @@ def sanitize_configuration(configuration):
     configuration = remove_container_with_only_null_values(configuration)
     configuration = fill_empty_terraform_template(configuration)
     configuration = add_missing_terraform_template(configuration)
+    configuration = add_missing_azure_account_to_azure_steps(configuration)
+    configuration = add_missing_azure_account_variable_to_terraform_steps(configuration)
+    configuration = add_missing_git_script_source(configuration)
     configuration = add_missing_script_body(configuration)
     configuration = fix_quoted_condition_expression(configuration)
     configuration = remove_type_from_templated_steps(configuration)
@@ -992,6 +1011,9 @@ def sanitize_configuration(configuration):
     # The server rejects a project name with a forward slash
     configuration = replace_slash_in_project_name(configuration)
     # A lifecycle phase with no environments means all remaining environments, and only one phase may
+    configuration = fix_bare_environment_match_references(configuration)
+    configuration = fix_channel_count_depending_on_new_project(configuration)
+    configuration = add_missing_referenced_project_resources(configuration)
     configuration = fix_lifecycle_phase_without_environments(configuration)
     # An inline ARM template step must say its template source
     configuration = fix_arm_template_source(configuration)
@@ -1032,6 +1054,14 @@ def sanitize_configuration(configuration):
     # Remove empty string default values
     configuration = fix_empty_strings(configuration)
     configuration = fix_blank_resource_names(configuration)
+    configuration = add_missing_community_step_template_resource(configuration)
+    configuration = move_environments_from_step_channels(configuration)
+    configuration = remove_non_step_references_from_steps_order(configuration)
+    configuration = remove_project_id_from_process_steps_order(configuration)
+    configuration = remove_deploy_release_steps_without_project(configuration)
+    configuration = quote_dotted_keys_in_jsonencode(configuration)
+    configuration = move_condition_expression_to_properties(configuration)
+    configuration = fix_project_description_with_extra_text(configuration)
     configuration = disable_version_controlled_projects(configuration)
     configuration = fix_aws_ecr_feed_attributes(configuration)
     configuration = remove_duplicate_lifecycle_phases(configuration)

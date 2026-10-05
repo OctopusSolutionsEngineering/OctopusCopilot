@@ -11,7 +11,16 @@ except ImportError:
 from domain.sanitizers.terraform import (  # noqa: E402
     add_missing_s3_package_options,
     fill_empty_terraform_template,
+    add_missing_azure_account_to_azure_steps,
+    add_missing_azure_account_variable_to_terraform_steps,
+    add_missing_git_script_source,
     add_missing_script_body,
+    add_missing_community_step_template_resource,
+    move_environments_from_step_channels,
+    remove_non_step_references_from_steps_order,
+    remove_project_id_from_process_steps_order,
+    move_condition_expression_to_properties,
+    fix_project_description_with_extra_text,
     disable_version_controlled_projects,
     remove_template_parameters_from_execution_properties,
     fix_aws_ecr_feed_attributes,
@@ -30,6 +39,11 @@ from domain.sanitizers.terraform import (  # noqa: E402
     fix_empty_strings,
     fix_created_worker_pool_fallback,
     fix_for_expression_over_empty_lookup,
+    add_missing_referenced_project_resources,
+    quote_dotted_keys_in_jsonencode,
+    remove_deploy_release_steps_without_project,
+    fix_bare_environment_match_references,
+    fix_channel_count_depending_on_new_project,
     fix_lifecycle_phase_without_environments,
     fix_manual_intervention_templated_step,
     fix_package_pre_deploy_script_property,
@@ -49,6 +63,7 @@ from domain.sanitizers.terraform import (  # noqa: E402
     fix_variable_condition_without_expression,
     fix_donor_package_attribute,
     escape_invalid_template_directives,
+    escape_template_directives_in_script_bodies,
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
     remove_default_channel_resources,
@@ -1742,6 +1757,433 @@ class TestFillEmptyTerraformTemplate(unittest.TestCase):
         self.assertEqual(fill_empty_terraform_template(config), config)
 
 
+class TestRemoveDeployReleaseStepsWithoutProject(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_deploy_release" {\n'
+        '  name = "Deploy Release"\n'
+        '  type = "Octopus.DeployRelease"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.DeployRelease.WaitForDeployment" = "True"\n'
+        "  }\n"
+        "}\n"
+    )
+    OTHER = (
+        'resource "octopusdeploy_process_step" "process_step_other" {\n'
+        '  name = "Other"\n'
+        '  type = "Octopus.Script"\n'
+        "  depends_on = [octopusdeploy_process_step.process_step_deploy_release]\n"
+        "}\n"
+    )
+    ORDER = (
+        'resource "octopusdeploy_process_steps_order" "order" {\n'
+        '  steps = ["${octopusdeploy_process_step.process_step_other.id}", '
+        '"${octopusdeploy_process_step.process_step_deploy_release.id}"]\n'
+        "}\n"
+    )
+
+    def test_removes_step_without_project(self):
+        result = remove_deploy_release_steps_without_project(self.STEP + self.OTHER + self.ORDER)
+        self.assertNotIn('resource "octopusdeploy_process_step" "process_step_deploy_release"', result)
+        self.assertIn('resource "octopusdeploy_process_step" "process_step_other"', result)
+
+    def test_removes_references_to_the_step(self):
+        result = remove_deploy_release_steps_without_project(self.STEP + self.OTHER + self.ORDER)
+        self.assertNotIn("process_step_deploy_release", result)
+        self.assertIn('steps = ["${octopusdeploy_process_step.process_step_other.id}"]', result)
+        self.assertIn("depends_on = []", result)
+
+    def test_removes_conditional_entry_with_index(self):
+        order = (
+            'resource "octopusdeploy_process_steps_order" "order" {\n'
+            "  steps = [\n"
+            '    "${length(data.x.y.z) != 0 ? null : octopusdeploy_process_step.process_step_deploy_release[0].id}"\n'
+            "  ]\n"
+            "}\n"
+        )
+        result = remove_deploy_release_steps_without_project(self.STEP + order)
+        self.assertNotIn("process_step_deploy_release", result)
+        self.assertIn("steps = [", result)
+
+    def test_keeps_step_with_project(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.DeployRelease.WaitForDeployment" = "True"\n',
+            '"Octopus.Action.DeployRelease.ProjectId" = "Projects-1"\n',
+        ) + self.OTHER + self.ORDER
+        self.assertEqual(remove_deploy_release_steps_without_project(config), config)
+
+    def test_keeps_other_step_types(self):
+        self.assertEqual(remove_deploy_release_steps_without_project(self.OTHER), self.OTHER)
+
+    def test_keeps_unrelated_depends_on(self):
+        config = self.OTHER.replace("process_step_deploy_release", "process_step_first")
+        self.assertEqual(remove_deploy_release_steps_without_project(config), config)
+
+
+class TestAddMissingReferencedProjectResources(unittest.TestCase):
+    PARENT = (
+        'resource "octopusdeploy_project" "project_parent" {\n'
+        '  name = "Parent"\n'
+        '  lifecycle_id = "${octopusdeploy_lifecycle.life.id}"\n'
+        '  project_group_id = "${octopusdeploy_project_group.group.id}"\n'
+        "}\n"
+    )
+    DATA = (
+        'data "octopusdeploy_projects" "project_child" {\n'
+        "  ids = null\n"
+        '  partial_name = "Child API"\n'
+        "}\n"
+    )
+    STEP = (
+        'resource "octopusdeploy_process_step" "deploy_child" {\n'
+        '  package_id = "${length(data.octopusdeploy_projects.project_child.projects) != 0 ? '
+        "data.octopusdeploy_projects.project_child.projects[0].id : octopusdeploy_project.project_child[0].id}\"\n"
+        "}\n"
+    )
+
+    def test_adds_resource_for_referenced_project(self):
+        result = add_missing_referenced_project_resources(self.PARENT + self.DATA + self.STEP)
+        self.assertIn('resource "octopusdeploy_project" "project_child" {', result)
+        self.assertIn('name                              = "Child API"', result)
+        self.assertIn('lifecycle_id                      = "${octopusdeploy_lifecycle.life.id}"', result)
+        self.assertIn('project_group_id                  = "${octopusdeploy_project_group.group.id}"', result)
+
+    def test_keeps_declared_resource(self):
+        config = self.PARENT + self.DATA + self.STEP + self.PARENT.replace("project_parent", "project_child")
+        self.assertEqual(add_missing_referenced_project_resources(config), config)
+
+    def test_ignores_data_source_that_is_not_referenced_as_resource(self):
+        config = self.PARENT + self.DATA
+        self.assertEqual(add_missing_referenced_project_resources(config), config)
+
+    def test_ignores_configuration_without_a_project(self):
+        config = self.DATA + self.STEP
+        self.assertEqual(add_missing_referenced_project_resources(config), config)
+
+    def test_adds_each_missing_project_once(self):
+        other = self.DATA.replace("project_child", "project_other").replace("Child API", "Other")
+        step = self.STEP.replace("project_child", "project_other")
+        result = add_missing_referenced_project_resources(self.PARENT + self.DATA + other + self.STEP + step)
+        self.assertEqual(result.count('resource "octopusdeploy_project" "project_child"'), 1)
+        self.assertEqual(result.count('resource "octopusdeploy_project" "project_other"'), 1)
+
+
+class TestRemoveProjectIdFromProcessStepsOrder(unittest.TestCase):
+    ORDER = (
+        'resource "octopusdeploy_process_steps_order" "order" {\n'
+        "  count = 1\n"
+        '  project_id = "${octopusdeploy_project.p[0].id}"\n'
+        '  process_id = "${octopusdeploy_process.p[0].id}"\n'
+        '  steps = ["a"]\n'
+        "}\n"
+    )
+
+    def test_removes_project_id(self):
+        result = remove_project_id_from_process_steps_order(self.ORDER)
+        self.assertNotIn("project_id", result)
+        self.assertIn("process_id", result)
+        self.assertIn('steps = ["a"]', result)
+
+    def test_keeps_project_id_without_process_id(self):
+        config = self.ORDER.replace('  process_id = "${octopusdeploy_process.p[0].id}"\n', "")
+        self.assertEqual(remove_project_id_from_process_steps_order(config), config)
+
+    def test_keeps_project_id_on_other_resources(self):
+        config = 'resource "octopusdeploy_process" "p" {\n  project_id = "x"\n}\n'
+        self.assertEqual(remove_project_id_from_process_steps_order(config), config)
+
+    def test_keeps_steps_order_without_project_id(self):
+        config = self.ORDER.replace('  project_id = "${octopusdeploy_project.p[0].id}"\n', "")
+        self.assertEqual(remove_project_id_from_process_steps_order(config), config)
+
+    def test_fixes_every_steps_order(self):
+        result = remove_project_id_from_process_steps_order(self.ORDER + self.ORDER.replace('"order"', '"order_two"'))
+        self.assertNotIn("project_id", result)
+
+
+class TestFixChannelCountDependingOnNewProject(unittest.TestCase):
+    CHANNEL = (
+        'resource "octopusdeploy_channel" "channel_hotfix" {\n'
+        '  count = "${length(data.octopusdeploy_channels.channel_hotfix.channels) != 0 ? 0 : 1}"\n'
+        '  name = "Hotfix"\n'
+        '  project_id = "${length(data.octopusdeploy_projects.project_main.projects) != 0 ? '
+        "data.octopusdeploy_projects.project_main.projects[0].id : octopusdeploy_project.project_main[0].id}\"\n"
+        "}\n"
+    )
+
+    def test_count_follows_project_lookup(self):
+        result = fix_channel_count_depending_on_new_project(self.CHANNEL)
+        self.assertIn(
+            'count = "${length(data.octopusdeploy_projects.project_main.projects) != 0 ? 0 : 1}"', result
+        )
+        self.assertNotIn("data.octopusdeploy_channels", result)
+
+    def test_keeps_count_already_using_project_lookup(self):
+        config = self.CHANNEL.replace(
+            "data.octopusdeploy_channels.channel_hotfix.channels", "data.octopusdeploy_projects.project_main.projects"
+        )
+        self.assertEqual(fix_channel_count_depending_on_new_project(config), config)
+
+    def test_keeps_channel_without_project_lookup(self):
+        config = self.CHANNEL.replace(
+            "${length(data.octopusdeploy_projects.project_main.projects) != 0 ? "
+            "data.octopusdeploy_projects.project_main.projects[0].id : octopusdeploy_project.project_main[0].id}",
+            "Projects-1",
+        )
+        self.assertEqual(fix_channel_count_depending_on_new_project(config), config)
+
+    def test_fixes_each_channel(self):
+        result = fix_channel_count_depending_on_new_project(self.CHANNEL + self.CHANNEL.replace("channel_hotfix", "channel_two"))
+        self.assertNotIn("data.octopusdeploy_channels", result)
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_environment" "e" {\n  count = 1\n}\n'
+        self.assertEqual(fix_channel_count_depending_on_new_project(config), config)
+
+
+class TestFixBareEnvironmentMatchReferences(unittest.TestCase):
+    RESOURCE = (
+        'resource "octopusdeploy_environment" "environment_dev" {\n'
+        '  count = "${length(local.environment_dev_matches) != 0 ? 0 : 1}"\n'
+        '  name  = "Dev"\n'
+        "}\n"
+    )
+    LIFECYCLE = (
+        'resource "octopusdeploy_lifecycle" "lifecycle_flow" {\n'
+        "  phase {\n"
+        '    automatic_deployment_targets = ["${local.environment_dev_matches[0].id}"]\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_replaces_bare_reference_with_lookup_or_create(self):
+        result = fix_bare_environment_match_references(self.RESOURCE + self.LIFECYCLE)
+        self.assertIn(
+            '["${length(local.environment_dev_matches) != 0 ? local.environment_dev_matches[0].id : '
+            'octopusdeploy_environment.environment_dev[0].id}"]',
+            result,
+        )
+
+    def test_keeps_reference_already_in_conditional(self):
+        config = self.RESOURCE + self.LIFECYCLE.replace(
+            "${local.environment_dev_matches[0].id}",
+            "${length(local.environment_dev_matches) != 0 ? local.environment_dev_matches[0].id : "
+            "octopusdeploy_environment.environment_dev[0].id}",
+        )
+        self.assertEqual(fix_bare_environment_match_references(config), config)
+
+    def test_keeps_reference_without_environment_resource(self):
+        self.assertEqual(fix_bare_environment_match_references(self.LIFECYCLE), self.LIFECYCLE)
+
+    def test_replaces_every_bare_reference(self):
+        result = fix_bare_environment_match_references(self.RESOURCE + self.LIFECYCLE + self.LIFECYCLE)
+        self.assertNotIn('["${local.environment_dev_matches[0].id}"]', result)
+        self.assertEqual(result.count("octopusdeploy_environment.environment_dev[0].id"), 2)
+
+
+class TestEscapeTemplateDirectivesInScriptBodies(unittest.TestCase):
+    def line(self, body):
+        return f'    "Octopus.Action.Script.ScriptBody" = "{body}"\n'
+
+    def test_escapes_if_and_endif_directives(self):
+        result = escape_template_directives_in_script_bodies(self.line('echo %{if x}yes%{endif}'))
+        self.assertEqual(result, self.line('echo %%{if x}yes%%{endif}'))
+
+    def test_escapes_for_directive(self):
+        result = escape_template_directives_in_script_bodies(self.line('%{ for a in b }x%{ endfor }'))
+        self.assertEqual(result, self.line('%%{ for a in b }x%%{ endfor }'))
+
+    def test_keeps_already_escaped_directive(self):
+        config = self.line('curl -w \\"%%{http_code}\\"')
+        self.assertEqual(escape_template_directives_in_script_bodies(config), config)
+
+    def test_ignores_other_properties(self):
+        config = '    "Octopus.Action.Terraform.Template" = "%{if x}y%{endif}"\n'
+        self.assertEqual(escape_template_directives_in_script_bodies(config), config)
+
+    def test_ignores_body_without_directives(self):
+        config = self.line('echo hello')
+        self.assertEqual(escape_template_directives_in_script_bodies(config), config)
+
+    def test_escapes_directives_in_heredoc_body(self):
+        config = (
+            '    "Octopus.Action.Script.ScriptBody" = <<-EOT\n'
+            'echo "%{if x}yes%{endif}"\n'
+            "EOT\n"
+            '    "Octopus.Action.Script.Syntax" = "Bash"\n'
+        )
+        result = escape_template_directives_in_script_bodies(config)
+        self.assertIn('echo "%%{if x}yes%%{endif}"', result)
+        self.assertIn('"Octopus.Action.Script.Syntax" = "Bash"', result)
+
+    def test_keeps_heredoc_without_directives(self):
+        config = '    "Octopus.Action.Script.ScriptBody" = <<-EOT\necho hi\nEOT\n'
+        self.assertEqual(escape_template_directives_in_script_bodies(config), config)
+
+    def test_escapes_each_script_body(self):
+        config = self.line('%{if a}') + self.line('%{endif}')
+        result = escape_template_directives_in_script_bodies(config)
+        self.assertEqual(result.count("%%{"), 2)
+
+
+class TestQuoteDottedKeysInJsonencode(unittest.TestCase):
+    def test_quotes_dotted_key(self):
+        config = '  "Params" = jsonencode({\n    Network.Cidr = "10.0.0.0/16"\n  })\n'
+        result = quote_dotted_keys_in_jsonencode(config)
+        self.assertIn('"Network.Cidr" = "10.0.0.0/16"', result)
+
+    def test_quotes_every_dotted_key(self):
+        config = 'x = jsonencode({\n  A.B = "1"\n  C.D.E = "2"\n})\n'
+        result = quote_dotted_keys_in_jsonencode(config)
+        self.assertIn('"A.B" = "1"', result)
+        self.assertIn('"C.D.E" = "2"', result)
+
+    def test_keeps_quoted_keys(self):
+        config = 'x = jsonencode({\n  "A.B" = "1"\n})\n'
+        self.assertEqual(quote_dotted_keys_in_jsonencode(config), config)
+
+    def test_keeps_keys_without_dots(self):
+        config = 'x = jsonencode({\n  Name = "1"\n})\n'
+        self.assertEqual(quote_dotted_keys_in_jsonencode(config), config)
+
+    def test_ignores_dotted_attributes_outside_jsonencode(self):
+        config = 'resource "a" "b" {\n  name = "x"\n}\nlocals {\n  A.B = "1"\n}\n'
+        self.assertEqual(quote_dotted_keys_in_jsonencode(config), config)
+
+    def test_handles_multiple_jsonencode_blocks(self):
+        block = 'x = jsonencode({\n  A.B = "1"\n})\n'
+        result = quote_dotted_keys_in_jsonencode(block + block)
+        self.assertEqual(result.count('"A.B"'), 2)
+
+
+class TestAddMissingAzureAccountVariableToTerraformSteps(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_apply" {\n'
+        '  name = "Apply"\n'
+        '  type = "Octopus.TerraformApply"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.Terraform.ManagedAccount" = "Azure"\n'
+        '    "Octopus.Action.Terraform.AzureAccount" = "True"\n'
+        "  }\n"
+        "}\n"
+    )
+    PRINCIPAL = 'resource "octopusdeploy_azure_service_principal" "account_azure" {\n  name = "Azure"\n}\n'
+    VARIABLE = (
+        'resource "octopusdeploy_variable" "some_variable" {\n'
+        '  count = "${length(data.p.q.projects) != 0 ? 0 : 1}"\n'
+        '  owner_id = "${octopusdeploy_project.p[0].id}"\n'
+        '  name = "Some.Variable"\n'
+        "}\n"
+    )
+
+    def test_adds_account_variable_property(self):
+        result = add_missing_azure_account_variable_to_terraform_steps(self.STEP)
+        self.assertIn('"Octopus.Action.AzureAccount.Variable" = "Project.Azure.Account"', result)
+
+    def test_adds_account_variable_resource(self):
+        result = add_missing_azure_account_variable_to_terraform_steps(self.STEP + self.PRINCIPAL + self.VARIABLE)
+        self.assertIn('resource "octopusdeploy_variable" "account_azure_terraform_account_variable"', result)
+        self.assertIn('type         = "AzureAccount"', result)
+        self.assertIn("octopusdeploy_azure_service_principal.account_azure[0].id", result)
+        self.assertIn('owner_id     = "${octopusdeploy_project.p[0].id}"', result)
+
+    def test_does_not_add_variable_resource_without_service_principal(self):
+        result = add_missing_azure_account_variable_to_terraform_steps(self.STEP + self.VARIABLE)
+        self.assertNotIn("terraform_account_variable", result)
+
+    def test_does_not_add_variable_resource_twice(self):
+        config = self.STEP + self.PRINCIPAL + self.VARIABLE.replace("Some.Variable", "Project.Azure.Account")
+        result = add_missing_azure_account_variable_to_terraform_steps(config)
+        self.assertNotIn("terraform_account_variable", result)
+
+    def test_keeps_step_with_account_variable(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.Terraform.AzureAccount" = "True"\n',
+            '"Octopus.Action.Terraform.AzureAccount" = "True"\n    "Octopus.Action.AzureAccount.Variable" = "Mine"\n',
+        )
+        self.assertEqual(add_missing_azure_account_variable_to_terraform_steps(config), config)
+
+    def test_ignores_terraform_step_without_azure_account(self):
+        config = self.STEP.replace('"Octopus.Action.Terraform.ManagedAccount" = "Azure"', '"Octopus.Action.Terraform.ManagedAccount" = "None"').replace(
+            '"True"', '"False"'
+        )
+        self.assertEqual(add_missing_azure_account_variable_to_terraform_steps(config), config)
+
+
+class TestAddMissingAzureAccountToAzureSteps(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_deploy" {\n'
+        '  name = "Deploy"\n'
+        '  type = "Octopus.AzurePowerShell"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.RunOnServer" = "true"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_adds_account_expression(self):
+        result = add_missing_azure_account_to_azure_steps(self.STEP)
+        self.assertIn('"Octopus.Action.Azure.AccountId" = "#{Project.Azure.Account}"', result)
+        self.assertIn('"Octopus.Action.RunOnServer" = "true"', result)
+
+    def test_keeps_existing_account(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.RunOnServer" = "true"\n',
+            '"Octopus.Action.Azure.AccountId" = "Accounts-1"\n',
+        )
+        self.assertEqual(add_missing_azure_account_to_azure_steps(config), config)
+
+    def test_ignores_other_step_types(self):
+        config = self.STEP.replace("Octopus.AzurePowerShell", "Octopus.Script")
+        self.assertEqual(add_missing_azure_account_to_azure_steps(config), config)
+
+    def test_fixes_each_step(self):
+        result = add_missing_azure_account_to_azure_steps(self.STEP + self.STEP.replace("process_step_deploy", "process_step_two"))
+        self.assertEqual(result.count('"Octopus.Action.Azure.AccountId"'), 2)
+
+    def test_handles_app_service_steps(self):
+        config = self.STEP.replace("Octopus.AzurePowerShell", "Octopus.AzureAppService")
+        self.assertIn(
+            '"Octopus.Action.Azure.AccountId"', add_missing_azure_account_to_azure_steps(config)
+        )
+
+
+class TestAddMissingGitScriptSource(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_step" "process_step_validate" {\n'
+        '  name = "Validate"\n'
+        '  type = "Octopus.Script"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.GitRepository.Source" = "External"\n'
+        '    "Octopus.Action.Script.ScriptFileName" = "scripts/validate.ps1"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_adds_git_script_source(self):
+        result = add_missing_git_script_source(self.STEP)
+        self.assertIn('"Octopus.Action.Script.ScriptSource" = "GitRepository"', result)
+        self.assertIn('"Octopus.Action.Script.ScriptFileName" = "scripts/validate.ps1"', result)
+
+    def test_keeps_existing_script_source(self):
+        config = self.STEP.replace(
+            '"Octopus.Action.GitRepository.Source" = "External"\n',
+            '"Octopus.Action.GitRepository.Source" = "External"\n    "Octopus.Action.Script.ScriptSource" = "GitRepository"\n',
+        )
+        self.assertEqual(add_missing_git_script_source(config), config)
+
+    def test_ignores_step_without_git_repository(self):
+        config = self.STEP.replace('    "Octopus.Action.GitRepository.Source" = "External"\n', "")
+        self.assertEqual(add_missing_git_script_source(config), config)
+
+    def test_ignores_step_without_script_file(self):
+        config = self.STEP.replace('    "Octopus.Action.Script.ScriptFileName" = "scripts/validate.ps1"\n', "")
+        self.assertEqual(add_missing_git_script_source(config), config)
+
+    def test_fixes_each_step_independently(self):
+        result = add_missing_git_script_source(self.STEP + self.STEP.replace("process_step_validate", "process_step_two"))
+        self.assertEqual(result.count('"Octopus.Action.Script.ScriptSource" = "GitRepository"'), 2)
+
+
 class TestAddMissingScriptBody(unittest.TestCase):
     STEP = (
         'resource "octopusdeploy_process_step" "process_step_check" {\n'
@@ -2128,3 +2570,204 @@ class TestDisableVersionControlledProjects(unittest.TestCase):
     def test_ignores_other_resources(self):
         config = 'resource "octopusdeploy_environment" "e" {\n  is_version_controlled = true\n}\n'
         self.assertEqual(disable_version_controlled_projects(config), config)
+
+
+
+class TestFixProjectDescriptionWithExtraText(unittest.TestCase):
+    CONFIG = (
+        'variable "project_x_description" {\n'
+        "  type = string\n"
+        '  default = ""\n'
+        "}\n"
+        'resource "octopusdeploy_project" "project_x" {\n'
+        '  description = "${var.project_x_description_prefix}${var.project_x_description}${var.project_x_description_suffix} chrono-ledger rollback"\n'
+        "}\n"
+    )
+
+    def test_moves_extra_text_into_the_description_variable(self):
+        result = fix_project_description_with_extra_text(self.CONFIG)
+        self.assertIn('default = "chrono-ledger rollback"', result)
+        self.assertIn(
+            'description = "${var.project_x_description_prefix}${var.project_x_description}${var.project_x_description_suffix}"',
+            result,
+        )
+
+    def test_appends_to_an_existing_default(self):
+        config = self.CONFIG.replace('default = ""', 'default = "Base text"')
+        self.assertIn('default = "Base text chrono-ledger rollback"', fix_project_description_with_extra_text(config))
+
+    def test_keeps_a_plain_expression(self):
+        config = self.CONFIG.replace(" chrono-ledger rollback", "")
+        self.assertEqual(fix_project_description_with_extra_text(config), config)
+
+    def test_keeps_a_plain_description(self):
+        config = 'resource "octopusdeploy_project" "p" {\n  description = "Hello"\n}\n'
+        self.assertEqual(fix_project_description_with_extra_text(config), config)
+
+    def test_adds_a_default_when_the_variable_has_none(self):
+        config = self.CONFIG.replace('  default = ""\n', "")
+        self.assertIn('default = "chrono-ledger rollback"', fix_project_description_with_extra_text(config))
+
+
+class TestMoveConditionExpressionToProperties(unittest.TestCase):
+    EXPRESSION = '"#{if Close.Enabled == \\"true\\"}True#{/if}"'
+
+    def step(self, properties):
+        return (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            '  name = "S"\n'
+            '  condition = "Variable"\n'
+            f"{properties}"
+            "  execution_properties = {\n"
+            '    "Octopus.Action.RunOnServer" = "true"\n'
+            f'    "Octopus.Step.ConditionVariableExpression" = {self.EXPRESSION}\n'
+            "  }\n"
+            "}\n"
+        )
+
+    def test_moves_into_an_empty_single_line_properties_block(self):
+        result = move_condition_expression_to_properties(self.step("  properties = {}\n"))
+        execution_index = result.index("execution_properties")
+        self.assertTrue(result.index("ConditionVariableExpression") < execution_index)
+        self.assertEqual(result.count("ConditionVariableExpression"), 1)
+        self.assertIn(self.EXPRESSION, result)
+
+    def test_moves_into_an_open_properties_block(self):
+        result = move_condition_expression_to_properties(self.step('  properties = {\n    "A" = "1"\n  }\n'))
+        self.assertTrue(result.index("ConditionVariableExpression") < result.index("execution_properties"))
+        self.assertIn('"A" = "1"', result)
+        self.assertEqual(result.count("ConditionVariableExpression"), 1)
+
+    def test_creates_the_properties_block_when_missing(self):
+        result = move_condition_expression_to_properties(self.step(""))
+        self.assertIn("properties = {", result.split("execution_properties")[0])
+        self.assertTrue(result.index("ConditionVariableExpression") < result.index("execution_properties"))
+        self.assertIn('"Octopus.Action.RunOnServer" = "true"', result)
+
+    def test_keeps_an_expression_already_in_properties(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            f'  properties = {{\n    "Octopus.Step.ConditionVariableExpression" = {self.EXPRESSION}\n  }}\n'
+            '  execution_properties = {\n    "A" = "1"\n  }\n}\n'
+        )
+        self.assertEqual(move_condition_expression_to_properties(config), config)
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_runbook" "r" {\n  execution_properties = {\n    "Octopus.Step.ConditionVariableExpression" = "x"\n  }\n}\n'
+        self.assertEqual(move_condition_expression_to_properties(config), config)
+
+
+class TestRemoveNonStepReferencesFromStepsOrder(unittest.TestCase):
+    ORDER = (
+        'resource "octopusdeploy_process_steps_order" "o" {\n'
+        '  process_id = "${octopusdeploy_process.p.id}"\n'
+        "  steps = [\n"
+        '    "${octopusdeploy_process_step.a[0].id}",\n'
+        '    "${octopusdeploy_runbook.r[0].id}",\n'
+        '    "${octopusdeploy_process_templated_step.t[0].id}"\n'
+        "  ]\n"
+        "}\n"
+    )
+
+    def test_removes_a_runbook_reference(self):
+        result = remove_non_step_references_from_steps_order(self.ORDER)
+        self.assertNotIn("octopusdeploy_runbook", result)
+        self.assertIn("octopusdeploy_process_step.a[0].id", result)
+        self.assertIn("octopusdeploy_process_templated_step.t[0].id", result)
+        self.assertIn('process_id = "${octopusdeploy_process.p.id}"', result)
+
+    def test_keeps_a_correct_order(self):
+        config = self.ORDER.replace('    "${octopusdeploy_runbook.r[0].id}",\n', "")
+        self.assertEqual(remove_non_step_references_from_steps_order(config), config)
+
+    def test_handles_a_single_line_list_and_conditional_references(self):
+        config = (
+            'resource "octopusdeploy_process_steps_order" "o" {\n'
+            '  steps = ["${length(data.x.y) != 0 ? null : octopusdeploy_process_step.a[0].id}", '
+            '"${length(data.x.y) != 0 ? null : octopusdeploy_runbook.r[0].id}"]\n}\n'
+        )
+        result = remove_non_step_references_from_steps_order(config)
+        self.assertIn("octopusdeploy_process_step.a[0].id", result)
+        self.assertNotIn("octopusdeploy_runbook", result)
+
+    def test_keeps_steps_whose_expression_reads_a_data_source(self):
+        config = (
+            'resource "octopusdeploy_process_steps_order" "o" {\n'
+            '  steps = ["${length(data.octopusdeploy_projects.p.projects) != 0 ? null : octopusdeploy_process_step.a[0].id}"]\n}\n'
+        )
+        self.assertEqual(remove_non_step_references_from_steps_order(config), config)
+
+    def test_can_leave_an_empty_list(self):
+        config = 'resource "octopusdeploy_process_steps_order" "o" {\n  steps = ["${octopusdeploy_runbook.r.id}"]\n}\n'
+        self.assertIn("steps = []", remove_non_step_references_from_steps_order(config))
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_variable" "v" {\n  steps = ["${octopusdeploy_runbook.r.id}"]\n}\n'
+        self.assertEqual(remove_non_step_references_from_steps_order(config), config)
+
+
+class TestAddMissingCommunityStepTemplateResource(unittest.TestCase):
+    CONFIG = (
+        'data "octopusdeploy_community_step_template" "communitysteptemplate_x" {\n  website = "https://library.octopus.com/step-templates/1"\n}\n'
+        'data "octopusdeploy_step_template" "steptemplate_x" {\n  name = "X"\n}\n'
+        'resource "octopusdeploy_process_templated_step" "s" {\n'
+        '  template_id = "${data.octopusdeploy_step_template.steptemplate_x.step_template != null ? data.octopusdeploy_step_template.steptemplate_x.step_template.id : octopusdeploy_community_step_template.communitysteptemplate_x[0].id}"\n'
+        "}\n"
+    )
+
+    def test_adds_the_missing_resource(self):
+        result = add_missing_community_step_template_resource(self.CONFIG)
+        self.assertIn('resource "octopusdeploy_community_step_template" "communitysteptemplate_x" {', result)
+        self.assertIn(
+            'count                        = "${data.octopusdeploy_step_template.steptemplate_x.step_template != null ? 0 : 1}"',
+            result,
+        )
+        self.assertIn("community_action_template_id", result)
+
+    def test_keeps_an_existing_resource(self):
+        config = self.CONFIG + 'resource "octopusdeploy_community_step_template" "communitysteptemplate_x" {\n}\n'
+        self.assertEqual(add_missing_community_step_template_resource(config), config)
+
+    def test_does_nothing_without_the_data_source(self):
+        config = self.CONFIG.replace('data "octopusdeploy_community_step_template"', 'data "octopusdeploy_other"')
+        self.assertEqual(add_missing_community_step_template_resource(config), config)
+
+    def test_adds_the_resource_once(self):
+        config = self.CONFIG + self.CONFIG.split("resource")[1].join(["resource", ""])
+        result = add_missing_community_step_template_resource(self.CONFIG + "\n" + self.CONFIG)
+        self.assertEqual(result.count('resource "octopusdeploy_community_step_template"'), 1)
+
+    def test_uses_a_count_of_one_without_the_step_template_data(self):
+        config = self.CONFIG.replace('data "octopusdeploy_step_template" "steptemplate_x"', 'data "octopusdeploy_other" "z"')
+        self.assertIn('count                        = "1"', add_missing_community_step_template_resource(config))
+
+
+class TestMoveEnvironmentsFromStepChannels(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_templated_step" "s" {\n'
+        '  channels = ["${length(local.environment_prod_matches) != 0 ? local.environment_prod_matches[0].id : octopusdeploy_environment.environment_prod[0].id}"]\n'
+        "  environments = null\n"
+        "}\n"
+    )
+
+    def test_moves_environment_references_to_environments(self):
+        result = move_environments_from_step_channels(self.STEP)
+        self.assertIn("channels = null", result)
+        self.assertIn("environments = [", result)
+        self.assertIn("octopusdeploy_environment.environment_prod[0].id", result)
+        self.assertEqual(result.count("octopusdeploy_environment.environment_prod"), 1)
+
+    def test_keeps_real_channel_references(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  channels = ["${octopusdeploy_channel.c.id}"]\n  environments = null\n}\n'
+        self.assertEqual(move_environments_from_step_channels(config), config)
+
+    def test_keeps_null_channels(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  channels = null\n  environments = null\n}\n'
+        self.assertEqual(move_environments_from_step_channels(config), config)
+
+    def test_keeps_existing_environments(self):
+        config = self.STEP.replace("environments = null", 'environments = ["x"]')
+        result = move_environments_from_step_channels(config)
+        self.assertIn("channels = null", result)
+        self.assertIn('environments = ["x"]', result)
+

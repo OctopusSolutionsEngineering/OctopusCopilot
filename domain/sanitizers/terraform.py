@@ -2064,6 +2064,89 @@ def environment_reference_for_name(config, environment_name):
     return None
 
 
+BARE_ENVIRONMENT_MATCH_REFERENCE_REGEX = re.compile(r"\$\{local\.(?P<label>\w+)_matches\[0\]\.id\}")
+
+
+def fix_bare_environment_match_references(config):
+    """
+    The environment locals only hold environments that already exist, so "${local.environment_dev_matches[0].id}"
+    fails with "Invalid index ... is empty tuple" when the configuration creates the environment itself. A bare
+    reference to the matches of a declared octopusdeploy_environment resource is replaced with the lookup-or-create
+    form. References that are already inside a conditional expression are left alone.
+    """
+
+    def replace(match):
+        label = match.group("label")
+        if not re.search(
+            rf'resource\s+"octopusdeploy_environment"\s+"{re.escape(label)}"\s*\{{', config
+        ):
+            return match.group(0)
+        return (
+            f"${{length(local.{label}_matches) != 0 ? local.{label}_matches[0].id : "
+            f"octopusdeploy_environment.{label}[0].id}}"
+        )
+
+    return BARE_ENVIRONMENT_MATCH_REFERENCE_REGEX.sub(replace, config)
+
+
+PROJECT_DATA_SOURCE_REGEX = re.compile(r'data\s+"octopusdeploy_projects"\s+"(?P<label>\w+)"\s*\{')
+PROJECT_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_project"\s+"(?P<label>\w+)"\s*\{')
+PARTIAL_NAME_REGEX = re.compile(r'^[ \t]*partial_name[ \t]*=[ \t]*(?P<value>"[^"\n]*")[ \t]*$', re.MULTILINE)
+ATTRIBUTE_LINE_REGEX = r"^[ \t]*{name}[ \t]*=[ \t]*(?P<value>.+)$"
+
+
+def add_missing_referenced_project_resources(config):
+    """
+    A step that deploys or runs another project uses the lookup-or-create form for that project, which refers to
+    octopusdeploy_project.<label>[0]. The LLM declares the data source for the other project but not the resource, and
+    the plan fails with "Reference to undeclared resource". A minimal project is declared that borrows the lifecycle and
+    project group of the first project in the configuration.
+    """
+
+    reference = None
+    for header in PROJECT_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end:
+            body = config[header.end() : end]
+            lifecycle = re.search(ATTRIBUTE_LINE_REGEX.format(name="lifecycle_id"), body, re.MULTILINE)
+            group = re.search(ATTRIBUTE_LINE_REGEX.format(name="project_group_id"), body, re.MULTILINE)
+            if lifecycle and group:
+                reference = (lifecycle.group("value"), group.group("value"))
+                break
+    if not reference:
+        return config
+
+    additions = ""
+    for data in PROJECT_DATA_SOURCE_REGEX.finditer(config):
+        label = data.group("label")
+        if f"octopusdeploy_project.{label}[0]" not in config:
+            continue
+        if re.search(rf'resource\s+"octopusdeploy_project"\s+"{re.escape(label)}"\s*\{{', config):
+            continue
+        end = find_block_end(config, data.end())
+        partial = PARTIAL_NAME_REGEX.search(config[data.end() : end]) if end else None
+        if not partial:
+            continue
+
+        additions += (
+            f'resource "octopusdeploy_project" "{label}" {{\n'
+            f'  count                             = "${{length(data.octopusdeploy_projects.{label}.projects) != 0 ? 0 : 1}}"\n'
+            f"  name                              = {partial.group('value')}\n"
+            f"  is_version_controlled             = false\n"
+            f"  lifecycle_id                      = {reference[0]}\n"
+            f"  project_group_id                  = {reference[1]}\n"
+            f'  tenanted_deployment_participation = "Untenanted"\n'
+            f"  lifecycle {{\n"
+            f"    prevent_destroy = true\n"
+            f"  }}\n"
+            f"}}\n"
+        )
+
+    if not additions:
+        return config
+    return config.rstrip("\n") + "\n" + additions
+
+
 def fix_lifecycle_phase_without_environments(config):
     """
     The LLM names the phases of a lifecycle but leaves both the automatic and the optional environment lists empty.
@@ -2404,6 +2487,31 @@ def escape_invalid_template_directives(config):
     """
 
     return UNESCAPED_TEMPLATE_DIRECTIVE_REGEX.sub("%%{", config)
+
+
+SCRIPT_BODY_LINE_REGEX = re.compile(r'(?m)^([ \t]*"Octopus\.Action\.Script\.ScriptBody"[ \t]*=[ \t]*")(.*)("[ \t]*)$')
+UNESCAPED_PERCENT_BRACE_REGEX = re.compile(r"(?<!%)%\{")
+SCRIPT_BODY_HEREDOC_REGEX = re.compile(
+    r'(?m)^([ \t]*"Octopus\.Action\.Script\.ScriptBody"[ \t]*=[ \t]*<<-?(\w+)[ \t]*\n)(.*?)(^[ \t]*\2[ \t]*$)', re.DOTALL | re.MULTILINE
+)
+
+
+def escape_template_directives_in_script_bodies(config):
+    """
+    A script body is text for the shell, so a percent sign followed by a brace in it is never a Terraform template
+    directive. escape_invalid_template_directives leaves "%{if", "%{else", "%{endif", "%{for" and "%{endfor"
+    alone, and a script such as `echo "%{if x}yes%{endif}"` then fails the plan with a template error. In a quoted
+    ScriptBody value every unescaped percent-brace is escaped to %%{.
+    """
+
+    def escape(match):
+        return match.group(1) + UNESCAPED_PERCENT_BRACE_REGEX.sub("%%{", match.group(2)) + match.group(3)
+
+    def escape_heredoc(match):
+        return match.group(1) + UNESCAPED_PERCENT_BRACE_REGEX.sub("%%{", match.group(3)) + match.group(4)
+
+    result = SCRIPT_BODY_LINE_REGEX.sub(escape, config)
+    return SCRIPT_BODY_HEREDOC_REGEX.sub(escape_heredoc, result)
 
 
 WORKER_POOL_ATTRIBUTE_REGEX = re.compile(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=")
@@ -3225,6 +3333,113 @@ def remove_duplicate_lifecycle_phases(config):
     return result
 
 
+STEPS_ORDER_PROJECT_ID_LINE_REGEX = re.compile(r"(?m)^[ \t]*project_id[ \t]*=.*\n")
+STEPS_ORDER_PROCESS_ID_LINE_REGEX = re.compile(r"(?m)^[ \t]*process_id[ \t]*=")
+
+
+def remove_project_id_from_process_steps_order(config):
+    """
+    An octopusdeploy_process_steps_order is identified by its process_id and has no project_id argument. LLMs copy the
+    project_id line from the octopusdeploy_process above it, and the plan fails with
+    "Unsupported argument ... An argument named "project_id" is not expected here". The line is removed from every
+    steps order that also has a process_id.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        if STEPS_ORDER_PROCESS_ID_LINE_REGEX.search(block):
+            block = STEPS_ORDER_PROJECT_ID_LINE_REGEX.sub("", block)
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
+
+
+CHANNEL_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_channel"\s+"(?P<label>\w+)"\s*\{')
+CHANNEL_LOOKUP_COUNT_REGEX = re.compile(
+    r'(?m)^([ \t]*count[ \t]*=[ \t]*)"\$\{length\(data\.octopusdeploy_channels\.\w+\.channels\)[ \t]*!=[ \t]*0[ \t]*\?[ \t]*0[ \t]*:[ \t]*1\}"'
+)
+CHANNEL_PROJECT_LOOKUP_REGEX = re.compile(r"data\.octopusdeploy_projects\.(?P<label>\w+)\.projects")
+
+
+def fix_channel_count_depending_on_new_project(config):
+    """
+    A channel is looked up by project id, and the project id of a project that is created in the same run is not known
+    until apply. The count of the channel, "length(data.octopusdeploy_channels.X.channels) != 0 ? 0 : 1", then
+    depends on an unknown value and the plan fails with "Invalid count argument ... depends on resource attributes
+    that cannot be determined until apply". The count follows the lookup of the project instead, as the sample channels
+    do: the channel is created when the project is.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        count = CHANNEL_LOOKUP_COUNT_REGEX.search(block)
+        project_id = re.search(r"(?m)^[ \t]*project_id[ \t]*=[ \t]*(?P<value>.+)$", block)
+        project = CHANNEL_PROJECT_LOOKUP_REGEX.search(project_id.group("value")) if project_id else None
+        if count and project:
+            replacement = (
+                f'{count.group(1)}"${{length(data.octopusdeploy_projects.{project.group("label")}.projects) != 0 ? 0 : 1}}"'
+            )
+            block = block[: count.start()] + replacement + block[count.end() :]
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
+
+
+JSONENCODE_OBJECT_REGEX = re.compile(r"jsonencode\(\s*\{")
+UNQUOTED_DOTTED_KEY_REGEX = re.compile(r"(?m)^([ \t]*)([A-Za-z_][\w-]*(?:\.[\w-]+)+)([ \t]*=)")
+
+
+def quote_dotted_keys_in_jsonencode(config):
+    """
+    Octopus names such as Network.Cidr are written as the keys of a jsonencode({ ... }) object, for example in
+    "Octopus.Action.Terraform.TemplateParameters". Unquoted, OpenTofu reads Network.Cidr as a reference and the plan
+    fails with "Reference to undeclared resource ... There is no managed resource". Dotted keys inside a jsonencode
+    object are quoted.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = JSONENCODE_OBJECT_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        body = result[header.end() : end]
+        fixed = UNQUOTED_DOTTED_KEY_REGEX.sub(lambda match: f'{match.group(1)}"{match.group(2)}"{match.group(3)}', body)
+        result = result[: header.end()] + fixed + result[end:]
+        position = header.end() + len(fixed)
+
+    return result
+
+
 TERRAFORM_STEP_TYPES = (
     "Octopus.TerraformApply",
     "Octopus.TerraformDestroy",
@@ -3408,8 +3623,484 @@ def disable_version_controlled_projects(config):
     return result
 
 
+PROJECT_DESCRIPTION_WITH_EXTRA_TEXT_REGEX = re.compile(
+    r'(?P<head>\bdescription[ \t]*=[ \t]*)"\$\{var\.(?P<base>\w+)_description_prefix\}\$\{var\.(?P=base)_description\}'
+    r'\$\{var\.(?P=base)_description_suffix\}(?P<extra>[^"\n]+)"'
+)
+
+
+def fix_project_description_with_extra_text(config):
+    """
+    The example projects build a description from three variables, `${var.X_description_prefix}${var.X_description}
+    ${var.X_description_suffix}`. LLMs keep that expression and append their own description after it, but the
+    variables are empty, so the description starts with a space. Octopus trims it and the apply fails with
+    `.description: was cty.StringVal(" text"), but now cty.StringVal("text")`. The extra text is moved into the
+    default of the `X_description` variable and removed from the expression.
+    """
+
+    result = config
+    while True:
+        match = PROJECT_DESCRIPTION_WITH_EXTRA_TEXT_REGEX.search(result)
+        if not match or not match.group("extra").strip():
+            break
+
+        base = match.group("base")
+        extra = match.group("extra").strip()
+        expression = (
+            f'{match.group("head")}"${{var.{base}_description_prefix}}${{var.{base}_description}}${{var.{base}_description_suffix}}"'
+        )
+        result = result[: match.start()] + expression + result[match.end() :]
+
+        header = re.search(rf'variable\s+"{re.escape(base)}_description"\s*\{{', result)
+        if not header:
+            continue
+        end = find_block_end(result, header.end())
+        if not end:
+            continue
+        block = result[header.start() : end]
+        default = re.search(r'(?m)^([ \t]*default[ \t]*=[ \t]*)"(?P<value>[^"\n]*)"', block)
+        if default:
+            value = f"{default.group('value')} {extra}".strip()
+            block = block[: default.start()] + f'{default.group(1)}"{value}"' + block[default.end() :]
+        else:
+            block = block[: end - header.start() - 1].rstrip() + f'\n  default = "{extra}"\n}}'
+        result = result[: header.start()] + block + result[end:]
+
+    return result
+
+
+ANY_PROCESS_STEP_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_process(?:_templated)?_step"\s+"\w+"\s*\{')
+CONDITION_EXPRESSION_LINE_REGEX = re.compile(
+    r'(?m)^[ \t]*"Octopus\.Step\.ConditionVariableExpression"[ \t]*=[ \t]*(?P<value>"(?:[^"\\\n]|\\.)*")[ \t]*\n'
+)
+PROPERTIES_BLOCK_OPEN_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)properties[ \t]*=[ \t]*\{[ \t]*(?P<close>\})?[ \t]*\n")
+
+
+def move_condition_expression_to_properties(config):
+    """
+    `Octopus.Step.ConditionVariableExpression` only works in the `properties` of a step. Written in
+    `execution_properties` it is ignored, and a step with `condition = "Variable"` fails with
+    "Please add a variable expression for your variable run condition". The expression is moved to `properties`.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = ANY_PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        execution = EXECUTION_PROPERTIES_REGEX.search(block)
+        if execution:
+            execution_end = find_block_end(block, execution.end() - 1)
+            line = CONDITION_EXPRESSION_LINE_REGEX.search(block, execution.end(), execution_end) if execution_end else None
+            if line:
+                value = line.group("value")
+                block = block[: line.start()] + block[line.end() :]
+                entry = lambda indent: f'{indent}"Octopus.Step.ConditionVariableExpression" = {value}\n'
+                properties = PROPERTIES_BLOCK_OPEN_REGEX.search(block)
+                if properties and properties.group("close"):
+                    indent = properties.group("indent")
+                    replacement = f"{indent}properties = {{\n{entry(indent + '  ')}{indent}}}\n"
+                    block = block[: properties.start()] + replacement + block[properties.end() :]
+                elif properties:
+                    block = block[: properties.end()] + entry(properties.group("indent") + "  ") + block[properties.end() :]
+                else:
+                    execution = EXECUTION_PROPERTIES_REGEX.search(block)
+                    indent = execution.group(1)
+                    replacement = f"{indent}properties = {{\n{entry(indent + '  ')}{indent}}}\n"
+                    block = block[: execution.start()] + replacement + block[execution.start() :]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+STEPS_LIST_START_REGEX = re.compile(r"(?m)^[ \t]*steps[ \t]*=[ \t]*\[")
+QUOTED_STRING_REGEX = re.compile(r'"(?:[^"\\]|\\.)*"')
+NON_STEP_RESOURCE_REFERENCE_REGEX = re.compile(r"(?<![\w.])octopusdeploy_(?!process_step\b|process_templated_step\b)\w+\.")
+
+
+def remove_non_step_references_from_steps_order(config):
+    """
+    The `steps` of an octopusdeploy_process_steps_order must be the ids of steps in that process. LLMs list the id of
+    a runbook (or another resource) as if it were a step, and the apply fails with
+    "Ordered step with id '...' is not part of the process". Entries that reference anything other than a
+    octopusdeploy_process_step or octopusdeploy_process_templated_step are removed.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        start = STEPS_LIST_START_REGEX.search(block)
+        if start:
+            depth = 1
+            index = start.end()
+            while index < len(block) and depth > 0:
+                if block[index] == "[":
+                    depth += 1
+                elif block[index] == "]":
+                    depth -= 1
+                index += 1
+            if depth == 0:
+                body = block[start.end() : index - 1]
+                entries = QUOTED_STRING_REGEX.findall(body)
+                kept = [entry for entry in entries if not NON_STEP_RESOURCE_REFERENCE_REGEX.search(entry)]
+                if len(kept) != len(entries):
+                    prefix = block[: start.end()]
+                    block = prefix + ", ".join(kept) + block[index - 1 :]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+PROCESS_STEP_LABEL_REGEX = re.compile(r'resource\s+"octopusdeploy_process_step"\s+"(?P<label>\w+)"\s*\{')
+
+
+def remove_deploy_release_steps_without_project(config):
+    """
+    A "Deploy a release" step (Octopus.DeployRelease) without "Octopus.Action.DeployRelease.ProjectId" fails with
+    "Please provide a project to deploy", and one failing step makes the recovery pass strip the whole deployment
+    process. LLMs invent such steps, usually in a runbook, when the prompt names no project to deploy. The step is
+    removed together with its entries in the steps order and the depends_on of other steps.
+    """
+
+    result = config
+    removed = []
+    position = 0
+    while True:
+        header = PROCESS_STEP_LABEL_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) == "Octopus.DeployRelease"
+            and "Octopus.Action.DeployRelease.ProjectId" not in block
+        ):
+            removed.append(header.group("label"))
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            position = end
+
+    for label in removed:
+        reference = re.compile(rf"(?<![\w.])octopusdeploy_process_step\.{re.escape(label)}(?![\w])")
+        position = 0
+        while True:
+            header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+            if not header:
+                break
+            end = find_block_end(result, header.end())
+            if not end:
+                position = header.end()
+                continue
+
+            block = result[header.start() : end]
+            start = STEPS_LIST_START_REGEX.search(block)
+            if start:
+                depth = 1
+                close = start.end()
+                while close < len(block) and depth > 0:
+                    if block[close] == "[":
+                        depth += 1
+                    elif block[close] == "]":
+                        depth -= 1
+                    close += 1
+                close = close - 1 if depth == 0 else -1
+                body = block[start.end() : close] if close != -1 else ""
+                entries = QUOTED_STRING_REGEX.findall(body)
+                kept = [entry for entry in entries if not reference.search(entry)]
+                if close != -1 and len(kept) != len(entries):
+                    block = block[: start.end()] + ", ".join(kept) + block[close:]
+            result = result[: header.start()] + block + result[end:]
+            position = header.start() + len(block)
+
+        result = re.sub(
+            rf"(?m)^([ \t]*depends_on[ \t]*=[ \t]*\[)(.*)\]",
+            lambda match: match.group(0)
+            if not reference.search(match.group(2))
+            else match.group(1)
+            + ", ".join(item for item in re.split(r"\s*,\s*", match.group(2).strip()) if item and not reference.search(item))
+            + "]",
+            result,
+        )
+
+    return result
+
+
+COMMUNITY_TEMPLATE_RESOURCE_REFERENCE_REGEX = re.compile(r"(?<![\w.])octopusdeploy_community_step_template\.(?P<label>\w+)\[0\]")
+
+
+def add_missing_community_step_template_resource(config):
+    """
+    A templated step for a community step template falls back to `octopusdeploy_community_step_template.X[0]` when the
+    template is not installed in the space, so a managed resource must exist next to the two data sources. LLMs often
+    write the data sources and the step but leave the resource out, and the plan fails with "Reference to undeclared
+    resource ... There is no managed resource". The resource is added when the matching data source exists.
+    """
+
+    result = config
+    for label in dict.fromkeys(match.group("label") for match in COMMUNITY_TEMPLATE_RESOURCE_REFERENCE_REGEX.finditer(config)):
+        if re.search(rf'resource\s+"octopusdeploy_community_step_template"\s+"{re.escape(label)}"', result):
+            continue
+        if not re.search(rf'data\s+"octopusdeploy_community_step_template"\s+"{re.escape(label)}"', result):
+            continue
+
+        template_label = label.replace("communitysteptemplate_", "steptemplate_", 1)
+        has_template_data = re.search(rf'data\s+"octopusdeploy_step_template"\s+"{re.escape(template_label)}"', result)
+        count = (
+            f"${{data.octopusdeploy_step_template.{template_label}.step_template != null ? 0 : 1}}"
+            if has_template_data
+            else "1"
+        )
+        resource = (
+            f'resource "octopusdeploy_community_step_template" "{label}" {{\n'
+            f'  community_action_template_id = "${{length(data.octopusdeploy_community_step_template.{label}.steps) != 0 ? '
+            f'data.octopusdeploy_community_step_template.{label}.steps[0].id : null}}"\n'
+            f'  count                        = "{count}"\n'
+            "}\n"
+        )
+        result = result.rstrip("\n") + "\n" + resource
+    return result
+
+
+STEP_CHANNELS_LIST_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)channels[ \t]*=[ \t]*\[(?P<items>[^\n\]]*(?:\[[^\n\]]*\][^\n\]]*)*)\][ \t]*$")
+STEP_ENVIRONMENTS_NULL_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)environments([ \t]*)=[ \t]*null[ \t]*$")
+
+
+def move_environments_from_step_channels(config):
+    """
+    `channels` of a step takes channel ids, but LLMs put the environments a step is scoped to in it ("only in Prod"),
+    which fails the apply. When every entry of `channels` refers to an environment it is moved to `environments`.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = ANY_PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        channels = STEP_CHANNELS_LIST_REGEX.search(block)
+        if channels and "environment" in channels.group("items") and "octopusdeploy_channel" not in channels.group("items"):
+            items = channels.group("items")
+            replaced = block[: channels.start()] + f"{channels.group('indent')}channels = null" + block[channels.end() :]
+            environments = STEP_ENVIRONMENTS_NULL_REGEX.search(replaced)
+            if environments:
+                replaced = (
+                    replaced[: environments.start()]
+                    + f"{environments.group('indent')}environments{environments.group(2)}= [{items}]"
+                    + replaced[environments.end() :]
+                )
+            block = replaced
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
 MISSING_SCRIPT_BODY_PLACEHOLDER = 'echo "No script was provided for this step."'
 SCRIPT_SOURCE_VALUE_REGEX = re.compile(r'"Octopus\.Action\.Script\.ScriptSource"[ \t]*=[ \t]*"([^"]*)"')
+
+
+TERRAFORM_STEP_TYPES = ("Octopus.TerraformPlan", "Octopus.TerraformApply", "Octopus.TerraformDestroy", "Octopus.TerraformPlanDestroy")
+AZURE_TERRAFORM_ACCOUNT_VARIABLE = "Project.Azure.Account"
+SERVICE_PRINCIPAL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_azure_service_principal"\s+"(?P<label>\w+)"\s*\{')
+VARIABLE_OWNER_REGEX = re.compile(r"^[ \t]*owner_id[ \t]*=[ \t]*(?P<value>.+)$", re.MULTILINE)
+VARIABLE_COUNT_REGEX = re.compile(r"^[ \t]*count[ \t]*=[ \t]*(?P<value>.+)$", re.MULTILINE)
+
+
+def add_missing_azure_account_variable_to_terraform_steps(config):
+    """
+    A Terraform step that uses an Azure account ("Octopus.Action.Terraform.AzureAccount" = "True" or ManagedAccount
+    "Azure") without "Octopus.Action.AzureAccount.Variable" fails with "Please specify an Azure account variable", and
+    one failing step makes the recovery pass strip the whole deployment process. The property is set to the name of a
+    project variable of type AzureAccount, which is declared too when the configuration creates an Azure service
+    principal and has a project variable to copy the owner from.
+    """
+
+    result = config
+    changed = False
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        properties = EXECUTION_PROPERTIES_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) in TERRAFORM_STEP_TYPES
+            and properties
+            and "Octopus.Action.AzureAccount.Variable" not in block
+            and re.search(r'"Octopus\.Action\.Terraform\.(?:AzureAccount"[ \t]*=[ \t]*"True|ManagedAccount"[ \t]*=[ \t]*"Azure)"', block)
+        ):
+            indent = properties.group(1) + "  "
+            block = (
+                block[: properties.end()]
+                + f'{indent}"Octopus.Action.AzureAccount.Variable" = "{AZURE_TERRAFORM_ACCOUNT_VARIABLE}"\n'
+                + block[properties.end() :]
+            )
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+            changed = True
+        position = end
+
+    if not changed or re.search(rf'name\s*=\s*"{re.escape(AZURE_TERRAFORM_ACCOUNT_VARIABLE)}"', result):
+        return result
+
+    principal = SERVICE_PRINCIPAL_HEADER_REGEX.search(result)
+    variable = re.search(r'resource\s+"octopusdeploy_variable"\s+"\w+"\s*\{', result)
+    if not principal or not variable:
+        return result
+    variable_end = find_block_end(result, variable.end())
+    if not variable_end:
+        return result
+    body = result[variable.end() : variable_end]
+    owner = VARIABLE_OWNER_REGEX.search(body)
+    count = VARIABLE_COUNT_REGEX.search(body)
+    if not owner or not count:
+        return result
+
+    label = principal.group("label")
+    return (
+        result.rstrip("\n")
+        + "\n"
+        + f'resource "octopusdeploy_variable" "{label}_terraform_account_variable" {{\n'
+        + f"  count        = {count.group('value')}\n"
+        + f"  owner_id     = {owner.group('value')}\n"
+        + f'  value        = "${{length(data.octopusdeploy_accounts.{label}.accounts) != 0 ? '
+        + f'data.octopusdeploy_accounts.{label}.accounts[0].id : octopusdeploy_azure_service_principal.{label}[0].id}}"\n'
+        + f'  name         = "{AZURE_TERRAFORM_ACCOUNT_VARIABLE}"\n'
+        + '  type         = "AzureAccount"\n'
+        + '  description  = "The Azure account used by the Terraform steps."\n'
+        + "  is_sensitive = false\n"
+        + "  lifecycle {\n"
+        + "    ignore_changes  = [sensitive_value]\n"
+        + "    prevent_destroy = true\n"
+        + "  }\n"
+        + "}\n"
+    )
+
+
+AZURE_ACCOUNT_STEP_TYPES = ("Octopus.AzurePowerShell", "Octopus.AzureAppService", "Octopus.AzureResourceGroup")
+
+
+def add_missing_azure_account_to_azure_steps(config):
+    """
+    An Azure step without "Octopus.Action.Azure.AccountId" fails with "Please select an Account or provide a variable
+    expression for the Account ID to use", and one failing step makes the recovery pass strip the whole deployment
+    process. LLMs write Azure steps without the account when the prompt names an account they did not declare. The
+    account is set to the "Project.Azure.Account" variable expression that the Azure starter projects use.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        properties = EXECUTION_PROPERTIES_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) in AZURE_ACCOUNT_STEP_TYPES
+            and properties
+            and "Octopus.Action.Azure.AccountId" not in block
+        ):
+            indent = properties.group(1) + "  "
+            block = (
+                block[: properties.end()]
+                + f'{indent}"Octopus.Action.Azure.AccountId" = "#{{Project.Azure.Account}}"\n'
+                + block[properties.end() :]
+            )
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
+
+
+def add_missing_git_script_source(config):
+    """
+    A script step that runs a file from a Git repository needs "Octopus.Action.Script.ScriptSource" = "GitRepository".
+    LLMs copy the starter's Git script step but drop that property, so Octopus treats the step as inline and fails with
+    "Please provide the script body to run. Providing a script file name is not valid for inline scripts", which makes
+    the recovery pass strip the whole deployment process. The missing script source is added.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        step_type = STEP_TYPE_REGEX.search(block)
+        properties = EXECUTION_PROPERTIES_REGEX.search(block)
+        if (
+            step_type
+            and step_type.group(1) == "Octopus.Script"
+            and properties
+            and "Octopus.Action.GitRepository.Source" in block
+            and "Octopus.Action.Script.ScriptFileName" in block
+            and not SCRIPT_SOURCE_VALUE_REGEX.search(block)
+        ):
+            indent = properties.group(1) + "  "
+            block = (
+                block[: properties.end()]
+                + f'{indent}"Octopus.Action.Script.ScriptSource" = "GitRepository"\n'
+                + block[properties.end() :]
+            )
+            result = result[: header.start()] + block + result[end:]
+            end = header.start() + len(block)
+        position = end
+
+    return result
 
 
 def add_missing_script_body(config):
