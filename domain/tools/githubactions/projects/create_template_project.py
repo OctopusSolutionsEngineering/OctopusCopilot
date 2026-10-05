@@ -95,6 +95,8 @@ from domain.sanitizers.terraform import (
     remove_container_with_only_null_values,
     fill_empty_terraform_template,
     add_missing_script_body,
+    disable_version_controlled_projects,
+    remove_template_parameters_from_execution_properties,
     fix_aws_ecr_feed_attributes,
     add_missing_terraform_template,
     remove_duplicate_lifecycle_phases,
@@ -976,6 +978,7 @@ def sanitize_configuration(configuration):
     configuration = add_missing_script_body(configuration)
     configuration = fix_quoted_condition_expression(configuration)
     configuration = remove_type_from_templated_steps(configuration)
+    configuration = remove_template_parameters_from_execution_properties(configuration)
     configuration = remove_named_packages_from_package_deploy_steps(configuration)
     configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
     configuration = fix_steps_order_project_id(configuration)
@@ -1029,6 +1032,7 @@ def sanitize_configuration(configuration):
     # Remove empty string default values
     configuration = fix_empty_strings(configuration)
     configuration = fix_blank_resource_names(configuration)
+    configuration = disable_version_controlled_projects(configuration)
     configuration = fix_aws_ecr_feed_attributes(configuration)
     configuration = remove_duplicate_lifecycle_phases(configuration)
     configuration = add_missing_git_credential_username(configuration)

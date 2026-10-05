@@ -12,6 +12,8 @@ from domain.sanitizers.terraform import (  # noqa: E402
     add_missing_s3_package_options,
     fill_empty_terraform_template,
     add_missing_script_body,
+    disable_version_controlled_projects,
+    remove_template_parameters_from_execution_properties,
     fix_aws_ecr_feed_attributes,
     add_missing_terraform_template,
     remove_duplicate_lifecycle_phases,
@@ -2027,3 +2029,103 @@ class TestFixAwsEcrFeedAttributes(unittest.TestCase):
     def test_ignores_other_feeds(self):
         config = 'resource "octopusdeploy_docker_container_registry" "f" {\n  feed_uri = "https://x"\n}\n'
         self.assertEqual(fix_aws_ecr_feed_attributes(config), config)
+
+
+class TestRemoveTemplateParametersFromExecutionProperties(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_templated_step" "process_step_t" {\n'
+        '  name = "T"\n'
+        "  execution_properties = {\n"
+        '    "Octopus.Action.RunOnServer" = "true"\n'
+        '    "Blue.Name" = "Blue"\n'
+        '    "Api.Key" = "#{Project.Key}"\n'
+        "  }\n"
+        "  parameters = {\n"
+        '    "Blue.Name" = "Blue"\n'
+        '    "Api.Key" = "#{Project.Key}"\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_removes_parameters_repeated_in_execution_properties(self):
+        result = remove_template_parameters_from_execution_properties(self.STEP)
+        self.assertEqual(result.count('"Blue.Name"'), 1)
+        self.assertEqual(result.count('"Api.Key"'), 1)
+        self.assertIn('"Octopus.Action.RunOnServer" = "true"', result)
+        self.assertTrue(result.index("parameters") < result.index('"Blue.Name"'))
+
+    def test_keeps_action_settings_that_are_also_parameters(self):
+        config = (
+            'resource "octopusdeploy_process_templated_step" "t" {\n'
+            '  execution_properties = {\n    "Octopus.Action.RunOnServer" = "true"\n  }\n'
+            '  parameters = {\n    "Octopus.Action.RunOnServer" = "true"\n  }\n}\n'
+        )
+        self.assertEqual(remove_template_parameters_from_execution_properties(config), config)
+
+    def test_keeps_a_step_without_repeats(self):
+        config = (
+            'resource "octopusdeploy_process_templated_step" "t" {\n'
+            '  execution_properties = {\n    "Octopus.Action.RunOnServer" = "true"\n  }\n'
+            '  parameters = {\n    "A" = "1"\n  }\n}\n'
+        )
+        self.assertEqual(remove_template_parameters_from_execution_properties(config), config)
+
+    def test_keeps_a_step_without_parameters(self):
+        config = (
+            'resource "octopusdeploy_process_templated_step" "t" {\n'
+            '  execution_properties = {\n    "A" = "1"\n  }\n}\n'
+        )
+        self.assertEqual(remove_template_parameters_from_execution_properties(config), config)
+
+    def test_ignores_regular_steps(self):
+        config = (
+            'resource "octopusdeploy_process_step" "s" {\n'
+            '  execution_properties = {\n    "A" = "1"\n  }\n  parameters = {\n    "A" = "1"\n  }\n}\n'
+        )
+        self.assertEqual(remove_template_parameters_from_execution_properties(config), config)
+
+
+class TestDisableVersionControlledProjects(unittest.TestCase):
+    PROJECT = (
+        'resource "octopusdeploy_project" "p" {\n'
+        '  name = "P"\n'
+        "  is_version_controlled = true\n"
+        "  git_username_password_persistence_settings {\n"
+        '    url = "https://github.com/example/x.git"\n'
+        '    username = "u"\n'
+        '    password = "Change Me!"\n'
+        '    base_path = ".octopus"\n'
+        "  }\n"
+        "  connectivity_policy {\n"
+        "    allow_deployments_to_no_targets = true\n"
+        "  }\n"
+        "}\n"
+    )
+
+    def test_disables_version_control_and_removes_git_settings(self):
+        result = disable_version_controlled_projects(self.PROJECT)
+        self.assertIn("is_version_controlled = false", result)
+        self.assertNotIn("git_username_password_persistence_settings", result)
+        self.assertNotIn("github.com", result)
+        self.assertIn("connectivity_policy {", result)
+        self.assertIn('name = "P"', result)
+
+    def test_removes_library_and_anonymous_persistence_blocks(self):
+        config = self.PROJECT.replace("git_username_password_persistence_settings", "git_library_persistence_settings")
+        self.assertNotIn("persistence_settings", disable_version_controlled_projects(config))
+
+    def test_keeps_a_standard_project(self):
+        config = 'resource "octopusdeploy_project" "p" {\n  is_version_controlled = false\n}\n'
+        self.assertEqual(disable_version_controlled_projects(config), config)
+
+    def test_keeps_lifecycle_ignore_changes_for_the_git_password(self):
+        config = (
+            'resource "octopusdeploy_project" "p" {\n  is_version_controlled = false\n'
+            '  lifecycle {\n    ignore_changes = ["git_username_password_persistence_settings[0].password"]\n  }\n}\n'
+        )
+        self.assertEqual(disable_version_controlled_projects(config), config)
+
+    def test_ignores_other_resources(self):
+        config = 'resource "octopusdeploy_environment" "e" {\n  is_version_controlled = true\n}\n'
+        self.assertEqual(disable_version_controlled_projects(config), config)
+

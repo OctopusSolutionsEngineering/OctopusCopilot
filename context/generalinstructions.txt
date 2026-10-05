@@ -324,6 +324,7 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
   * "this step runs in parallel with the previous step"
   * "run this at the same time as the previous step"
   * "run concurrently with <the previous step's name>"
+  * `Add a step "Deploy Right" ... that runs in parallel with "Deploy Left"` (naming the earlier step in quotes) → "Deploy Right" is `StartWithPrevious` and directly follows "Deploy Left"
   * "this step and <previous step name> run together / simultaneously / side by side"
   A numbered list item saying "…, and must run in parallel with the previous step" is as binding as the annotated form. Do NOT require the exact phrase `Set the start trigger to ...`; leaving it `StartAfterPrevious` makes the process sequential and is always wrong.
 * Converse wordings mean `StartAfterPrevious` (a convergence step): "must wait for all previous steps to complete before it starts", "wait for all previous steps to complete, then start", "only after the previous steps finish".

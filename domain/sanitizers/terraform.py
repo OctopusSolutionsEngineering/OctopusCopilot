@@ -3315,6 +3315,99 @@ def fix_aws_ecr_feed_attributes(config):
     return result
 
 
+TEMPLATED_STEP_PARAMETERS_BLOCK_REGEX = re.compile(r"(?m)^[ \t]*parameters[ \t]*=[ \t]*\{[ \t]*\n")
+TEMPLATED_STEP_EXECUTION_PROPERTIES_BLOCK_REGEX = re.compile(r"(?m)^[ \t]*execution_properties[ \t]*=[ \t]*\{[ \t]*\n")
+ACTION_PROPERTY_PREFIXES = ("Octopus.Action.", "OctopusUseBundledTooling")
+PROPERTY_KEY_REGEX = re.compile(r'(?m)^[ \t]*"(?P<key>[^"\n]+)"[ \t]*=')
+
+
+def remove_template_parameters_from_execution_properties(config):
+    """
+    The settings of a step template are the `parameters` of an octopusdeploy_process_templated_step, and only action
+    settings such as Octopus.Action.RunOnServer belong in `execution_properties`. LLMs repeat the parameters in both,
+    and the provider drops the copies from execution_properties, which fails the apply with:
+    Provider produced inconsistent result after apply ... .execution_properties: element "X" has vanished.
+    Entries of execution_properties that are also parameters are removed, except action settings (Octopus.Action.*).
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        parameters = TEMPLATED_STEP_PARAMETERS_BLOCK_REGEX.search(block)
+        properties = TEMPLATED_STEP_EXECUTION_PROPERTIES_BLOCK_REGEX.search(block)
+        if parameters and properties:
+            parameters_end = find_block_end(block, parameters.end() - 1)
+            if parameters_end:
+                parameter_keys = {match.group("key") for match in PROPERTY_KEY_REGEX.finditer(block[parameters.end() : parameters_end])}
+                properties_end = find_block_end(block, properties.end() - 1)
+                if properties_end and parameter_keys:
+                    body = block[properties.end() : properties_end]
+                    kept = [
+                        line
+                        for line in body.splitlines(keepends=True)
+                        if not (
+                            (key := PROPERTY_KEY_REGEX.match(line))
+                            and key.group("key") in parameter_keys
+                            and not key.group("key").startswith(ACTION_PROPERTY_PREFIXES)
+                        )
+                    ]
+                    block = block[: properties.end()] + "".join(kept) + block[properties_end:]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+PROJECT_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_project"\s+"\w+"\s*\{')
+IS_VERSION_CONTROLLED_TRUE_REGEX = re.compile(r"(?m)^([ \t]*is_version_controlled[ \t]*=[ \t]*)true\b")
+GIT_PERSISTENCE_BLOCK_REGEX = re.compile(r"(?m)^[ \t]*git_\w*persistence_settings[ \t]*\{[ \t]*\n")
+
+
+def disable_version_controlled_projects(config):
+    """
+    The assistant never creates Config-as-Code projects: converting a project to version control authenticates to the
+    real Git repository, and the provider returns a database-backed project instead, which fails the apply with
+    "Provider produced inconsistent result after apply ... .is_version_controlled: was cty.True, but now cty.False".
+    Any project with is_version_controlled = true is made a standard project and its Git persistence blocks are removed.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = PROJECT_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        block = IS_VERSION_CONTROLLED_TRUE_REGEX.sub(r"\1false", block)
+        while True:
+            persistence = GIT_PERSISTENCE_BLOCK_REGEX.search(block)
+            if not persistence:
+                break
+            persistence_end = find_block_end(block, persistence.end() - 1)
+            if not persistence_end:
+                break
+            trailing = 1 if block[persistence_end : persistence_end + 1] == "\n" else 0
+            block = block[: persistence.start()] + block[persistence_end + trailing :]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
 MISSING_SCRIPT_BODY_PLACEHOLDER = 'echo "No script was provided for this step."'
 SCRIPT_SOURCE_VALUE_REGEX = re.compile(r'"Octopus\.Action\.Script\.ScriptSource"[ \t]*=[ \t]*"([^"]*)"')
 
