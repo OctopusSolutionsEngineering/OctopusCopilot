@@ -592,6 +592,45 @@ def fix_single_line_lifecycle2(config):
     )
 
 
+def wrap_bare_postconditions_in_lifecycle(config):
+    """
+    A postcondition block is only valid inside a lifecycle block, but the LLM sometimes places it directly in a
+    data source, which fails the plan with: Blocks of type "postcondition" are not expected here.
+    """
+
+    result = config
+    position = 0
+    while True:
+        match = re.compile(r"^([ \t]*)postcondition\s*\{", re.MULTILINE).search(result, position)
+        if not match:
+            return result
+
+        end = _find_closing_brace(result, match.end())
+        if end is None:
+            return result
+
+        # Look at the block that encloses this postcondition
+        depth = 0
+        enclosing = None
+        for index in range(match.start() - 1, -1, -1):
+            if result[index] == "}":
+                depth += 1
+            elif result[index] == "{":
+                if depth == 0:
+                    enclosing = result[:index].rstrip().rsplit("\n", 1)[-1]
+                    break
+                depth -= 1
+
+        if enclosing is not None and enclosing.strip().startswith("lifecycle"):
+            position = end
+            continue
+
+        indent = match.group(1)
+        wrapped = f"{indent}lifecycle {{\n{result[match.start():end]}\n{indent}}}"
+        result = result[: match.start()] + wrapped + result[end:]
+        position = match.start() + len(wrapped)
+
+
 def fix_single_line_retention_policy(config):
     """
     The LLM kept insisting on using a single line release_retention_policy block. This is not valid HCL2 syntax.
@@ -2099,62 +2138,7 @@ def fix_bare_environment_match_references(config):
     return BARE_ENVIRONMENT_MATCH_REFERENCE_REGEX.sub(replace, config)
 
 
-PROJECT_DATA_SOURCE_REGEX = re.compile(r'data\s+"octopusdeploy_projects"\s+"(?P<label>\w+)"\s*\{')
 PROJECT_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_project"\s+"(?P<label>\w+)"\s*\{')
-PARTIAL_NAME_REGEX = re.compile(r'^[ \t]*partial_name[ \t]*=[ \t]*(?P<value>"[^"\n]*")[ \t]*$', re.MULTILINE)
-ATTRIBUTE_LINE_REGEX = r"^[ \t]*{name}[ \t]*=[ \t]*(?P<value>.+)$"
-
-
-def add_missing_referenced_project_resources(config):
-    """
-    A step that deploys or runs another project uses the lookup-or-create form for that project, which refers to
-    octopusdeploy_project.<label>[0]. The LLM declares the data source for the other project but not the resource, and
-    the plan fails with "Reference to undeclared resource". A minimal project is declared that borrows the lifecycle and
-    project group of the first project in the configuration.
-    """
-
-    reference = None
-    for header in PROJECT_RESOURCE_HEADER_REGEX.finditer(config):
-        end = find_block_end(config, header.end())
-        if end:
-            body = config[header.end() : end]
-            lifecycle = re.search(ATTRIBUTE_LINE_REGEX.format(name="lifecycle_id"), body, re.MULTILINE)
-            group = re.search(ATTRIBUTE_LINE_REGEX.format(name="project_group_id"), body, re.MULTILINE)
-            if lifecycle and group:
-                reference = (lifecycle.group("value"), group.group("value"))
-                break
-    if not reference:
-        return config
-
-    additions = ""
-    for data in PROJECT_DATA_SOURCE_REGEX.finditer(config):
-        label = data.group("label")
-        if f"octopusdeploy_project.{label}[0]" not in config:
-            continue
-        if re.search(rf'resource\s+"octopusdeploy_project"\s+"{re.escape(label)}"\s*\{{', config):
-            continue
-        end = find_block_end(config, data.end())
-        partial = PARTIAL_NAME_REGEX.search(config[data.end() : end]) if end else None
-        if not partial:
-            continue
-
-        additions += (
-            f'resource "octopusdeploy_project" "{label}" {{\n'
-            f'  count                             = "${{length(data.octopusdeploy_projects.{label}.projects) != 0 ? 0 : 1}}"\n'
-            f"  name                              = {partial.group('value')}\n"
-            f"  is_version_controlled             = false\n"
-            f"  lifecycle_id                      = {reference[0]}\n"
-            f"  project_group_id                  = {reference[1]}\n"
-            f'  tenanted_deployment_participation = "Untenanted"\n'
-            f"  lifecycle {{\n"
-            f"    prevent_destroy = true\n"
-            f"  }}\n"
-            f"}}\n"
-        )
-
-    if not additions:
-        return config
-    return config.rstrip("\n") + "\n" + additions
 
 
 def fix_lifecycle_phase_without_environments(config):
@@ -3355,6 +3339,74 @@ def remove_duplicate_lifecycle_phases(config):
     return result
 
 
+EMPTY_CHANNEL_RULE_ATTRIBUTE_REGEX = re.compile(r'(?m)^[ \t]*(?:version_range|tag)[ \t]*=[ \t]*""[ \t]*\n')
+
+
+def remove_empty_attributes_from_channel_rules(config):
+    """
+    A channel rule with `version_range = ""` (or `tag = ""`) applies, but the provider returns null for the empty
+    attribute and the apply fails with "Provider produced inconsistent result after apply ... .rule[0].version_range:
+    was cty.StringVal(""), but now null". An empty version_range or tag is removed from the rules of every channel.
+    """
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        fixed = EMPTY_CHANNEL_RULE_ATTRIBUTE_REGEX.sub("", block)
+        if fixed != block:
+            result = result[: header.start()] + fixed + result[end:]
+            end = header.start() + len(fixed)
+        position = end
+
+    return result
+
+
+STEP_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_process(?:_templated)?_step"\s+"\w+"\s*\{')
+STEP_NAME_LINE_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<value>[^"\n]*)"[ \t]*$')
+STEP_SLUG_LINE_REGEX = re.compile(r'(?m)^[ \t]*slug[ \t]*=[ \t]*"(?P<value>[^"\n]*)"[ \t]*$')
+DEPLOYMENT_ACTION_LINE_REGEX = re.compile(r'(?m)^([ \t]*deployment_action[ \t]*=[ \t]*")([^"\n]*)(")')
+
+
+def fix_channel_rule_step_slugs(config):
+    """
+    The deployment_action of a channel version rule is the name of a step ("Deploy a Helm Chart"). LLMs write the slug
+    of the step instead ("deploy-a-helm-chart"), and the apply fails with "Channel version rule references step
+    'deploy-portal' which does not exist in the deployment process". A slug that is not the name of any step but is
+    the slug of one is replaced with the name of that step.
+    """
+
+    names = set()
+    slugs = {}
+    for header in STEP_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if not end:
+            continue
+        body = config[header.end() : end]
+        name = STEP_NAME_LINE_REGEX.search(body)
+        slug = STEP_SLUG_LINE_REGEX.search(body)
+        if name:
+            names.add(name.group("value"))
+            if slug:
+                slugs[slug.group("value")] = name.group("value")
+
+    def replace(match):
+        action = match.group(2)
+        if action in names or action not in slugs:
+            return match.group(0)
+        return match.group(1) + slugs[action] + match.group(3)
+
+    return DEPLOYMENT_ACTION_LINE_REGEX.sub(replace, config)
+
+
 STEPS_ORDER_PROJECT_ID_LINE_REGEX = re.compile(r"(?m)^[ \t]*project_id[ \t]*=.*\n")
 STEPS_ORDER_PROCESS_ID_LINE_REGEX = re.compile(r"(?m)^[ \t]*process_id[ \t]*=")
 
@@ -3794,55 +3846,6 @@ def remove_non_step_references_from_steps_order(config):
     return result
 
 
-PROCESS_STEP_LABEL_REGEX = re.compile(r'resource\s+"octopusdeploy_process_step"\s+"(?P<label>\w+)"\s*\{')
-
-
-def remove_deploy_release_steps_without_project(config):
-    """
-    A "Deploy a release" step (Octopus.DeployRelease) without "Octopus.Action.DeployRelease.ProjectId" fails with
-    "Please provide a project to deploy", and one failing step makes the recovery pass strip the whole deployment
-    process. LLMs invent such steps, usually in a runbook, when the prompt names no project to deploy. The step is
-    removed together with its entries in the steps order and the depends_on of other steps.
-    """
-
-    result, removed = _remove_deploy_release_step_blocks(config)
-    for label in removed:
-        reference = re.compile(rf"(?<![\w.])octopusdeploy_process_step\.{re.escape(label)}(?![\w])")
-        result = _remove_reference_from_steps_orders(result, reference)
-        result = _remove_reference_from_depends_on(result, reference)
-
-    return result
-
-
-def _remove_deploy_release_step_blocks(config):
-    result = config
-    removed = []
-    position = 0
-    while True:
-        header = PROCESS_STEP_LABEL_REGEX.search(result, position)
-        if not header:
-            break
-        end = find_block_end(result, header.end())
-        if not end:
-            position = header.end()
-            continue
-
-        block = result[header.start() : end]
-        step_type = STEP_TYPE_REGEX.search(block)
-        if (
-            step_type
-            and step_type.group(1) == "Octopus.DeployRelease"
-            and "Octopus.Action.DeployRelease.ProjectId" not in block
-        ):
-            removed.append(header.group("label"))
-            result = result[: header.start()] + result[end:]
-            position = header.start()
-        else:
-            position = end
-
-    return result, removed
-
-
 def _find_list_close(block, index):
     depth = 1
     while index < len(block) and depth > 0:
@@ -3852,42 +3855,6 @@ def _find_list_close(block, index):
             depth -= 1
         index += 1
     return index - 1 if depth == 0 else -1
-
-
-def _remove_reference_from_steps_orders(config, reference):
-    result = config
-    position = 0
-    while True:
-        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
-        if not header:
-            break
-        end = find_block_end(result, header.end())
-        if not end:
-            position = header.end()
-            continue
-
-        block = result[header.start() : end]
-        start = STEPS_LIST_START_REGEX.search(block)
-        close = _find_list_close(block, start.end()) if start else -1
-        if close != -1:
-            entries = QUOTED_STRING_REGEX.findall(block[start.end() : close])
-            kept = [entry for entry in entries if not reference.search(entry)]
-            if len(kept) != len(entries):
-                block = block[: start.end()] + ", ".join(kept) + block[close:]
-        result = result[: header.start()] + block + result[end:]
-        position = header.start() + len(block)
-
-    return result
-
-
-def _remove_reference_from_depends_on(config, reference):
-    def strip_reference(match):
-        if not reference.search(match.group(2)):
-            return match.group(0)
-        items = [item for item in re.split(r"\s*,\s*", match.group(2).strip()) if item and not reference.search(item)]
-        return match.group(1) + ", ".join(items) + "]"
-
-    return re.sub(r"(?m)^([ \t]*depends_on[ \t]*=[ \t]*\[)(.*)\]", strip_reference, config)
 
 
 COMMUNITY_TEMPLATE_RESOURCE_REFERENCE_REGEX = re.compile(r"(?<![\w.])octopusdeploy_community_step_template\.(?P<label>\w+)\[0\]")
@@ -3968,136 +3935,6 @@ def move_environments_from_step_channels(config):
 
 MISSING_SCRIPT_BODY_PLACEHOLDER = 'echo "No script was provided for this step."'
 SCRIPT_SOURCE_VALUE_REGEX = re.compile(r'"Octopus\.Action\.Script\.ScriptSource"[ \t]*=[ \t]*"([^"]*)"')
-
-
-TERRAFORM_STEP_TYPES = ("Octopus.TerraformPlan", "Octopus.TerraformApply", "Octopus.TerraformDestroy", "Octopus.TerraformPlanDestroy")
-AZURE_TERRAFORM_ACCOUNT_VARIABLE = "Project.Azure.Account"
-SERVICE_PRINCIPAL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_azure_service_principal"\s+"(?P<label>\w+)"\s*\{')
-VARIABLE_OWNER_REGEX = re.compile(r"^[ \t]*owner_id[ \t]*=[ \t]*(?P<value>.+)$", re.MULTILINE)
-VARIABLE_COUNT_REGEX = re.compile(r"^[ \t]*count[ \t]*=[ \t]*(?P<value>.+)$", re.MULTILINE)
-
-
-def add_missing_azure_account_variable_to_terraform_steps(config):
-    """
-    A Terraform step that uses an Azure account ("Octopus.Action.Terraform.AzureAccount" = "True" or ManagedAccount
-    "Azure") without "Octopus.Action.AzureAccount.Variable" fails with "Please specify an Azure account variable", and
-    one failing step makes the recovery pass strip the whole deployment process. The property is set to the name of a
-    project variable of type AzureAccount, which is declared too when the configuration creates an Azure service
-    principal and has a project variable to copy the owner from.
-    """
-
-    result = config
-    changed = False
-    position = 0
-    while True:
-        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
-        if not header:
-            break
-        end = find_block_end(result, header.end())
-        if not end:
-            position = header.end()
-            continue
-
-        block = result[header.start() : end]
-        step_type = STEP_TYPE_REGEX.search(block)
-        properties = EXECUTION_PROPERTIES_REGEX.search(block)
-        if (
-            step_type
-            and step_type.group(1) in TERRAFORM_STEP_TYPES
-            and properties
-            and "Octopus.Action.AzureAccount.Variable" not in block
-            and re.search(r'"Octopus\.Action\.Terraform\.(?:AzureAccount"[ \t]*=[ \t]*"True|ManagedAccount"[ \t]*=[ \t]*"Azure)"', block)
-        ):
-            indent = properties.group(1) + "  "
-            block = (
-                block[: properties.end()]
-                + f'{indent}"Octopus.Action.AzureAccount.Variable" = "{AZURE_TERRAFORM_ACCOUNT_VARIABLE}"\n'
-                + block[properties.end() :]
-            )
-            result = result[: header.start()] + block + result[end:]
-            end = header.start() + len(block)
-            changed = True
-        position = end
-
-    if not changed or re.search(rf'name\s*=\s*"{re.escape(AZURE_TERRAFORM_ACCOUNT_VARIABLE)}"', result):
-        return result
-
-    principal = SERVICE_PRINCIPAL_HEADER_REGEX.search(result)
-    variable = re.search(r'resource\s+"octopusdeploy_variable"\s+"\w+"\s*\{', result)
-    if not principal or not variable:
-        return result
-    variable_end = find_block_end(result, variable.end())
-    if not variable_end:
-        return result
-    body = result[variable.end() : variable_end]
-    owner = VARIABLE_OWNER_REGEX.search(body)
-    count = VARIABLE_COUNT_REGEX.search(body)
-    if not owner or not count:
-        return result
-
-    label = principal.group("label")
-    return (
-        result.rstrip("\n")
-        + "\n"
-        + f'resource "octopusdeploy_variable" "{label}_terraform_account_variable" {{\n'
-        + f"  count        = {count.group('value')}\n"
-        + f"  owner_id     = {owner.group('value')}\n"
-        + f'  value        = "${{length(data.octopusdeploy_accounts.{label}.accounts) != 0 ? '
-        + f'data.octopusdeploy_accounts.{label}.accounts[0].id : octopusdeploy_azure_service_principal.{label}[0].id}}"\n'
-        + f'  name         = "{AZURE_TERRAFORM_ACCOUNT_VARIABLE}"\n'
-        + '  type         = "AzureAccount"\n'
-        + '  description  = "The Azure account used by the Terraform steps."\n'
-        + "  is_sensitive = false\n"
-        + "  lifecycle {\n"
-        + "    ignore_changes  = [sensitive_value]\n"
-        + "    prevent_destroy = true\n"
-        + "  }\n"
-        + "}\n"
-    )
-
-
-AZURE_ACCOUNT_STEP_TYPES = ("Octopus.AzurePowerShell", "Octopus.AzureAppService", "Octopus.AzureResourceGroup")
-
-
-def add_missing_azure_account_to_azure_steps(config):
-    """
-    An Azure step without "Octopus.Action.Azure.AccountId" fails with "Please select an Account or provide a variable
-    expression for the Account ID to use", and one failing step makes the recovery pass strip the whole deployment
-    process. LLMs write Azure steps without the account when the prompt names an account they did not declare. The
-    account is set to the "Project.Azure.Account" variable expression that the Azure starter projects use.
-    """
-
-    result = config
-    position = 0
-    while True:
-        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
-        if not header:
-            break
-        end = find_block_end(result, header.end())
-        if not end:
-            position = header.end()
-            continue
-
-        block = result[header.start() : end]
-        step_type = STEP_TYPE_REGEX.search(block)
-        properties = EXECUTION_PROPERTIES_REGEX.search(block)
-        if (
-            step_type
-            and step_type.group(1) in AZURE_ACCOUNT_STEP_TYPES
-            and properties
-            and "Octopus.Action.Azure.AccountId" not in block
-        ):
-            indent = properties.group(1) + "  "
-            block = (
-                block[: properties.end()]
-                + f'{indent}"Octopus.Action.Azure.AccountId" = "#{{Project.Azure.Account}}"\n'
-                + block[properties.end() :]
-            )
-            result = result[: header.start()] + block + result[end:]
-            end = header.start() + len(block)
-        position = end
-
-    return result
 
 
 def add_missing_git_script_source(config):

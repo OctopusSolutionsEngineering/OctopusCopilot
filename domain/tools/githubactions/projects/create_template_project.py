@@ -58,12 +58,14 @@ from domain.sanitizers.terraform import (
     fix_bare_data_lookup_reference,
     fix_created_worker_pool_fallback,
     fix_lookup_worker_pool_default_fallback,
+    wrap_bare_postconditions_in_lifecycle,
     fix_process_step_container_block,
     fix_arm_template_source,
     fix_for_expression_over_empty_lookup,
-    add_missing_referenced_project_resources,
     fix_bare_environment_match_references,
     fix_channel_count_depending_on_new_project,
+    fix_channel_rule_step_slugs,
+    remove_empty_attributes_from_channel_rules,
     fix_lifecycle_phase_without_environments,
     fix_package_pre_deploy_script_property,
     fix_cloudformation_dotted_property_names,
@@ -98,14 +100,11 @@ from domain.sanitizers.terraform import (
     quote_dotted_package_keys,
     remove_container_with_only_null_values,
     fill_empty_terraform_template,
-    add_missing_azure_account_to_azure_steps,
-    add_missing_azure_account_variable_to_terraform_steps,
     add_missing_git_script_source,
     add_missing_script_body,
     add_missing_community_step_template_resource,
     move_environments_from_step_channels,
     quote_dotted_keys_in_jsonencode,
-    remove_deploy_release_steps_without_project,
     remove_non_step_references_from_steps_order,
     remove_project_id_from_process_steps_order,
     move_condition_expression_to_properties,
@@ -896,6 +895,8 @@ def sanitize_configuration(configuration):
     configuration = replace_access_and_secret_keys(configuration)
     # Azure account IDs must be UUIDs, even when the prompt supplies malformed values
     configuration = replace_invalid_azure_guids(configuration)
+    # A postcondition must be nested in a lifecycle block
+    configuration = wrap_bare_postconditions_in_lifecycle(configuration)
     # Prompt-named project groups emitted as lookup-only data sources must be created
     configuration = convert_prompt_named_project_group_lookup(configuration)
     # Recreate project group resources the LLM referenced but did not declare
@@ -996,8 +997,6 @@ def sanitize_configuration(configuration):
     configuration = remove_container_with_only_null_values(configuration)
     configuration = fill_empty_terraform_template(configuration)
     configuration = add_missing_terraform_template(configuration)
-    configuration = add_missing_azure_account_to_azure_steps(configuration)
-    configuration = add_missing_azure_account_variable_to_terraform_steps(configuration)
     configuration = add_missing_git_script_source(configuration)
     configuration = add_missing_script_body(configuration)
     configuration = fix_quoted_condition_expression(configuration)
@@ -1018,7 +1017,8 @@ def sanitize_configuration(configuration):
     # A lifecycle phase with no environments means all remaining environments, and only one phase may
     configuration = fix_bare_environment_match_references(configuration)
     configuration = fix_channel_count_depending_on_new_project(configuration)
-    configuration = add_missing_referenced_project_resources(configuration)
+    configuration = fix_channel_rule_step_slugs(configuration)
+    configuration = remove_empty_attributes_from_channel_rules(configuration)
     configuration = fix_lifecycle_phase_without_environments(configuration)
     # An inline ARM template step must say its template source
     configuration = fix_arm_template_source(configuration)
@@ -1063,7 +1063,6 @@ def sanitize_configuration(configuration):
     configuration = move_environments_from_step_channels(configuration)
     configuration = remove_non_step_references_from_steps_order(configuration)
     configuration = remove_project_id_from_process_steps_order(configuration)
-    configuration = remove_deploy_release_steps_without_project(configuration)
     configuration = quote_dotted_keys_in_jsonencode(configuration)
     configuration = move_condition_expression_to_properties(configuration)
     configuration = fix_project_description_with_extra_text(configuration)
