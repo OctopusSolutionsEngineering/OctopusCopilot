@@ -467,6 +467,8 @@ def create_template_project_callback(
             # Get a fresh password for the mock git server
             configuration = configure_mock_git_server(configuration)
 
+            log_query(create_template_project_callback.__name__, configuration)
+
             try:
                 if auto_apply:
                     response = await create_terraform_autoapply(
@@ -808,7 +810,10 @@ async def retry_terraform_plan(
     # The second pass output has the same problems as the first (masked values like slug = "02-ledger-*****",
     # placeholder credentials, and so on), so it must go through the same sanitization.
     configuration = sanitize_configuration(configuration)
+
     configuration = configure_mock_git_server(configuration)
+
+    log_query(create_template_project_callback.__name__, configuration)
 
     response = await create_terraform_plan(
         api_key,

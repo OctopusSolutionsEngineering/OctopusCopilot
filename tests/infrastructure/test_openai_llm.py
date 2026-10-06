@@ -20,6 +20,7 @@ class TestOpenAIBuild(unittest.TestCase):
         self.assertIsInstance(llm, ChatOpenAI)
         self.assertEqual(llm.model_name, "gpt-5")
         self.assertEqual(llm.openai_api_base, "https://api.openai.com/v1")
+        self.assertIsNone(llm.max_tokens)
 
     def test_endpoint_and_model_env_override(self):
         env = {
@@ -39,6 +40,12 @@ class TestOpenAIBuild(unittest.TestCase):
             llm = build_llm(OPENAI_PROJECT_SERVICE)
 
         self.assertIsNone(llm.temperature)
+
+    def test_max_tokens_env_override(self):
+        with mock.patch.dict(os.environ, {"OPENAI_MAX_TOKENS": "4096"}):
+            llm = build_llm(OPENAI_PROJECT_SERVICE)
+
+        self.assertEqual(llm.max_tokens, 4096)
 
 
 if __name__ == "__main__":

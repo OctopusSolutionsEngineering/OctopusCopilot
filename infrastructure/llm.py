@@ -203,6 +203,12 @@ def get_openai_temperature():
     )
 
 
+def get_openai_max_tokens():
+    """Get the OpenAI maximum number of output tokens, or None to leave it to the model default."""
+    value = os.getenv("OPENAI_MAX_TOKENS", "")
+    return None if value in ("", "None") else string_to_int(value, None)
+
+
 def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -232,6 +238,7 @@ def build_openai_llm():
         model=get_openai_model(),
         base_url=get_openai_endpoint(),
         api_key=get_openai_api_key(),
+        max_tokens=get_openai_max_tokens(),
     )
 
 
