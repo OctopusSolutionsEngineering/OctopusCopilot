@@ -6,7 +6,7 @@ from langchain_anthropic import ChatAnthropic
 from langchain_classic.agents import create_openai_tools_agent
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_ollama import ChatOllama
-from langchain_openai import AzureChatOpenAI
+from langchain_openai import AzureChatOpenAI, ChatOpenAI
 from openai import RateLimitError
 from retry import retry
 
@@ -35,6 +35,7 @@ NO_FUNCTION_RESPONSE = (
 AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 OLLAMA_PROJECT_SERVICE = "ollama_project"
+OPENAI_PROJECT_SERVICE = "openai_project"
 AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
@@ -175,6 +176,33 @@ def get_ollama_reasoning():
     return reasoning
 
 
+def get_openai_endpoint():
+    """Get the OpenAI-compatible endpoint, falling back to the public OpenAI API."""
+    return os.getenv("OPENAI_ENDPOINT") or "https://api.openai.com/v1"
+
+
+def get_openai_api_key():
+    """
+    Get the OpenAI API key. Self-hosted OpenAI-compatible servers often do not require a key, but the client
+    rejects an empty one, so a placeholder is used when none is set.
+    """
+    return os.getenv("OPENAI_API_KEY") or "not-needed"
+
+
+def get_openai_model():
+    """Get the OpenAI model to query, falling back to the default model."""
+    return os.getenv("OPENAI_MODEL", "gpt-5")
+
+
+def get_openai_temperature():
+    """Get the OpenAI temperature, following the string_to_int convention used by the other builders."""
+    return (
+        None
+        if os.getenv("OPENAI_TEMPERATURE", "") == "None"
+        else string_to_int(os.getenv("OPENAI_TEMPERATURE", "0"), 0)
+    )
+
+
 def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -190,7 +218,21 @@ def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == OLLAMA_PROJECT_SERVICE:
         return build_ollama_llm(ollama_model)
 
+    # An OpenAI-compatible endpoint is configured with a URL, so it has no regional variants.
+    if purpose == OPENAI_PROJECT_SERVICE:
+        return build_openai_llm()
+
     return build_azure_general_llm(region)
+
+
+def build_openai_llm():
+    # The URL is configurable so any OpenAI-compatible server (OpenAI itself, vLLM, LM Studio, a proxy) can be used.
+    return ChatOpenAI(
+        temperature=get_openai_temperature(),
+        model=get_openai_model(),
+        base_url=get_openai_endpoint(),
+        api_key=get_openai_api_key(),
+    )
 
 
 def build_ollama_llm(ollama_model=None):
