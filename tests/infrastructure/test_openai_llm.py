@@ -21,6 +21,8 @@ class TestOpenAIBuild(unittest.TestCase):
         self.assertEqual(llm.model_name, "gpt-5")
         self.assertEqual(llm.openai_api_base, "https://api.openai.com/v1")
         self.assertIsNone(llm.max_tokens)
+        self.assertIsNone(llm.reasoning_effort)
+        self.assertIsNone(llm.reasoning)
 
     def test_endpoint_and_model_env_override(self):
         env = {
@@ -46,6 +48,26 @@ class TestOpenAIBuild(unittest.TestCase):
             llm = build_llm(OPENAI_PROJECT_SERVICE)
 
         self.assertEqual(llm.max_tokens, 4096)
+
+    def test_reasoning_effort_env_override(self):
+        with mock.patch.dict(os.environ, {"OPENAI_REASONING_EFFORT": "high"}):
+            llm = build_llm(OPENAI_PROJECT_SERVICE)
+
+        self.assertEqual(llm.reasoning_effort, "high")
+        self.assertIsNone(llm.reasoning)
+
+    def test_reasoning_with_responses_api(self):
+        env = {
+            "OPENAI_RESPONSES": "true",
+            "OPENAI_REASONING_EFFORT": "low",
+            "OPENAI_REASONING_SUMMARY": "concise",
+        }
+        with mock.patch.dict(os.environ, env):
+            llm = build_llm(OPENAI_PROJECT_SERVICE)
+
+        self.assertTrue(llm.use_responses_api)
+        self.assertIsNone(llm.reasoning_effort)
+        self.assertEqual(llm.reasoning, {"effort": "low", "summary": "concise"})
 
 
 if __name__ == "__main__":

@@ -209,6 +209,26 @@ def get_openai_max_tokens():
     return None if value in ("", "None") else string_to_int(value, None)
 
 
+def get_openai_reasoning_effort():
+    """
+    Get the OpenAI reasoning effort (e.g. "minimal", "low", "medium", "high"), or None to use the model default.
+    It is unset by default, because models without reasoning support reject the setting with a 400.
+    """
+    effort = os.getenv("OPENAI_REASONING_EFFORT", "").strip()
+    return None if effort.lower() in ("", "none") else effort
+
+
+def get_openai_reasoning_summary():
+    """Get the reasoning summary mode ("auto", "concise" or "detailed") used with the Responses API, or None."""
+    summary = os.getenv("OPENAI_REASONING_SUMMARY", "").strip()
+    return None if summary.lower() in ("", "none") else summary
+
+
+def get_openai_use_responses_api():
+    """Get whether to use the Responses API rather than Chat Completions."""
+    return os.getenv("OPENAI_RESPONSES", "").casefold() == "true"
+
+
 def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -233,12 +253,25 @@ def build_llm(purpose, region=None, prompt=None, ollama_model=None):
 
 def build_openai_llm():
     # The URL is configurable so any OpenAI-compatible server (OpenAI itself, vLLM, LM Studio, a proxy) can be used.
+    effort = get_openai_reasoning_effort()
+    summary = get_openai_reasoning_summary()
+    use_responses_api = get_openai_use_responses_api()
+
+    # Chat Completions takes a flat reasoning_effort, while the Responses API takes a reasoning object
+    # that can also request a summary.
+    reasoning = None
+    if use_responses_api and (effort or summary):
+        reasoning = {key: value for key, value in (("effort", effort), ("summary", summary)) if value}
+
     return ChatOpenAI(
         temperature=get_openai_temperature(),
         model=get_openai_model(),
         base_url=get_openai_endpoint(),
         api_key=get_openai_api_key(),
         max_tokens=get_openai_max_tokens(),
+        use_responses_api=use_responses_api,
+        reasoning_effort=None if use_responses_api else effort,
+        reasoning=reasoning,
     )
 
 
