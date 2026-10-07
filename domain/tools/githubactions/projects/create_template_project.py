@@ -140,7 +140,9 @@ from domain.sanitizers.terraform import (
     fix_single_line_lifecycle2,
     set_mock_git_server,
     fix_empty_namespace,
+    fix_empty_terraform_params,
     fix_use_guided_infrastructure,
+    fix_invalid_worker_type,
     fix_unescaped_variables,
     fix_yaml_source,
     set_mock_git_user_variable,
@@ -911,6 +913,8 @@ def sanitize_configuration(configuration):
     configuration = sanitize_kubernetes_yaml_step_config(configuration)
     # Remove empty namespace properties
     configuration = fix_empty_namespace(configuration)
+    # Remove empty Terraform parameter properties that Octopus drops
+    configuration = fix_empty_terraform_params(configuration)
     # Deal with the LLM using the wrong capitalisation for the account type
     configuration = sanitize_account_type(configuration)
     # Remove invalid slugs
@@ -935,6 +939,8 @@ def sanitize_configuration(configuration):
     configuration = fix_empty_teams(configuration)
     # Deal with the LLM returning an invalid use_guided_infrastructure setting
     configuration = fix_use_guided_infrastructure(configuration)
+    # Deal with the LLM returning an invalid dynamic worker pool worker_type
+    configuration = fix_invalid_worker_type(configuration)
     # Deal with the LLM returning a single line for a tentacle_retention_policy block
     configuration = fix_single_line_tentacle_retention_policy(configuration)
     # Deal with the LLM returning a single line for a connectivity_policy block

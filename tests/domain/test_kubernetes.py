@@ -225,6 +225,47 @@ class TestKubernetesSanitizer(unittest.TestCase):
         result = sanitize_name_attributes(input_config)
         self.assertEqual(result, expected_output)
 
+    def test_sanitize_name_attributes_matches_channel_rule_deployment_action(self):
+        # The channel rule must keep naming the step after the step name is sanitized
+        input_config = """
+        resource "octopusdeploy_process_step" "step" {
+          name = "Canary 5%"
+        }
+        resource "octopusdeploy_channel" "channel" {
+          rule {
+            action_package {
+              deployment_action = "Canary 5%"
+            }
+          }
+        }
+        resource "octopusdeploy_external_feed_create_release_trigger" "trigger" {
+          package {
+            deployment_action_slug = "canary-5"
+          }
+        }
+        """
+
+        expected_output = """
+        resource "octopusdeploy_process_step" "step" {
+          name = "Canary 5_"
+        }
+        resource "octopusdeploy_channel" "channel" {
+          rule {
+            action_package {
+              deployment_action = "Canary 5_"
+            }
+          }
+        }
+        resource "octopusdeploy_external_feed_create_release_trigger" "trigger" {
+          package {
+            deployment_action_slug = "canary-5"
+          }
+        }
+        """
+
+        result = sanitize_name_attributes(input_config)
+        self.assertEqual(result, expected_output)
+
     def test_sanitize_name_attributes_keeps_brackets_and_ampersands(self):
         # The Octopus API accepts brackets and ampersands in resource names, so
         # they must survive sanitization. Only the slash is replaced.

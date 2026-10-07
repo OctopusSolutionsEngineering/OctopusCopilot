@@ -104,8 +104,11 @@ def sanitize_name_attributes(config):
     # "username = ..." lines and stripped backslashes from Windows-style
     # DOMAIN\user account usernames (e.g. "SVC\\telemetry" became "SVC__telemetry"),
     # corrupting a value the prompt supplied verbatim.
+    # A channel rule's action_package names its step in "deployment_action", so it gets the same replacement as the
+    # step "name". Observed failure: step "Canary 5%" became "Canary 5_" while the rule kept "Canary 5%", and the API
+    # rejected the channel with "Channel version rule references step 'Canary 5%' which does not exist".
     yaml_configs = re.findall(
-        r"\bname\s*=\s*.*",
+        r"\b(?:name|deployment_action)\s*=\s*.*",
         config,
     )
 
@@ -134,7 +137,7 @@ def sanitize_name_attributes(config):
 
         # Octopus trims the name, so leading and trailing spaces make the provider report an inconsistent result:
         # Provider produced inconsistent result after apply ... .name was cty.StringVal("  My Name  "), but now ...
-        quoted = re.match(r'^(\bname\s*=\s*")(.*?)("\s*)$', line)
+        quoted = re.match(r'^(\b(?:name|deployment_action)\s*=\s*")(.*?)("\s*)$', line)
         if quoted and quoted.group(2) != quoted.group(2).strip():
             line = quoted.group(1) + quoted.group(2).strip() + quoted.group(3)
 
@@ -682,6 +685,20 @@ def fix_single_line_variable(config):
     )
 
 
+def fix_empty_terraform_params(config):
+    """
+    Octopus drops empty Terraform parameter properties, which fails the apply with:
+    Provider produced inconsistent result after apply ... .execution_properties: element
+    "Octopus.Action.Terraform.AdditionalActionParams" has vanished.
+    """
+
+    return re.sub(
+        r'[ \t]*"Octopus\.Action\.Terraform\.(?:AdditionalActionParams|AdditionalInitParams)"\s*=\s*""[ \t]*\n?',
+        "",
+        config,
+    )
+
+
 def fix_empty_teams(config):
     """
     The LLM kept insisting on using adding "Octopus.Action.Manual.ResponsibleTeamIds" = ""
@@ -704,6 +721,34 @@ def fix_use_guided_infrastructure(config):
         "",
         config,
     )
+
+
+VALID_DYNAMIC_WORKER_TYPES = [
+    "Ubuntu1804",
+    "Ubuntu2204",
+    "UbuntuDefault",
+    "Windows2016",
+    "Windows2019",
+    "Windows2022",
+    "WindowsDefault",
+]
+
+
+def fix_invalid_worker_type(config):
+    """
+    A dynamic worker pool's worker_type must be one of VALID_DYNAMIC_WORKER_TYPES. The LLM wrote values like "Dynamic"
+    or "Ubuntu", which fail the plan with: expected worker_type to be one of ["Ubuntu1804" ...], got Dynamic.
+    Anything mentioning Windows becomes WindowsDefault, everything else UbuntuDefault.
+    """
+
+    def replace(match):
+        value = match.group(2)
+        if value in VALID_DYNAMIC_WORKER_TYPES:
+            return match.group(0)
+        default = "WindowsDefault" if "win" in value.lower() else "UbuntuDefault"
+        return match.group(1) + default + match.group(3)
+
+    return re.sub(r'(\bworker_type\s*=\s*")([^"]*)(")', replace, config)
 
 
 def fix_bad_feed_data(config):
@@ -3339,7 +3384,7 @@ def remove_duplicate_lifecycle_phases(config):
     return result
 
 
-EMPTY_CHANNEL_RULE_ATTRIBUTE_REGEX = re.compile(r'(?m)^[ \t]*(?:version_range|tag)[ \t]*=[ \t]*""[ \t]*\n')
+EMPTY_CHANNEL_RULE_ATTRIBUTE_REGEX = re.compile(r'(?m)^[ \t]*(?:version_range|tag|package_reference)[ \t]*=[ \t]*""[ \t]*\n')
 
 
 def remove_empty_attributes_from_channel_rules(config):
@@ -3347,6 +3392,7 @@ def remove_empty_attributes_from_channel_rules(config):
     A channel rule with `version_range = ""` (or `tag = ""`) applies, but the provider returns null for the empty
     attribute and the apply fails with "Provider produced inconsistent result after apply ... .rule[0].version_range:
     was cty.StringVal(""), but now null". An empty version_range or tag is removed from the rules of every channel.
+    The same happens to `package_reference = ""` in a rule's action_package (the primary package), so it is removed too.
     """
 
     result = config

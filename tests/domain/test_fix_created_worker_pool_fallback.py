@@ -1792,6 +1792,16 @@ class TestRemoveEmptyAttributesFromChannelRules(unittest.TestCase):
         config = self.CHANNEL.replace('version_range = ""', 'version_range = "[1.0,)"')
         self.assertEqual(remove_empty_attributes_from_channel_rules(config), config)
 
+    def test_removes_empty_package_reference(self):
+        config = self.CHANNEL.replace('version_range = ""', 'version_range = "[1.0,)"\n    package_reference = ""')
+        result = remove_empty_attributes_from_channel_rules(config)
+        self.assertNotIn("package_reference", result)
+        self.assertIn('version_range = "[1.0,)"', result)
+
+    def test_keeps_package_reference_outside_channels(self):
+        config = 'resource "octopusdeploy_external_feed_create_release_trigger" "t" {\n  package_reference = ""\n}\n'
+        self.assertEqual(remove_empty_attributes_from_channel_rules(config), config)
+
     def test_ignores_other_resources(self):
         config = 'resource "octopusdeploy_variable" "v" {\n  tag = ""\n}\n'
         self.assertEqual(remove_empty_attributes_from_channel_rules(config), config)

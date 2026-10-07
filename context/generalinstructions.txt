@@ -318,6 +318,7 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
 * **A leading list number in a prompt's project name is part of the name, not prompt formatting to strip.** "Create a project called '21. Argo CD Rollouts'" → `name = "21. Argo CD Rollouts"`, never `"Argo CD Rollouts"`. Self-check: if the prompt's project name starts with a number and a period/colon, confirm that exact prefix is still present in the `octopusdeploy_project` `name` value.
 ## Step Execution Order and Parallel Steps
 
+* **Positional wording beats prompt bullet order:** `Add a step "A" before "B"` puts A IMMEDIATELY before B in `octopusdeploy_process_steps_order` (and in the `depends_on` chain) even when A is described after B in the prompt (e.g. "Approve Switch" before "Switch Load Balancer" → `..., approve_switch, switch_load_balancer, ...`); "after B" puts it immediately after B. Unquoted "before the deployment" / "before Production deployment" / "before deploying" means immediately before the main deploy step.
 * `Set the start trigger to "Run in parallel with the previous step"` → the `octopusdeploy_process_step` / `octopusdeploy_process_templated_step` MUST have `start_trigger = "StartWithPrevious"`.
 * **CRITICAL:** the parallel instruction counts in ANY wording, not just the literal annotation — all of these MUST produce `StartWithPrevious`:
   * "and must run in parallel with the previous step"
@@ -859,6 +860,13 @@ value = "${length(data.octopusdeploy_certificates.certificate_my_cert.certificat
 
 Self-check (EVERY project type, incl. IIS, Tomcat, Azure Function, and Windows Service, whose examples have no certificate): each prompt-named certificate has a resource (and, if requested, a `Certificate`-typed variable using the ternary above) in the shape above, with no `${var.`.
 
+## IIS Web Application and Virtual Directory Steps
+
+`Octopus.IIS` steps deploying under an existing site (API rejects omissions with "Please enter a Parent Web Site name" / "Please enter an IIS application pool name"):
+* Web application ("as an IIS web application /reports"): `"Octopus.Action.IISWebSite.DeploymentType" = "webApplication"`, `"Octopus.Action.IISWebSite.WebApplication.WebSiteName" = "<parent site>"`, `"Octopus.Action.IISWebSite.WebApplication.VirtualPath" = "/reports"`, `"Octopus.Action.IISWebSite.WebApplication.ApplicationPoolName" = "<pool>"` (+ `...WebApplication.ApplicationPoolFrameworkVersion` / `...ApplicationPoolIdentityType`).
+* Virtual directory ("as an IIS virtual directory /api"): `"Octopus.Action.IISWebSite.DeploymentType" = "virtualDirectory"`, `"Octopus.Action.IISWebSite.VirtualDirectory.WebSiteName" = "<parent site>"`, `"Octopus.Action.IISWebSite.VirtualDirectory.VirtualPath" = "/api"`.
+* Neither sets `Bindings`, `WebSiteName` or `CreateOrUpdateWebSite`; those belong to `"webSite"` deployments only.
+
 ## Binding an Octopus Certificate to an IIS HTTPS Site
 
 **CRITICAL:** An HTTPS binding in `Octopus.Action.IISWebSite.Bindings` consumes a certificate through `certificateVariable`, NEVER through `thumbprint`.
@@ -1138,6 +1146,7 @@ For the second template use `...[0].template[1].id`, and so on. Templates may us
 
 * Each resource "octopusdeploy_library_variable_set" must have an associated data "octopusdeploy_library_variable_sets" (see example below).
 * A library variable set "Variable Template" is defined in the "template" block of a "octopusdeploy_library_variable_set" resource.
+* **CRITICAL:** library variable set VARIABLES ("with variables X = Y", "add variable X to the set") are NOT `template` blocks: emit one `octopusdeploy_variable` per name/scope with `owner_id` = the library variable set ID (ternary on the data source) and any requested `scope` (e.g. `environments` for "scoped to Production"). Use `template` only for "variable template" / tenant variable wording.
 * **CRITICAL:** Variable template NAMES must be unique within each `octopusdeploy_library_variable_set` and each `octopusdeploy_project`. If the prompt asks for the same template twice (e.g. `Add a second tenant variable template to that library variable set, also called "Registry.Endpoint"`), emit ONE `template` block, keeping the last definition. Never add a numeric suffix.
 * A tenant "Common Variable" is a "octopusdeploy_tenant_common_variable" resource.
 * When the variable template defines an AWS account, the "template" block must set "display_settings" to `{ "Octopus.ControlType" = "AmazonWebServicesAccount" }`.
@@ -1308,6 +1317,7 @@ data "octopusdeploy_feeds" "feed_octopus_server__built_in_" {
 
 * Define data "octopusdeploy_feeds" "feed_docker_hub" exactly once.
 * Unlisted "feed_type" in the prompt → "NuGet". Never "Npm".
+* "Artifactory generic feed" → `octopusdeploy_artifactory_generic_feed` (`name`, `feed_uri`, `repository`, `layout_regex` (e.g. `"(?<package>[^/]+)/(?<version>[^/]+)/.*"`), `username`, `password` var); its `octopusdeploy_feeds` data source OMITS `feed_type` ("ArtifactoryGeneric" is not a valid filter) and uses `partial_name`. Never a NuGet feed.
 * Never set "password" on "octopusdeploy_docker_container_registry" to an empty string.
 * Never create "octopusdeploy_feed", "octopusdeploy_generic_artifact_feed" or "octopusdeploy_builtin_feed".
 * Maven/Docker feed with anonymous authentication: "username" and "password" = null, not empty strings.
@@ -1336,7 +1346,7 @@ resource "octopusdeploy_docker_container_registry" "feed_google_container_regist
 ## Account Instructions
 
 * "account_type": "AzureOIDC", never "AzureOidc"; never "Certificate".
-* Account resource types: "octopusdeploy_aws_openid_connect_account", "octopusdeploy_azure_openid_connect", "octopusdeploy_gcp_account", "octopusdeploy_azure_service_principal", "octopusdeploy_ssh_key_account", "octopusdeploy_token_account", "octopusdeploy_username_password_account".
+* Account resource types: "octopusdeploy_aws_openid_connect_account", "octopusdeploy_azure_openid_connect", "octopusdeploy_gcp_account", "octopusdeploy_azure_service_principal", "octopusdeploy_ssh_key_account", "octopusdeploy_token_account", "octopusdeploy_username_password_account", "octopusdeploy_generic_oidc_account" ("Generic OIDC" accounts: `name`, `audience`, `execution_subject_keys = []` (omitting it fails apply: "was null, but now cty.ListValEmpty"); data source `account_type = "GenericOidcAccount"`; variable type `"GenericOidcAccount"`; never an AWS OIDC account).
 * "octopusdeploy_aws_openid_connect_account" "role_arn" is mandatory: "arn:aws:iam::123456789012:role/MyRole".
 * "octopusdeploy_azure_openid_connect" "azure_environment": "AzureCloud" unless the prompt says otherwise; one of "AzureCloud", "AzureChinaCloud", "AzureGermanCloud", "AzureUSGovernment".
 * **CRITICAL** "octopusdeploy_azure_service_principal" requires `application_id`, `subscription_id`, `tenant_id` = `"00000000-0000-0000-0000-000000000000"`, **AND `password`** — `password` is a REQUIRED schema attribute (not optional), and omitting it aborts the ENTIRE apply at `tofu plan` with `Error: Missing required argument ... The argument "password" is required, but no definition was found`, even when the account was never named in the prompt (e.g. the template-baseline `account_octopussamples_azure_account`). Set `password = "${var.<account_label>}"` and declare a matching `sensitive = true` variable with `default = "Change Me!"` (same ternary/placeholder pattern as other account secrets), never a literal value. Self-check: every `octopusdeploy_azure_service_principal` resource has a `password` line referencing a variable.
@@ -1541,6 +1551,7 @@ Self-check: every `octopusdeploy_project_scheduled_trigger` whose purpose is to 
 * Never create `octopusdeploy_project_automatic_release_trigger` resources.
 * Every trigger MUST have `count`, ternary `project_id` and `channel_id`, `depends_on` the process steps order, and `lifecycle { prevent_destroy = true }`. **CRITICAL:** this applies to placeholder triggers (no `package` block) too.
 * If the prompt requests an external feed trigger but no channel, create a channel called "Application" and link it to the trigger.
+* **CRITICAL:** the step named by `deployment_action_slug` must itself declare the package (else "The specified package reference '' ... does not exist on the action"): `package_reference` = its `packages` map key (e.g. `envoy` for `packages = { envoy = { package_id = "envoyproxy/envoy", ... } }`), or `""` only for a `primary_package`. Any step whose YAML uses `#{Octopus.Action.Package[X]...}` needs `packages = { X = {...} }` on the prompt's feed (X never contains `/`).
 * **CRITICAL:** `channel_id` on ALL triggers MUST use the ternary lookup, even if the channel is created in the same file. Never a literal like `"Channels-1"`, never a direct reference like `"${octopusdeploy_channel.channel_application.id}"`. Likewise `project_id` must never be a direct reference like `octopusdeploy_project.project_foo.id`.
 * **CRITICAL:** when the prompt says the trigger must be disabled (e.g. `"The trigger must be disabled."`, used for migrated pipelines with originally-disabled Docker triggers), set `is_disabled = true`.
 
@@ -1730,6 +1741,7 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
 
 * resource "octopusdeploy_channel" required: "name", "project_id". Optional: "description", "is_default" (set "false" unless otherwise specified), "lifecycle_id", "rule" (nested block for per-step/package versioning rules), "space_id", "tenant_tags" (list of strings).
 * A project can have multiple "octopusdeploy_channel" resources. Never create "octopusdeploy_project_channel" resources.
+* A channel described by the environments it skips or targets (e.g. "Hotfix channel that skips Integration and Pre-Prod") needs its own `octopusdeploy_lifecycle` (+ data source) whose phases contain only the remaining environments, referenced by the channel's `lifecycle_id`; never omit `lifecycle_id` for such a channel.
 * "count" must be "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the project's "octopusdeploy_projects" data source — never an "octopusdeploy_channels" data source. Never reference an "octopusdeploy_projects" data source that does not exist in the output.
 * Every "octopusdeploy_channel" resource must have an associated "octopusdeploy_channels" data source.
 * **CRITICAL:** every `octopusdeploy_channel` MUST have `lifecycle { prevent_destroy = true }`, including bare channels without `rule` blocks (e.g. the "Application" channel for external feed triggers).
@@ -1787,11 +1799,13 @@ Version-range example: `rule { action_package { deployment_action = "Deploy a He
 * **ABSOLUTE RULE:** every `rule` block MUST have at least one `action_package` block ("Version rules must specify a package step"). If no package-based steps exist (e.g. all `Octopus.KubernetesDeployRawYaml` without package blocks, or only Bash/PowerShell/manual/email/Deploy a Release steps), add NO `rule` block (even when the prompt asks for one); a bare channel is valid for triggers. An `action_package` may only name a step that has a `primary_package` or `packages` entry, never a script step. A channel version REGEX (e.g. `^15\\.[0-9]+\\.[0-9]+$`) always goes in `tag`; `version_range` only takes a NuGet-style range such as `[1.0,)` and a regex there fails with "Version specification syntax was invalid".
 * **CRITICAL:** a `rule` block MUST NEVER set `version_range = ""` or `tag = ""` — OMIT the attribute (Octopus stores empty as null; `Provider produced inconsistent result after apply` / `.rule[0].version_range: was cty.StringVal(""), but now null.`; fatal and late, after project/steps/variables are created). Tag-only rules have no `version_range` line (e.g. never `tag = "^master.*"` with `version_range = ""`); version-only rules have no `tag` line. Omitting `version_range` means "any version". Same for every optional string attribute on a `rule` (same failure mode as empty `parameters` on `octopusdeploy_process_templated_step`).
 * Self-check: search every channel `rule` block for `= ""` and delete those lines.
+* Rules for different packages of the SAME step (primary + additional `packages`) MUST set `package_reference` in each `action_package` (OMIT it for the primary package — `""` comes back null and fails the apply — else the `packages` map key, e.g. `bundle-ui`); without it every rule targets the primary package and the API rejects the channel ("A deployment step can only be defined in one rule per channel"). A step/package pair appears in at most ONE rule per channel; combine its `version_range` and `tag` in that rule.
 
 ## Octopus Global Deployment Freeze Instructions
 
 **CRITICAL — a requested deployment freeze MUST be created** as `octopusdeploy_deployment_freeze` ("add a deployment freeze called X", "block deployments to <environment> between <dates>", "freeze deployments over <period>"; observed dropped for `Add a deployment freeze called "Change Freeze" that blocks deployments to "Prod" for the whole of December 2026`). Self-check: for each "freeze", "blackout", "change window" or "no deployments between" in the prompt, confirm a matching `octopusdeploy_deployment_freeze`.
-* **CRITICAL — there is NO `project_scope` block.** `octopusdeploy_deployment_freeze` accepts only `name`, `start`, `end` (optional `recurring_schedule`); never `description` or `space_id`. Scope with one `octopusdeploy_deployment_freeze_project` per named project; an unscoped freeze applies to everything.
+* **CRITICAL — there is NO `project_scope` block.** `octopusdeploy_deployment_freeze` accepts only `name`, `start`, `end`; never `description` or `space_id`. Scope with one `octopusdeploy_deployment_freeze_project` per named project; an unscoped freeze applies to everything.
+* **CRITICAL — NEVER set `recurring_schedule`** on `octopusdeploy_deployment_freeze`: the deployed provider fails at PLAN with "Value Conversion Error ... Struct defines fields not found in object: utc_offset_in_minutes". For a repeating freeze ("every Friday 16:00-23:59", "second Tuesday monthly"), create ONE freeze for the first occurrence and state the requested recurrence in the project `description`.
 
 ```hcl
 resource "octopusdeploy_deployment_freeze" "deploymentfreeze_data_freeze" {
@@ -1997,6 +2011,7 @@ E.g. `process_step_my_project_rollback_internal` (`"Rollback -internal-"`, `"rol
 
 * A "octopusdeploy_process_step" or "octopusdeploy_process_child_step" "name" must never contain characters other than letters, numbers, periods, commas, dashes, underscores, or hashes (in particular never "/" or "\").
 * Target tags must only be defined in the "Octopus.Action.TargetRoles" property of a "octopusdeploy_process_step" step-level `properties` block, e.g. `properties = { "Octopus.Action.TargetRoles" = "AzureWebApp" }`.
+* Multiple target tags for one step are ONE comma-separated, de-duplicated string with no spaces (e.g. tags "iis-web", "iis-web", "dmz-edge" → `"Octopus.Action.TargetRoles" = "iis-web,dmz-edge"`); never drop a requested tag.
 
 **CRITICAL: an `Octopus.AzureWebApp` (and `Octopus.AzureAppService`) step MUST set `"Octopus.Action.Azure.WebAppName"` in `execution_properties`**, or the API rejects it — unless your output also creates an Azure Web App deployment target resolving the app.
 * Prefer a variable expression; if the prompt creates a variable holding the app name (e.g. `Portal.AppServiceName`), the value MUST be `"#{Portal.AppServiceName}"`.
@@ -2035,6 +2050,7 @@ E.g. `process_step_my_project_rollback_internal` (`"Rollback -internal-"`, `"rol
   2. `"Octopus.Action.Script.ScriptFileName"` to the prompt's path (e.g. `scripts/read.sh`), inventing one only if none given,
   3. **NO `"Octopus.Action.Script.Syntax"`** (the extension determines syntax — opposite of inline, where `Syntax` is required). A word like "Bash" in the prompt (e.g. `Add a Bash script step called "Read Config" whose script comes from the Git repository "…" on branch "main" at the path "scripts/read.sh"`) describes the file; don't set `Syntax = "Bash"`.
   4. no `"Octopus.Action.Script.ScriptBody"`.
+* When the prompt gives the script TEXT (e.g. "inline Bash `git log ...`") and also names a repository, the step is `ScriptSource = "Inline"` with that `ScriptBody`/`Syntax` and NO `git_dependencies`; record the repository in `notes`. Never combine `GitRepository` with `ScriptBody` ("Providing a script body is not valid for scripts from a git repository").
 * If a Git-sourced script is requested but no repository is named, emit an ordinary inline `Octopus.Script` step with a placeholder body and record the missing repository in `notes`; never `ScriptSource = "GitRepository"` with an empty repository.
 
 **Self-check (script steps):** for every `Octopus.Script`, `Octopus.AwsRunScript`, `Octopus.AzurePowerShell`, `Octopus.KubernetesRunScript` or `Octopus.GcpRunScript` step with a `primary_package` or `packages` map, `execution_properties` must match exactly one shape:
@@ -2108,6 +2124,7 @@ Error: `This deployment step does not support named package references`.
 
 * Use the prompt's region; if an AWS account is named but no region, default to `"us-east-1"`.
 * `Octopus.Action.AwsAccount.Variable` takes the NAME of a project variable (type `AmazonWebServicesAccount`), not an account ID or `#{...}` reference.
+* Assuming a role in any AWS step: `"Octopus.Action.Aws.AssumeRole" = "True"`, `"Octopus.Action.Aws.AssumedRoleArn" = "<arn>"`, `"Octopus.Action.Aws.AssumedRoleSession" = "<session name>"` (note "Assumed"; `AssumeRoleArn`/`AssumeRoleSessionName` are ignored and the API rejects the step with "Please provide the assumed role ARN"). No role to assume → `"Octopus.Action.Aws.AssumeRole" = "False"` only.
 * Azure equivalent: `Octopus.Action.AzureAccount.Variable`; Google Cloud: `Octopus.Action.GoogleCloudAccount.Variable`. A Terraform step with `"Octopus.Action.Terraform.AzureAccount" = "True"` (or `ManagedAccount` "Azure") MUST also set `Octopus.Action.AzureAccount.Variable` to the name of an `AzureAccount`-typed project variable (e.g. `Project.Azure.Account`, value = the account id ternary), which you must declare; otherwise the apply fails with "Please specify an Azure account variable".
 * Self-check: every `Octopus.Terraform*` step with `Octopus.Action.AwsAccount.Variable` has a non-empty `Octopus.Action.Aws.Region`.
 
@@ -2480,7 +2497,7 @@ Add a community step template step called "Slack - Detailed Notification - Bash"
 * **General rule: when a prompt supplies a list and the target property accepts one value, the shortfall goes in `notes`** (manifest paths, branches, repositories, Argo CD applications).
 
 **CRITICAL:** `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` REQUIRES a non-empty `"Octopus.Action.ArgoCD.PullRequest.Environments"` in the same `execution_properties`, else the apply aborts.
-* When the prompt asks to commit "via a pull request", "by raising a PR", or "with a pull request for review", set both: `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` and `"Octopus.Action.ArgoCD.PullRequest.Environments"` = comma-separated environment IDs resolved with the usual data-source/resource ternary (e.g. `"Environments-4661,Environments-4662"`); use every lifecycle environment unless the prompt names a subset.
+* When the prompt asks to commit "via a pull request", "by raising a PR", or "with a pull request for review", set both: `"Octopus.Action.ArgoCD.CommitMethod" = "PullRequest"` and `"Octopus.Action.ArgoCD.PullRequest.Environments"` = comma-separated environment IDs resolved with the usual data-source/resource ternary (e.g. `"Environments-4661,Environments-4662"`); use every lifecycle environment unless the prompt names a subset. Mixed wording ("commit directly in Development, via a pull request in Production") still means `"PullRequest"`, with `PullRequest.Environments` = only the PR environments (other environments commit directly).
 * Otherwise use `"DirectCommit"` (no environment list needed) — also when you cannot confidently build the ID list.
 
 **CRITICAL:** an `Octopus.ArgoCDUpdateManifests` step MUST NOT have a `packages`, `package`, or `primary_package` block; it reads manifests via `git_dependencies` (attaching an image aborts the apply). When the prompt says a manifest-update step handles "the container image `org/name`", that belongs in manifest content/Argo configuration, not a package.
@@ -2583,7 +2600,7 @@ Self-check: every `octopusdeploy_process_step` with `type = "Octopus.TomcatDeplo
 * Applies whenever the step is added, even renamed (e.g. "Add a 'Scan for Vulnerabilities' step called 'Scan Evidence Bundle'") or in a project with no other packages (still needs a feed).
 * General rule: for ANY community step template, supply every required `parameters` entry shown in the example configurations; optional parameters MUST be omitted, not set to `""`.
 * **CRITICAL — for a community step template with NO documented example in this file** (e.g. "AWS - Copy S3 Object"), do NOT guess by setting an unfamiliar required parameter to `""`. Octopus wraps many fields in "tiny type" value objects that reject blank strings at apply time: `Octopus API error: There was a problem with your request. [value (Parameter 'Tiny types should never be empty or whitespace. If the value you want to communicate is null/empty/whitespace then just pass a null rather than a tiny type wrapping it.')]` (observed on `octopusdeploy_process_templated_step` for an undocumented template). Either provide every parameter a concrete, sensible placeholder value derived from the prompt (never `""`), or omit the key entirely so the template's own default applies — never pass an empty string for any `parameters` value.
-* **CRITICAL — NEVER fabricate a `website` GUID for a community step template that is not one of the ones with a documented `https://library.octopus.com/step-templates/<guid>` URL in this file** (the verified set includes "Slack - Send Simple Notification" `99e6f203-3061-4018-9e34-4a3a9c3c3179`, "Run Octopus Deploy Runbook" `0444b0b3-088e-4689-b755-112d1360ffe3`, "Block Release Progression" `78a182b3-5369-4e13-9292-b7f991295ad1`, "Octopus - Check Blue Green Deployment" `72db001f-ae7f-4a0f-b952-5f80e2fc4cd2`, "Calculate Deployment Mode" `d166457a-1421-4731-b143-dd6766fb95d5`). An invented/incorrect GUID does not fail cleanly — it crashes the Octopus server apply with `Octopus API error: An exception was thrown while attempting to evaluate a LINQ query parameter expression ... Object reference not set to an instance of an object.` and `unable to install community step template` (observed for a fabricated "AWS - Copy S3 Object" GUID). If the prompt names a community step template outside this verified set, do NOT create `octopusdeploy_community_step_template`/its data source — implement the same intent as an ordinary `Octopus.Script` step instead, and record in that step's `notes` that the requested community step template could not be verified and was replaced with an equivalent script.
+* **CRITICAL — NEVER fabricate a `website` GUID for a community step template that is not one of the ones with a documented `https://library.octopus.com/step-templates/<guid>` URL in this file** (the verified set includes "Slack - Send Simple Notification" `99e6f203-3061-4018-9e34-4a3a9c3c3179`, "Run Octopus Deploy Runbook" `0444b0b3-088e-4689-b755-112d1360ffe3`, "Block Release Progression" `78a182b3-5369-4e13-9292-b7f991295ad1`, "Octopus - Check Blue Green Deployment" `72db001f-ae7f-4a0f-b952-5f80e2fc4cd2`, "Calculate Deployment Mode" `d166457a-1421-4731-b143-dd6766fb95d5`). An invented/incorrect GUID does not fail cleanly — it crashes the Octopus server apply with `Octopus API error: An exception was thrown while attempting to evaluate a LINQ query parameter expression ... Object reference not set to an instance of an object.` and `unable to install community step template` (observed for a fabricated "AWS - Copy S3 Object" GUID). Placeholder GUIDs (e.g. `00000000-0000-0000-0000-000000000002`) are fabricated too: the data source finds nothing and the plan fails ("Must set a configuration value for the community_action_template_id attribute"). Every requested template outside the verified set (e.g. "HTTP - Test URL", "SQL - Execute Script", "File System - Clean Directory") gets the same treatment. If the prompt names a community step template outside this verified set, do NOT create `octopusdeploy_community_step_template`/its data source — implement the same intent as an ordinary `Octopus.Script` step instead, and record in that step's `notes` that the requested community step template could not be verified and was replaced with an equivalent script.
 
 * A prompt creating a community step template with a url to https://library.octopus.com/step-templates needs both a resource "octopusdeploy_community_step_template" and a data "octopusdeploy_community_step_template" (existence check), never a "octopusdeploy_process_step" instead. Copy the data source's "website" attribute literally.
 * The "properties" attribute must be added to "octopusdeploy_step_template" resources.
@@ -2708,6 +2725,7 @@ Self-check: every `octopusdeploy_process` resource that has a `runbook_id` attri
 
 ## Worker Pool Instructions
 
+* `octopusdeploy_dynamic_worker_pool` `worker_type` is one of "Ubuntu1804", "Ubuntu2204", "UbuntuDefault", "Windows2016", "Windows2019", "Windows2022", "WindowsDefault" (never "Dynamic"; "Ubuntu"/"Linux" → "UbuntuDefault").
 * Always include:
 
 ```
@@ -2742,6 +2760,7 @@ environments = ["${length(data.octopusdeploy_environments.environment_developmen
 ```
   * NEVER `environments = [""]` (passes plan, fails apply with `The EnvironmentIds field is required.`, orphaning earlier resources); NEVER literals like `environments = ["Environments-1"]` (`Environments-n`); NEVER IDs from `octopusdeploy_machine_policies`, `octopusdeploy_worker_pools`, `octopusdeploy_feeds` or `octopusdeploy_accounts`; a ternary with identical branches is always wrong, e.g. observed `"${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id != "" ? "" : ""}"`.
   * If the output has no environments at all (e.g. a prompt asking only for an account, feed and target), emit data/resource pairs for "Development", "Test" and "Production" and list all three.
+* **CRITICAL:** every `octopusdeploy_kubernetes_cluster_deployment_target` needs EXACTLY ONE of `authentication { account_id = … }`, `aws_account_authentication`, `azure_service_principal_authentication`, `certificate_authentication`, `gcp_account_authentication` or `pod_authentication` (none or two fails PLAN with "Invalid combination of arguments"). If the prompt gives no credentials for a target it names (e.g. "Prod EKS" at https://eks.example.com), use `pod_authentication { token_path = "/var/run/secrets/kubernetes.io/serviceaccount/token" }`.
 * Each "octopusdeploy_kubernetes_cluster_deployment_target" needs a data "octopusdeploy_deployment_targets" of the same name:
 
 ```
@@ -2877,13 +2896,14 @@ resource "octopusdeploy_aws_openid_connect_account" "account_aws_production" {
 * **CRITICAL:** prompt-named accounts replace template defaults for that cloud provider (e.g. "Add an AWS OIDC account named 'AWS Production Account'", "Add an Azure OIDC account named 'Azure Production Account'"). Create ONLY the named accounts:
   - Azure: do NOT create the default `account_octopussamples_azure_account` (`octopusdeploy_azure_service_principal`).
   - AWS: do NOT create the default `account_aws_oidc` (`octopusdeploy_aws_openid_connect_account`).
-  - ALL steps must reference the prompt-named account's resource/data source: `"Octopus.Action.Azure.AccountId"` in `Octopus.AzureWebApp`, `Octopus.AzurePowerShell`, `Octopus.AzureResourceGroup` steps; `"Octopus.Action.AwsAccount"` in `Octopus.AwsRunScript`, `Octopus.AwsUploadS3` steps. E.g. for "AWS Production Account":
+  - ALL steps must reference the prompt-named account's resource/data source: `"Octopus.Action.Azure.AccountId"` in `Octopus.AzureWebApp`, `Octopus.AzurePowerShell`, `Octopus.AzureResourceGroup` steps; AWS steps (`Octopus.AwsRunScript`, `Octopus.AwsUploadS3`, ...) take the account INDIRECTLY: `"Octopus.Action.AwsAccount.Variable"` = the NAME of an `AmazonWebServicesAccount` project variable whose `value` is the named account's ID ternary, plus `"Octopus.Action.AwsAccount.UseInstanceRole" = "False"`. A bare `"Octopus.Action.AwsAccount"` holding an account ID is rejected ("Please specify the AWS account."). E.g. for "AWS Production Account" with variable "AWS.Production.Account":
 ```hcl
 execution_properties = {
-  "Octopus.Action.AwsAccount" = "${length(data.octopusdeploy_accounts.account_aws_production_account.accounts) != 0 ? data.octopusdeploy_accounts.account_aws_production_account.accounts[0].id : octopusdeploy_aws_openid_connect_account.account_aws_production_account[0].id}"
+  "Octopus.Action.AwsAccount.Variable"        = "AWS.Production.Account"
+  "Octopus.Action.AwsAccount.UseInstanceRole" = "False"
 }
 ```
-  - Self-check: if the prompt names an Azure/AWS account, `account_octopussamples_azure_account` / `account_aws_oidc` must not appear anywhere (delete it), and every `Octopus.Action.Azure.AccountId` / `Octopus.Action.AwsAccount` references the named account.
+  - Self-check: if the prompt names an Azure/AWS account, `account_octopussamples_azure_account` / `account_aws_oidc` must not appear anywhere (delete it), and every `Octopus.Action.Azure.AccountId` / `Octopus.Action.AwsAccount.Variable` resolves to the named account.
 
 ## Worker Instructions
 
