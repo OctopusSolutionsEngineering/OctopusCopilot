@@ -1927,7 +1927,7 @@ resource "octopusdeploy_process_child_steps_order" "process_child_step_order_my_
 | Prompt phrase | `condition` value |
 |---|---|
 | `Only run the step when the previous step has failed.` | `"Failure"` |
-| `Always run the step.` | `"Always"` |
+| `Always run the step.` / "runs even if previous steps failed" / "regardless of success or failure" | `"Always"` (never `"Failure"`, which skips the step on success) |
 | *(no condition phrase)* | `"Success"` ← default |
 | `Set condition to "Variable"` with expression | `"Variable"` |
 
