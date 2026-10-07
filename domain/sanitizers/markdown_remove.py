@@ -29,6 +29,12 @@ def remove_markdown_code_block(text: str) -> str:
     if stripped_text.startswith("```") and stripped_text.endswith("```"):
         return re.sub("```.*?$", "", text, flags=re.MULTILINE).removesuffix("```")
 
+    # A response truncated at the token limit opens a fence that is never closed, which tofu rejects with
+    # "Invalid character" on line 1. Drop the opening fence line.
+    opening_fence = FENCE_LINE_REGEX.match(stripped_text)
+    if opening_fence and not FENCE_LINE_REGEX.search(stripped_text, opening_fence.end()):
+        return stripped_text[opening_fence.end() :].lstrip("\n")
+
     return remove_prose_around_code_block(text)
 
 

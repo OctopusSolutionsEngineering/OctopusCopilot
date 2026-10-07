@@ -98,3 +98,21 @@ class TestRemoveProseAroundCodeBlock(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class UnclosedFenceTest(unittest.TestCase):
+    def test_removes_unclosed_opening_fence(self):
+        from domain.sanitizers.markdown_remove import remove_markdown_code_block
+
+        self.assertEqual(
+            'resource "octopusdeploy_project" "p" {\n  name = "x"',
+            remove_markdown_code_block('```hcl\nresource "octopusdeploy_project" "p" {\n  name = "x"'),
+        )
+
+    def test_keeps_closed_fence_handling(self):
+        from domain.sanitizers.markdown_remove import remove_markdown_code_block
+
+        self.assertEqual(
+            'resource "a" "b" {}',
+            remove_markdown_code_block('```hcl\nresource "a" "b" {}\n```').strip(),
+        )

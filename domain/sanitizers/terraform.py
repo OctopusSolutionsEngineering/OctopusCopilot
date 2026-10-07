@@ -1380,37 +1380,53 @@ def remove_duplicate_definitions(config):
     if not config:
         return ""
 
-    fixed_config = config
-
     splits = config.splitlines()
 
+    # Each block is recorded as (start line index, end line index) inclusive.
+    # Lines inside heredocs (e.g. inline Terraform templates in step properties) are
+    # skipped, as they are not top level blocks even if they start in the first column.
     blocks = []
 
     # Step 1 - Find the blocks in the config
-    current_block = None
-    for line in splits:
-        # The start of a block is appended to the current block
-        if any(line.startswith(block_type) for block_type in block_types):
-            current_block = []
+    current_start = None
+    heredoc_marker = None
+    for index, line in enumerate(splits):
+        if heredoc_marker is not None:
+            if line.strip() == heredoc_marker:
+                heredoc_marker = None
+            continue
 
-        if current_block is not None:
-            # If we have started a new block, append the line to it
-            current_block.append(line)
+        # The start of a block
+        if current_start is None and any(
+            line.startswith(block_type) for block_type in block_types
+        ):
+            current_start = index
+            # A block defined on a single line, e.g. variable "env" { type = string }
+            if line.count("{") > 0 and line.count("{") == line.count("}"):
+                blocks.append((current_start, index))
+                current_start = None
+                continue
+
+        heredoc_match = HEREDOC_START_REGEX.search(line)
+        if heredoc_match:
+            heredoc_marker = heredoc_match.group(1)
+            continue
 
         # If we reach the end of a block, append it to the blocks list
-        if line == "}":
-            if current_block is not None:
-                blocks.append(current_block)
-            current_block = None
+        if line == "}" and current_start is not None:
+            blocks.append((current_start, index))
+            current_start = None
 
-    # Step 2 - Remove duplicate blocks
+    # Step 2 - Remove duplicate blocks, keeping the last copy
+    block_text = ["\n".join(splits[start : end + 1]) for start, end in blocks]
+    removed_lines = set()
     for i in range(len(blocks)):
-        for j in range(i + 1, len(blocks)):
-            if blocks[i] == blocks[j]:
-                duplicate_block = "\n".join(blocks[i])
-                while fixed_config.count(duplicate_block) > 1:
-                    # Remove the duplicate block
-                    fixed_config = fixed_config.replace(duplicate_block, "", 1)
+        if any(block_text[i] == block_text[j] for j in range(i + 1, len(blocks))):
+            removed_lines.update(range(blocks[i][0], blocks[i][1] + 1))
+
+    fixed_config = "\n".join(
+        line for index, line in enumerate(splits) if index not in removed_lines
+    )
 
     return fixed_config.strip()
 
@@ -1427,10 +1443,62 @@ def sanitize_inline_script(lines):
 
     resource_combined = "\n".join(lines)
 
+    # An inline script that references a package by name needs that package in the named packages map
+    resource_combined = convert_primary_package_to_referenced_package(
+        resource_combined
+    )
+
     # There is no primary package for inline scripts
     resource_combined = remove_primary_package(resource_combined)
 
     return resource_combined
+
+
+SCRIPT_PACKAGE_REFERENCE_REGEX = re.compile(r"#\{Octopus\.Action\.Package\[([^\]\s]+)\]")
+PACKAGES_ATTRIBUTE_REGEX = re.compile(r"(?m)^\s*packages\s*=")
+
+
+def convert_primary_package_to_referenced_package(text):
+    """
+    The LLM often gives an inline script step that references a package (e.g. using
+    #{Octopus.Action.Package[Search.Scripts].ExtractedPath}) a primary_package. Inline scripts can't have a
+    primary package, so rather than dropping the package, it is moved to the named packages map using the
+    reference name from the script. The package is extracted when the script reads its extracted files and no
+    Extract setting was given.
+    """
+    if PACKAGES_ATTRIBUTE_REGEX.search(text):
+        return text
+
+    reference = SCRIPT_PACKAGE_REFERENCE_REGEX.search(text)
+    match = PRIMARY_PACKAGE_START_REGEX.search(text)
+    if not reference or not match:
+        return text
+
+    depth = 1
+    end = match.end()
+    while end < len(text) and depth > 0:
+        if text[end] == "{":
+            depth += 1
+        elif text[end] == "}":
+            depth -= 1
+        end += 1
+
+    if depth > 0:
+        return text
+
+    body = text[match.end() : end - 1]
+    # Keep any explicit Extract setting, and only extract when the script reads the extracted files
+    if not re.search(r"\bExtract\s*=", body) and ".ExtractedPath" in text:
+        body = re.sub(
+            r"properties\s*=\s*\{", 'properties = { Extract = "True",', body, count=1
+        )
+
+    key = reference.group(1)
+    return (
+        text[: match.start()]
+        + f'packages = {{ "{key}" = {{{body}}} }}'
+        + text[end:]
+    )
 
 
 PRIMARY_PACKAGE_START_REGEX = re.compile(r"primary_package\s*=\s*\{")
@@ -4349,11 +4417,20 @@ def remove_non_octopus_data_sources(config):
     return process_resource_blocks(config, process_data_source, "data ")
 
 
+# Step types that deploy their primary package. A stray ScriptSource property on these steps (e.g. an
+# LLM writing pre/post deployment scripts as an inline script body) must not cause the package to be removed.
+PACKAGE_DEPLOYMENT_STEP_TYPE_REGEX = re.compile(
+    r'^\s*type\s*=\s*"Octopus\.(?:TentaclePackage|IIS|WindowsService|TomcatDeploy|WildFlyDeploy|JavaArchive|'
+    r'AzureWebApp|AzureAppService|TransferPackage|AwsUploadS3|DeployRelease)"'
+)
+
+
 def fix_script_source(config):
     """
     LLMs would frequently mix up inline and package scripts. This function looks at the script source and strips out
     any unsupported settings. This kind of sanitization is not ideal - proper HCL2 parsing would be much better than
     assuming correctly indented HCL2 code. But this is better than nothing.
+    Steps that deploy a package (e.g. Octopus.TentaclePackage) are left alone, as their primary package is required.
     """
 
     if not config:
@@ -4372,6 +4449,12 @@ def fix_script_source(config):
         )
 
         if not is_script:
+            return resource_lines
+
+        if any(
+            PACKAGE_DEPLOYMENT_STEP_TYPE_REGEX.match(resource_line)
+            for resource_line in resource_lines
+        ):
             return resource_lines
 
         script_type = next(
@@ -4680,3 +4763,257 @@ def set_mock_git_user_variable(config, username):
     return process_resource_blocks(
         config, process_resource, 'resource "octopusdeploy_variable"'
     )
+
+
+MAX_PROJECT_NAME_LENGTH = 200
+LONG_PROJECT_NAME_LINE_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<value>(?:[^"\\\n]|\\.)*)"')
+LONG_PROJECT_NAME_VARIABLE_REGEX = re.compile(r"^\$\{var\.(?P<variable>\w+)\}$")
+
+
+def utf16_length(value):
+    """The length .NET (and so the Octopus API) reports for a string: emoji and other astral characters count twice."""
+    return len(value.encode("utf-16-le")) // 2
+
+
+def truncate_utf16(value, limit):
+    """Cut a string to at most limit UTF-16 code units without splitting a character."""
+    result = ""
+    for character in value:
+        if utf16_length(result + character) > limit:
+            break
+        result += character
+    return result
+
+
+def truncate_long_project_names(config):
+    """
+    Octopus rejects a project name longer than 200 characters with "Name is too long. Maximum length is 200
+    characters.", which aborts the whole apply. Characters are counted as .NET counts them (UTF-16 code units), so an
+    emoji counts twice. LLMs do not shorten long prompt-supplied names reliably, so a project
+    name (written literally or as the default of the variable the name references) longer than the limit is cut to
+    200 characters, and every copy of the original string (data source lookups, descriptions) is replaced with it.
+    """
+
+    long_names = set()
+    position = 0
+    while True:
+        header = PROJECT_HEADER_REGEX.search(config, position)
+        if not header:
+            break
+        end = find_block_end(config, header.end())
+        if not end:
+            break
+        name = LONG_PROJECT_NAME_LINE_REGEX.search(config[header.end() : end])
+        if name:
+            value = name.group("value")
+            variable = LONG_PROJECT_NAME_VARIABLE_REGEX.match(value)
+            if variable:
+                default = re.search(
+                    r'variable\s+"' + re.escape(variable.group("variable")) + r'"\s*\{[^}]*?\bdefault\s*=\s*"(?P<value>(?:[^"\\\n]|\\.)*)"',
+                    config,
+                )
+                value = default.group("value") if default else ""
+            if utf16_length(value) > MAX_PROJECT_NAME_LENGTH:
+                long_names.add(value)
+        position = end
+
+    for value in long_names:
+        # Never leave half of an escape sequence at the end of the shortened string
+        truncated = truncate_utf16(value, MAX_PROJECT_NAME_LENGTH).rstrip()
+        while truncated.endswith("\\") and not truncated.endswith("\\\\"):
+            truncated = truncated[:-1].rstrip()
+        config = config.replace('"' + value + '"', '"' + truncated + '"')
+
+    return config
+
+
+# Step properties that only take effect when the matching feature is listed in "Octopus.Action.EnabledFeatures"
+FEATURE_PROPERTY_REGEXES = (
+    (
+        re.compile(r'^\s*"Octopus\.Action\.Package\.CustomInstallationDirectory"\s*='),
+        "Octopus.Features.CustomDirectory",
+    ),
+    (
+        re.compile(r'^\s*"Octopus\.Action\.SubstituteInFiles\.TargetFiles"\s*='),
+        "Octopus.Features.SubstituteInFiles",
+    ),
+    (
+        re.compile(
+            r'^\s*"Octopus\.Action\.Package\.JsonConfigurationVariablesTargets"\s*='
+        ),
+        "Octopus.Features.JsonConfigurationVariables",
+    ),
+    (
+        re.compile(r'^\s*"Octopus\.Action\.CustomScripts\.\w+\.\w+"\s*='),
+        "Octopus.Features.CustomScripts",
+    ),
+    (
+        re.compile(
+            r'^\s*"Octopus\.Action\.Package\.AdditionalXmlConfigurationTransforms"\s*='
+        ),
+        "Octopus.Features.ConfigurationTransforms",
+    ),
+    (
+        re.compile(
+            r'^\s*"Octopus\.Action\.Package\.AutomaticallyUpdateAppSettingsAndConnectionStrings"\s*=\s*"True"'
+        ),
+        "Octopus.Features.ConfigurationVariables",
+    ),
+)
+ENABLED_FEATURES_LINE_REGEX = re.compile(
+    r'^(\s*"Octopus\.Action\.EnabledFeatures"\s*=\s*")([^"]*)(".*)$'
+)
+
+
+def add_missing_enabled_features(config):
+    """
+    Package step properties like "Octopus.Action.Package.CustomInstallationDirectory" or
+    "Octopus.Action.SubstituteInFiles.TargetFiles" only take effect when the matching feature (e.g.
+    "Octopus.Features.CustomDirectory") is listed in "Octopus.Action.EnabledFeatures". LLMs frequently set the
+    property but leave the feature out of the list, or leave the "Octopus.Action.EnabledFeatures" property out
+    entirely.
+    """
+    if not config:
+        return config
+
+    # The LLM sometimes invents a Package prefix for the substitution property, which Octopus silently ignores
+    config = config.replace(
+        '"Octopus.Action.Package.SubstituteInFiles.TargetFiles"',
+        '"Octopus.Action.SubstituteInFiles.TargetFiles"',
+    )
+
+    def process_resource(resource_lines):
+        required = []
+        for regex, feature in FEATURE_PROPERTY_REGEXES:
+            if any(regex.match(line) for line in resource_lines) and feature not in required:
+                required.append(feature)
+
+        if not required:
+            return resource_lines
+
+        has_enabled_features = any(
+            ENABLED_FEATURES_LINE_REGEX.match(line) for line in resource_lines
+        )
+
+        fixed_lines = []
+        added = False
+        for line in resource_lines:
+            match = ENABLED_FEATURES_LINE_REGEX.match(line)
+            if match:
+                existing = match.group(2)
+                missing = [feature for feature in required if feature not in existing]
+                if missing:
+                    line = (
+                        match.group(1)
+                        + existing.rstrip(",")
+                        + "".join("," + feature for feature in missing)
+                        + match.group(3)
+                    )
+            fixed_lines.append(line)
+
+            # Without any enabled features, add the property next to the first property needing a feature
+            if (
+                not has_enabled_features
+                and not added
+                and any(regex.match(line) for regex, _ in FEATURE_PROPERTY_REGEXES)
+            ):
+                indent = line[: len(line) - len(line.lstrip())]
+                fixed_lines.append(
+                    f'{indent}"Octopus.Action.EnabledFeatures" = "{",".join(required)}"'
+                )
+                added = True
+        return fixed_lines
+
+    return process_resource_blocks(config, process_resource)
+
+
+GCP_IMPERSONATE_TRUE_REGEX = re.compile(
+    r'^(\s*"Octopus\.Action\.GoogleCloud\.ImpersonateServiceAccount"\s*=\s*)"True"(.*)$'
+)
+GCP_SERVICE_ACCOUNT_EMAILS_REGEX = re.compile(
+    r'^\s*"Octopus\.Action\.GoogleCloud\.ServiceAccountEmails"\s*=\s*"[^"\s]+'
+)
+
+
+def disable_gcp_impersonation_without_emails(config):
+    """
+    Google Cloud steps that enable service account impersonation must also define the service account emails,
+    otherwise Octopus rejects the step with "Please provide service account email(s) to be impersonated as."
+    and the entire apply fails. Disable impersonation when no emails were defined.
+    """
+    if not config:
+        return config
+
+    def process_resource(resource_lines):
+        if any(GCP_SERVICE_ACCOUNT_EMAILS_REGEX.match(line) for line in resource_lines):
+            return resource_lines
+
+        return [
+            GCP_IMPERSONATE_TRUE_REGEX.sub(r'\1"False"\2', line) for line in resource_lines
+        ]
+
+    return process_resource_blocks(config, process_resource)
+
+
+FREEZE_LINK_COUNT_REGEX = re.compile(
+    r'^(\s*)count\s*=\s*"\$\{length\(data\.octopusdeploy_deployment_freezes\.([A-Za-z0-9_-]+)\.deployment_freezes\)\s*!=\s*0\s*\?\s*0\s*:\s*1\}"\s*$'
+)
+FREEZE_LINK_ID_REGEX = re.compile(
+    r'^(\s*)deploymentfreeze_id\s*=\s*"\$\{octopusdeploy_deployment_freeze\.([A-Za-z0-9_-]+)\[0\]\.id\}"\s*$'
+)
+FREEZE_LINK_PROJECT_LOOKUP_REGEX = re.compile(
+    r'^\s*project_id\s*=\s*"\$\{length\(data\.octopusdeploy_projects\.([A-Za-z0-9_-]+)\.projects\)\s*!=\s*0'
+)
+
+
+def link_projects_to_existing_deployment_freezes(config):
+    """
+    Deployment freezes are global, so a freeze with the requested name often already exists (e.g. created
+    for another space). The LLM gates both the freeze and its octopusdeploy_deployment_freeze_project link on
+    the freeze lookup, so when the freeze exists the new project is silently left out of it. The link is
+    instead gated on the project lookup (like other project resources) and references the existing freeze
+    when there is one.
+    """
+    if not config or 'resource "octopusdeploy_deployment_freeze_project"' not in config:
+        return config
+
+    def process_resource(resource_lines):
+        if not resource_lines[0].startswith(
+            'resource "octopusdeploy_deployment_freeze_project"'
+        ):
+            return resource_lines
+
+        project_lookup = next(
+            (
+                match.group(1)
+                for match in map(FREEZE_LINK_PROJECT_LOOKUP_REGEX.match, resource_lines)
+                if match
+            ),
+            None,
+        )
+
+        fixed_lines = []
+        for line in resource_lines:
+            count_match = FREEZE_LINK_COUNT_REGEX.match(line)
+            id_match = FREEZE_LINK_ID_REGEX.match(line)
+            if count_match:
+                if project_lookup:
+                    line = (
+                        f"{count_match.group(1)}count               = "
+                        f'"${{length(data.octopusdeploy_projects.{project_lookup}.projects) != 0 ? 0 : 1}}"'
+                    )
+                else:
+                    # Without a project lookup, the link is always created
+                    continue
+            elif id_match:
+                freeze = id_match.group(2)
+                line = (
+                    f"{id_match.group(1)}deploymentfreeze_id = "
+                    f'"${{length(data.octopusdeploy_deployment_freezes.{freeze}.deployment_freezes) != 0 '
+                    f"? data.octopusdeploy_deployment_freezes.{freeze}.deployment_freezes[0].id "
+                    f': octopusdeploy_deployment_freeze.{freeze}[0].id}}"'
+                )
+            fixed_lines.append(line)
+        return fixed_lines
+
+    return process_resource_blocks(config, process_resource)

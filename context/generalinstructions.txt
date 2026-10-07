@@ -139,20 +139,16 @@ resource "octopusdeploy_runbook" "runbook_recycle_claims_app_pool" {
 **CRITICAL — `minimum_environments_before_promotion` MUST NEVER exceed the environment count of its OWN `phase`** (`automatic_deployment_targets` + `optional_deployment_targets`; a 1-environment phase allows only `0` or `1`). Violations abort the apply early (`The phase "Claims Staging" requires a minimum of 2 environments for promotion, but only 1 environments have been added.`) and nothing is created. A "deployments" count never sets it: `a "Claims Staging" phase that automatically promotes releases after 2 successful deployments to "Claims Dev"` → Octopus has no "promote after N successful deployments" feature; write `minimum_environments_before_promotion = 0`. See `## Lifecycle Phase `minimum_environments_before_promotion` Instructions`.
 
 **CRITICAL — a wrong or missing `Octopus.Action.RunOnServer` aborts the apply**; Octopus recomputes it on save, and the failing step and everything after it is never created.
-* **Decision order**: step has `worker_pool_id` / `worker_pool_variable` → `"true"` (even a package step with target roles). Else package-deployment step type (`Octopus.TentaclePackage`, `Octopus.WindowsService`, `Octopus.IIS`, `Octopus.TomcatDeploy`) whose SAME step declares `Octopus.Action.TargetRoles` → `"false"`. Else (incl. `Octopus.Script`, manual, webhook/curl) → `"true"`. In doubt → `"true"`. Never copy `"false"` between steps.
+* **Decision order**: step has `worker_pool_id` / `worker_pool_variable` → `"true"` (even a package step with target roles). Else package-deployment step type (`Octopus.TentaclePackage`, `Octopus.WindowsService`, `Octopus.IIS`, `Octopus.TomcatDeploy`) whose SAME step declares `Octopus.Action.TargetRoles` → `"false"`. Else a non-runbook `Octopus.Script` (or other script step) whose SAME step declares `Octopus.Action.TargetRoles` and the prompt says it runs ON the targets/machines ("running on the deployment targets with tag X") → `"false"`, no `container`. Else (incl. untagged `Octopus.Script`, manual, webhook/curl) → `"true"`. In doubt → `"true"`. Never copy `"false"` between steps.
 * **EVERY runbook step** (any `octopusdeploy_process_step` whose `process_id` is a runbook's `octopusdeploy_process`) → `"true"`, even when it acts on a machine ("restart the service", "drain connections from the target", "recycle the app pool").
 * **"runs on a worker" means `"true"`**: "on a worker", "on a worker rather than the target", "off the target", "on the Octopus Server" → `"true"` plus `worker_pool_id`/`worker_pool_variable`.
-* **NEVER OMIT the key** (`.execution_properties: new element "Octopus.Action.RunOnServer" has appeared.`). Every `Octopus.Script` and runbook step states `"Octopus.Action.RunOnServer" = "true"` explicitly.
-* Self-check: re-verify every `"Octopus.Action.RunOnServer" = "false"` against the decision order (and not in a runbook); add the key as `"true"` to every `Octopus.Script`, `Octopus.Manual`, `Octopus.KubernetesRunScript` or runbook step lacking it.
+* **NEVER OMIT the key** (`.execution_properties: new element "Octopus.Action.RunOnServer" has appeared.`). Every `Octopus.Script` and runbook step states it explicitly: `"true"`, except a tagged non-runbook script running ON the targets (`"false"`, e.g. a "health check on each target with tag X").
+* Self-check: re-verify every `"Octopus.Action.RunOnServer" = "false"` against the decision order (and not in a runbook); add the key as `"true"` to every `Octopus.Script`, `Octopus.Manual`, `Octopus.KubernetesRunScript` or runbook step lacking it. Conversely, a deployment-process `Octopus.Script` with `Octopus.Action.TargetRoles`, no worker pool, and prompt wording "runs on each X target" / "on the targets" must be `"false"` (e.g. `Verify Proxy` running `curl http://localhost/...` on each `edge-nginx` target).
 
 **CRITICAL — no `""` values in `octopusdeploy_process_templated_step` `parameters`** (discarded by Octopus → `.parameters: element "Run.Runbook.PromptedVariables" has vanished.`). Set only parameters with real values, omit the rest (no `"Run.Runbook.PromptedVariables" = ""`, `"Run.Runbook.Tenant.Name" = ""`, `"Run.Runbook.CustomNotes" = ""`). All community step templates, not just "Run Octopus Deploy Runbook".
 
 **CRITICAL (ABSOLUTE PRIORITY over templates) — an unscoped `octopusdeploy_variable` has NO `scope` block**; `scope {}` or an all-`null` scope aborts the apply (`.scope: block count changed from 1 to 0`).
 
-**CRITICAL (ABSOLUTE PRIORITY over the prompt) — `actions` in a variable `scope` is ALWAYS `null`.** For `scoped to the "<Step Name>" step`: `octopusdeploy_process_step.<name>.id` is the STEP id, not the ACTION id `Scope.Actions` needs, so `actions = [octopusdeploy_process_step.process_step_deploy_fraud_lambda.id]` silently matches nothing.
-* Keep the variable (losing the step scope is expected), scoped only by environments/channels/target tags/tenant tags the prompt also gave, or with no `scope` block. Don't drop it; don't invent a `roles` scope.
-* `processes` is no escape hatch: only a PROJECT id (`octopusdeploy_project.<name>[0].id`) or RUNBOOK id (`octopusdeploy_runbook.<name>[0].id`).
-* NO scope attribute (`actions`, `processes`, `machines`, `roles`) may hold an `octopusdeploy_process_step` / `octopusdeploy_process_templated_step` id. Remove any `scope` left with no non-null attribute.
 
 **CRITICAL (ABSOLUTE PRIORITY over templates) — tenant variable TEMPLATE ≠ VALUE.** "add a project tenant variable template called 'X'" → only a `template` block on `octopusdeploy_project`. Create `octopusdeploy_tenant_project_variable` only for a prompt-given value for a named tenant (empty `value` fails: `Variable was created but ID not returned in response`).
 
@@ -568,6 +564,7 @@ Self-check: in any manifest in `Octopus.Action.KubernetesContainers.CustomResour
 ## Step Name Character Rules
 
 * Step names may only contain letters, numbers, spaces, periods, commas, dashes, underscores and hashes. Replace anything else with a dash — including `()` and `[]`. Square brackets hard-fail at the API (`'Zeta Bracket [Y]' contains invalid characters. Names can only contain letters, numbers, periods, commas, dashes, underscores or hashes.`) — never relax this. Parentheses/`&` are accepted by the API (e.g. `Drain (Blue)`) but still replace parentheses (`Drain -Blue-`) because the Terraform provider validates step names more strictly.
+* `/` in a step name → dash: `Build/Publish: Edge #1` → `Build-Publish: Edge #1` (`:` is accepted), never `Build_Publish`.
 * Use the prompt's dash-replaced form exactly (e.g. `Deploy -Manifest-`); never re-introduce parentheses and never convert dashes to underscores (`Manual Judgment -Canary-`, never `Manual Judgment _Canary_`).
 * The API error message's character list is misleading (same text for step/project/environment names, which are validated differently) — don't infer the allowed set from it.
 
@@ -1493,8 +1490,9 @@ resource "octopusdeploy_project" "project_deploy_to_production" {
 * **Weekly** ("every Monday at 6am", "every Friday at 5pm") → `once_daily_schedule` with ONLY the named day(s) in `days_of_week`.
 * **Monthly, quarterly, cron, "the first day of each month", "every 15 minutes"** → cannot be expressed; emit `once_daily_schedule` on the closest workable cadence (typically daily) and say so in `description` (e.g. `"Approximates the requested monthly schedule; Octopus scheduled triggers created here support a daily schedule only."`).
 * NEVER write a block name not seen in this file or the example configurations. The trigger must never be the reason a project fails.
-* `start_time`: ISO 8601 string. `timezone`: a valid "Windows Time Zone Identifier" string.
+* `start_time`: ISO 8601 string. `timezone`: a valid "Windows Time Zone Identifier" string. Map IANA names exactly, minding DST: Australia/Sydney, Australia/Melbourne, Australia/Canberra → "AUS Eastern Standard Time"; Australia/Brisbane → "E. Australia Standard Time"; Pacific/Auckland → "New Zealand Standard Time"; Europe/London → "GMT Standard Time"; Europe/Berlin → "W. Europe Standard Time"; America/New_York → "Eastern Standard Time"; UTC → "UTC".
 * `project_id` on a trigger must never be empty.
+* Trigger for specific tenants (by name or tag, e.g. "against tenants tagged Clinic Tier/Gold") → `tenant_ids` = ternary IDs of every tenant created/looked up in this config that matches (the trigger has no tag filter; resolve tags to those tenants). `tenant_ids = []` only when no tenants are named.
 
 Example (09:00 daily, Pacific Standard Time):
 ```
@@ -1739,7 +1737,7 @@ resource "octopusdeploy_kubernetes_cluster_deployment_target" "target_kubernetes
 * If you notice an unresolvable problem, FIX IT SILENTLY by dropping the offending attribute or resource.
 * Never use backticks in the Terraform. The output must begin with a valid HCL construct (`data`, `resource`, `variable`, `#`, or `terraform`).
 
-* resource "octopusdeploy_channel" required: "name", "project_id". Optional: "description", "is_default" (set "false" unless otherwise specified), "lifecycle_id", "rule" (nested block for per-step/package versioning rules), "space_id", "tenant_tags" (list of strings).
+* resource "octopusdeploy_channel" required: "name", "project_id". Optional: "description", "is_default" (set "false" unless otherwise specified; a prompt marking a channel as the default — "a channel \"Stable\" (default)", "make X the default channel" — sets `is_default = true` on that channel only), "lifecycle_id", "rule" (nested block for per-step/package versioning rules), "space_id", "tenant_tags" (list of strings).
 * A project can have multiple "octopusdeploy_channel" resources. Never create "octopusdeploy_project_channel" resources.
 * A channel described by the environments it skips or targets (e.g. "Hotfix channel that skips Integration and Pre-Prod") needs its own `octopusdeploy_lifecycle` (+ data source) whose phases contain only the remaining environments, referenced by the channel's `lifecycle_id`; never omit `lifecycle_id` for such a channel.
 * "count" must be "${length(data.octopusdeploy_projects.<name>.projects) != 0 ? 0 : 1}" where "<name>" is the project's "octopusdeploy_projects" data source — never an "octopusdeploy_channels" data source. Never reference an "octopusdeploy_projects" data source that does not exist in the output.
@@ -1936,6 +1934,7 @@ resource "octopusdeploy_process_child_steps_order" "process_child_step_order_my_
 * Any dropped prompt-specified channel scope must be stated in the step's `notes`.
 
 * The "condition" attribute on "octopusdeploy_process_step" and `octopusdeploy_process_templated_step` must be one of "Always", "Failure", "Success", "Variable". Any other prompt condition → "Success".
+* A step that "cannot be skipped", "is required" or "must not be skipped during deployment" sets the step attribute `is_required = true` (distinct from `condition`).
 * **CRITICAL:** condition mapping (both resource types):
 
 | Prompt phrase | `condition` value |
@@ -2026,7 +2025,7 @@ E.g. `process_step_my_project_rollback_internal` (`"Rollback -internal-"`, `"rol
 
 * Never use target tags in "name=value" format in the "target_roles" attribute.
 * Never add the "target_roles" attribute on an "action".
-* Never add the "excluded_environments" attribute on a "step".
+* Never add the "excluded_environments" attribute on a legacy nested "step" block (an `octopusdeploy_process_step` DOES support it for denylists).
 * Never add target tags to the "tenant_tags" attribute.
 * **A target tag is NOT a tenant tag and MUST NOT get an `octopusdeploy_tag_set` or `octopusdeploy_tag` resource.** Target tags (roles) are free-form strings, declared nowhere, existing only in a step's `"Octopus.Action.TargetRoles"` and a target's `roles` list. `octopusdeploy_tag_set`/`octopusdeploy_tag` are TENANT tag sets, created ONLY to support a `tenant_tags` value such as `"Regions/US-East"`. A tag set such as `Target Tag Set` containing a target tag (e.g. `gpu-pool`, `insight-cluster`, `tomcat-server`) is always wrong; an untenanted project must contain no tag sets. If a target tag is the only "tag" mentioned, output ZERO `octopusdeploy_tag_set` resources.
 
@@ -2042,8 +2041,16 @@ E.g. `process_step_my_project_rollback_internal` (`"Rollback -internal-"`, `"rol
   2. `"Octopus.Action.Script.ScriptFileName"` naming the script file in the package — mandatory, never empty; invent a plausible name (e.g. `deploy.sh` for Bash, `Deploy.ps1` for PowerShell) if not given.
   3. a `primary_package` block — NOT a named `packages` map — giving `feed_id` and `package_id`
   and NO `"Octopus.Action.Script.ScriptBody"` or `"Octopus.Action.Script.Syntax"`.
-* An **inline** script that merely *references* a package ("add a reference package to the script step") is the mirror image: named `packages` map, `"Octopus.Action.Script.ScriptSource" = "Inline"`, and a non-empty `"Octopus.Action.Script.ScriptBody"`.
+* An **inline** script that merely *references* a package ("add a reference package to the script step", "references the package X and runs bash `...`") is the mirror image: named `packages` map, `"Octopus.Action.Script.ScriptSource" = "Inline"`, and a non-empty `"Octopus.Action.Script.ScriptBody"`. Whenever the prompt gives script TEXT, keep it verbatim as `ScriptBody`; never swap it for `ScriptSource = "Package"` with an invented `ScriptFileName`. The `packages` key is the reference name the script uses in `#{Octopus.Action.Package[KEY]...}`; set `Extract = "True"` when the script uses `ExtractedPath`.
 * **CRITICAL:** `"Octopus.Action.Script.ScriptFileName"` is ONLY valid for `Octopus.Script` steps (`type = "Octopus.Script"`) — see the `Octopus.HelmChartUpgrade` rule below.
+
+**CRITICAL — pre/post-deployment scripts on a package step** (`Octopus.TentaclePackage`, `Octopus.IIS`, `Octopus.WindowsService`, `Octopus.JavaArchive`, …: "runs a post-deployment bash script", "pre-deployment script") are NOT `Octopus.Action.Script.*` properties (a `ScriptSource`/`ScriptBody` on a package step strips its `primary_package` → `Please select a package`). Use `"Octopus.Action.CustomScripts.PreDeploy.sh"` / `"Octopus.Action.CustomScripts.Deploy.sh"` / `"Octopus.Action.CustomScripts.PostDeploy.sh"` (`.ps1` for PowerShell) holding each script verbatim, plus `Octopus.Features.CustomScripts` in `"Octopus.Action.EnabledFeatures"`. A custom install directory adds `Octopus.Features.CustomDirectory` with `"Octopus.Action.Package.CustomInstallationDirectory"`, `"Octopus.Action.Package.CustomInstallationDirectoryShouldBePurgedBeforeDeployment" = "True"` when purging, and `"Octopus.Action.Package.CustomInstallationDirectoryPurgeExclusions"` for purge exclusions. Keep the `primary_package`.
+
+**CRITICAL — package-step configuration features use ONLY these names (never invent `Octopus.Action.ConfigurationVariables.*` or `Octopus.Action.ConfigurationTransforms`):**
+* Structured configuration variables ("appsettings.json", YAML/JSON/XML files) → `Octopus.Features.JsonConfigurationVariables` + `"Octopus.Action.Package.JsonConfigurationVariablesTargets" = "appsettings.json"` (newline-separated paths).
+* XML config transforms → `Octopus.Features.ConfigurationTransforms` + `"Octopus.Action.Package.AutomaticallyRunConfigurationTransformationFiles" = "True"`; extra rules such as "Web.Release.config => Web.config" go in `"Octopus.Action.Package.AdditionalXmlConfigurationTransforms"` verbatim.
+* Substitute variables in files (`application.properties`, `*.conf`, any file not named as an `X => Y` transform) → `Octopus.Features.SubstituteInFiles` + `"Octopus.Action.SubstituteInFiles.TargetFiles"`; `AdditionalXmlConfigurationTransforms` holds ONLY `X => Y` transform rules.
+* Replace appSettings/connectionStrings → `Octopus.Features.ConfigurationVariables` + `"Octopus.Action.Package.AutomaticallyUpdateAppSettingsAndConnectionStrings" = "True"`.
 
 **CRITICAL: third shape `ScriptSource = "GitRepository"` requires `ScriptFileName` and FORBIDS `Script.Syntax`**. When a step's script "comes from a Git repository", set:
   1. `"Octopus.Action.Script.ScriptSource" = "GitRepository"`,
@@ -2061,7 +2068,7 @@ E.g. `process_step_my_project_rollback_internal` (`"Rollback -internal-"`, `"rol
 * Steps of type "Octopus.AzureAppService" must have at least one item in the "target_roles" attribute.
 
 **CRITICAL: TARGET-BASED step types MUST carry a non-empty `"Octopus.Action.TargetRoles"` in their STEP-LEVEL `properties` block**. They run ON a deployment target (every occurrence in the `everystep.tf` example configuration has one):
-`Octopus.IIS`, `Octopus.WindowsService`, `Octopus.JavaArchive`, `Octopus.TentaclePackage`, `Octopus.AzureWebApp`, `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, `Octopus.TomcatDeploy`, `Octopus.TransferPackage`.
+`Octopus.IIS`, `Octopus.WindowsService`, `Octopus.JavaArchive`, `Octopus.TentaclePackage`, `Octopus.AzureWebApp`, `Octopus.KubernetesDeployRawYaml`, `Octopus.KubernetesRunScript`, `Octopus.HelmChartUpgrade`, `Octopus.Kubernetes.Kustomize`, `Octopus.TomcatDeploy`, `Octopus.WildFlyDeploy`, `Octopus.TransferPackage`.
 * The tag goes in step-level `properties`, NOT `execution_properties`, NOT a `target_roles` attribute on the step resource. A worker pool is NOT a substitute.
 * **CRITICAL: do NOT put a worker pool (`worker_pool_id` / `worker_pool_variable`) on a target-based step** (Octopus flips `Octopus.Action.RunOnServer`, aborting the apply with `Error: Provider produced inconsistent result after apply ... .execution_properties["Octopus.Action.RunOnServer"]: was cty.StringVal("false"), but now cty.StringVal("true")`, observed on `Octopus.IIS`). This applies no matter how the request is phrased — including "run this target-based step on worker pool X **in addition to** its target role" or "as well as" its target role; there is no valid way to give a target-based step BOTH a worker pool and a target role, since the step only ever runs on the target. If the prompt asks a target-based step to run on a named worker pool (e.g. `Add a "Deploy Java Archive" step called "Stage Archive" … * Create a worker pool called "Reporting Pool" and run the "Stage Archive" step on it`), IGNORE the pool for that step, keep the target tag, and note it in the step's `notes`. Still create the `octopusdeploy_static_worker_pool` if requested, and apply it to steps that legitimately run on a worker (`Octopus.Script` with `RunOnServer = "true"`, `Octopus.Aws*`, `Octopus.Terraform*`, `Octopus.AzurePowerShell`, Kubernetes steps using `worker_pool_variable`).
 * If a target-based step must nevertheless carry a worker pool, state `"Octopus.Action.RunOnServer"` explicitly in its `execution_properties`.
@@ -2114,7 +2121,7 @@ Error: `This deployment step does not support named package references`.
   * API key: create sensitive project variable `Project.Claude.ApiKey` (default `"Change Me!"`), set `"Octopus.Action.Claude.ApiKey" = "#{Project.Claude.ApiKey}"` (e.g. `octopusdeploy_variable` "claude_project_claude_apikey_1": `type = "Sensitive"`, `is_sensitive = true`, `sensitive_value = "Change Me!"`). Example step also sets `"Octopus.Action.Claude.Model" = "claude-sonnet-5"`, `"Octopus.Action.RunOnServer" = "true"`.
   * SandboxMode: only `"None"` or `"SandboxRuntime"`. Use `"None"` unless the prompt explicitly asks for a sandboxed agent. `"SandboxRuntime"` also needs `Octopus.Action.Claude.SandboxSettings` (a `jsonencode({...})` of `network` and `filesystem` rules); if unsure, use `"None"`.
 
-* **CRITICAL — RunOnServer: any step with no `Octopus.Action.TargetRoles` property MUST set `"Octopus.Action.RunOnServer" = "true"`**, in every project type (not just blue/green/progressive swap, cutover and "health check gate" steps; also LLM/Claude/orchestration steps like `Perform Deployment`, `List Commits`, `Extract JSON`, whatever the name). Octopus forces server execution, so `"false"` causes `Provider produced inconsistent result after apply` and no project is created. Steps that DO set `Octopus.Action.TargetRoles` may use `"false"`; don't blanket-set `"true"` on them. Self-check: check every deployment-process and runbook step before responding.
+* **CRITICAL — RunOnServer**: follow the decision order in the RunOnServer section above for EVERY deployment-process and runbook step in every project type (including LLM/Claude/orchestration and health-check steps); a step with no `Octopus.Action.TargetRoles` is always `"true"`.
 
 * **CRITICAL — "Scan for Vulnerabilities" community step template steps MUST set `parameters` entry `"Sbom.Package" = jsonencode({ "FeedId" = "<feed id>", "PackageId" = "<package id>" })`**, else `"There was a problem with your request. [Package parameter 'Sbom.Package' is missing]"` / `"Unable to create process step"`. If the prompt names no package, reuse the project's deployment package (or the template default, e.g. the Maven feed with `com.octopus:octopub-sbom`).
 
@@ -2127,6 +2134,8 @@ Error: `This deployment step does not support named package references`.
 * Assuming a role in any AWS step: `"Octopus.Action.Aws.AssumeRole" = "True"`, `"Octopus.Action.Aws.AssumedRoleArn" = "<arn>"`, `"Octopus.Action.Aws.AssumedRoleSession" = "<session name>"` (note "Assumed"; `AssumeRoleArn`/`AssumeRoleSessionName` are ignored and the API rejects the step with "Please provide the assumed role ARN"). No role to assume → `"Octopus.Action.Aws.AssumeRole" = "False"` only.
 * Azure equivalent: `Octopus.Action.AzureAccount.Variable`; Google Cloud: `Octopus.Action.GoogleCloudAccount.Variable`. A Terraform step with `"Octopus.Action.Terraform.AzureAccount" = "True"` (or `ManagedAccount` "Azure") MUST also set `Octopus.Action.AzureAccount.Variable` to the name of an `AzureAccount`-typed project variable (e.g. `Project.Azure.Account`, value = the account id ternary), which you must declare; otherwise the apply fails with "Please specify an Azure account variable".
 * Self-check: every `Octopus.Terraform*` step with `Octopus.Action.AwsAccount.Variable` has a non-empty `Octopus.Action.Aws.Region`.
+* **Google Cloud (`Octopus.GoogleCloudScripting`, gcloud steps):** `"Octopus.Action.GoogleCloud.ImpersonateServiceAccount" = "True"` REQUIRES `"Octopus.Action.GoogleCloud.ServiceAccountEmails"` = the email(s) verbatim (comma-separated); without it the API rejects the step (`Please provide service account email(s) to be impersonated as.`) and NOTHING is created. No email given → `ImpersonateServiceAccount = "False"`.
+* Terraform CLI arguments by phase: `terraform init` args ("init params", `-backend-config=...`, `-upgrade`) → `"Octopus.Action.Terraform.AdditionalInitParams"`; plan/apply/destroy args (`-var=...`, `-parallelism=...`) → `"Octopus.Action.Terraform.AdditionalActionParams"`. Never put init args in `AdditionalActionParams`.
 
 * **CRITICAL — never define a "primary_package" block when `"Octopus.Action.Script.ScriptSource" = "Inline"`** (incl. "Octopus.AwsRunScript"); the API fails with "Providing a package is not valid for inline scripts." Correct inline AWS Lambda deploy:
 ```hcl
@@ -2145,6 +2154,7 @@ Error: `This deployment step does not support named package references`.
 ```
 * "deploy an AWS Lambda function" with a named package → TWO steps: (1) "Upload Lambda", type `"Octopus.AwsUploadS3"` with `primary_package` uploading the zip to S3; (2) "Deploy Lambda", type `"Octopus.AwsRunScript"` (inline, NO `primary_package`) calling `aws lambda update-function-code` with the S3 bucket/key. For a Lambda step the prompt names "Deploy X", emit BOTH steps (e.g. "Upload X" + "Deploy X"); channel `action_package` entries and `octopusdeploy_built_in_trigger` `release_creation_package.deployment_action` MUST name the "Upload X" step (the one with `primary_package`), never the inline "Deploy X" step.
 
+* Any step (deployment OR runbook) described as an "Azure CLI" / `az ...` script, or using the Azure account variable, is `Octopus.AzurePowerShell` (`Script.Syntax` "Bash" or "PowerShell" as stated) with `Octopus.Action.Azure.AccountId` — never `Octopus.Script`, which has no Azure login so `az` fails.
 * "Octopus.AzureResourceGroup" and "Octopus.AzurePowerShell" steps must define "Octopus.Action.Azure.AccountId", never an empty string or omitted, including a script step you add for an "Azure Web App" deploy (omitting it fails with "Please select an Account or provide a variable expression for the Account ID"; with no named account use `"#{Project.Azure.Account}"` and declare that `AzureAccount` variable):
 ```
 "Octopus.Action.Azure.AccountId" = "${length(data.octopusdeploy_accounts.account_azure.accounts) != 0 ? data.octopusdeploy_accounts.account_azure.accounts[0].id : octopusdeploy_azure_openid_connect.account_azure[0].id}"
@@ -2286,7 +2296,7 @@ resource "octopusdeploy_community_step_template" "my_community_step_template" {
 "Octopus.Action.Azure.ResourceGroupTemplate" = "resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {\n  name: 'analytics$${uniqueString(resourceGroup().id)}'
 ```
   (CloudFormation: `!Sub '$${AWS::StackName}-function'`, `!Sub '$${Project.AWS.Lambda.S3.BucketName}'`, `DB_HOST: $${DB_HOST}`.)
-* "Octopus.Script" steps with no target roles must set "Octopus.Action.RunOnServer" to "true".
+* A container image the prompt names for ONE step ("Step 2 ... using the container hashicorp/vault:1.16") applies to that step ONLY; never copy it onto other steps (e.g. an AWS CLI step must not inherit a Vault image — give it `ghcr.io/octopusdeploylabs/aws-workertools` or no container).
 * Never set the "container" "image" to an empty string. If the prompt wants a container image but names none, or "container" has a "feed_id" but the prompt specifies no image, use "octopusdeploy/worker-tools:6.5.0-ubuntu.22.04".
 * Additional packages ("referenced packages") go in the "packages" block of an "octopusdeploy_process_step"; always emit the complete block (never just its tail, e.g. `", id = null, package_id = "mypackage", properties = { SelectionMode = "immediate" } }`):
 ```
@@ -2314,7 +2324,7 @@ packages = {
   * `"Octopus.Action.RunOnServer" = "true"`.
   * `"Octopus.Action.Manual.BlockConcurrentDeployments" = "True"` (always; omission lets concurrent deployments skip the gate).
 
-**CRITICAL — `Octopus.Action.Manual.ResponsibleTeamIds` may only be `"teams-everyone"` (Everyone), `"teams-administrators"` (Octopus Administrators) or `"teams-managers"` (Octopus Managers).** Never slugify a prompt team name (e.g. `teams-release-managers` for "Release Managers"): other teams have unknowable `Teams-123` IDs, and a fabricated value silently leaves nobody able to approve. For any other team, omit the property and name the team in the instructions. Don't create an `octopusdeploy_team` unless the prompt explicitly asks.
+**CRITICAL — `Octopus.Action.Manual.ResponsibleTeamIds` may only be `"teams-everyone"` (Everyone), `"teams-administrators"` (Octopus Administrators), `"teams-managers"` (Octopus Managers) or `"teams-spacemanagers-${trimspace(var.octopus_space_id)}"` (Space Managers).** It DOES restrict who can approve: e.g. "responsible to the team Space Managers" → `"Octopus.Action.Manual.ResponsibleTeamIds" = "teams-spacemanagers-${trimspace(var.octopus_space_id)}"` in `execution_properties`; never drop a team that maps to one of these four. Never slugify a prompt team name (e.g. `teams-release-managers` for "Release Managers"): other teams have unknowable `Teams-123` IDs, and a fabricated value silently leaves nobody able to approve. For any other team, omit the property and name the team in the instructions. Don't create an `octopusdeploy_team` unless the prompt explicitly asks.
 ```hcl
 execution_properties = {
   "Octopus.Action.Manual.Instructions"              = "Approval required from the Release Managers team. Do you approve the release to production?"
@@ -2325,6 +2335,7 @@ execution_properties = {
 * Preserve prompt-defined manual-intervention instructions exactly: don't rewrite `${ ... }` SpEL into `#{...}`, normalize punctuation, or strip/replace Unicode. If the prompt appends a NOTE about SpEL expressions, include it verbatim at the end of the same string; don't "fix" embedded expressions.
 * **CRITICAL — escape `${...}` as `$${...}` in `Octopus.Action.Manual.Instructions`** (e.g. `release: *${trigger['tag']}* (NOTE: ...)` → `"Octopus.Action.Manual.Instructions" = "release: *$${trigger['tag']}* (NOTE: ...)"`). Octostache `#{...}` needs no escaping.
 * `jsonencode({})` values must not be followed by a quote or newline: `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})`, not `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({})"`.
+* `Octopus.AzureResourceGroup` parameter values use the ARM parameters-file shape, each value wrapped in `value`: `"Octopus.Action.Azure.ResourceGroupTemplateParameters" = jsonencode({ vnetName = { value = "vnet-lz-#{Octopus.Environment.Name | ToLower}" } })`, never a flat `{ vnetName = "..." }` map.
 * Never define "Octopus.Action.Aws.S3.BucketName" on an "Octopus.AwsRunCloudFormation" step.
 * Every "tenant_tags" item must reference a tag in a resource "octopusdeploy_tag" and its tag set in a resource "octopusdeploy_tag_set".
 * Step template and community step template steps must use "octopusdeploy_process_templated_step" (never "octopusdeploy_process_step"), with no "packages" block.
@@ -2475,12 +2486,14 @@ Add a community step template step called "Slack - Detailed Notification - Bash"
 * **CRITICAL:** maintain the prompt's step order in the "octopusdeploy_process_steps_order" resource: add each step one by one, top to bottom and left to right (e.g. "Slack Notification - Start", then "Deploy user-profile worker -dev-", then "Deploy user-track worker -dev-", even when later steps "Run in parallel with the previous step").
 * **CRITICAL:** correctly escape dollar signs and curly braces: e.g. `"ssn_Message" = "*Triggered by:* $${ trigger.user }\n*Container image:* $${ #triggerResolvedArtifactByType(\"docker/image\")[\"reference\"] }"`. Escape `${...}` SpEL as `$${...}` in EVERY plain HCL string literal attribute value, with NO exceptions for the specific attribute name — this includes `notes`, `"Octopus.Action.Manual.Instructions"`, any `execution_properties` value, and just as much `octopusdeploy_variable`/`octopusdeploy_library_variable_set` template `value`/`default_value`/`sensitive_value`, `description`, or any other plain string attribute anywhere in the file. A literal, unescaped `${environment}` (or any other `${...}` the prompt wants passed through as inert text) is NOT valid Terraform syntax there — OpenTofu tries to parse it as a real interpolation and fails with `Error: Invalid reference ... A reference to a resource type must be followed by at least one attribute access` (observed on an `octopusdeploy_variable` `value`). If the prompt supplies a literal string containing `${...}` that is not an Octostache `#{...}` template being passed through, escape it as `$${...}` regardless of which attribute it lands in.
 * SpEL already converted to Octopus syntax (e.g. `#{Octopus.Release.Number}`) must NOT be re-escaped; `#{...}` needs no escaping. Only escape what remains in `${...}` form.
+* Exception: when the prompt says a `#{...}` is literal text ("not a variable", "escape it as Octostache-literal"), write Octostache's escape `##{...}` (e.g. `##{not-octostache}`) so Octopus outputs `#{...}` unevaluated.
 * **CRITICAL:** when `notes` derives from prompt text with paths/URLs like `at gs://...`, do not add quotation marks around the URL/path:
 `notes = "... Google Cloud Storage at gs://my-bucket/path. The manifest must be inlined."`, not `at \"gs://my-bucket/path\"`.
 
 ## Email Step Instructions
 
 * Steps of type "Octopus.Email" must set `"Octopus.Action.RunOnServer" = "true"` and must define `"Octopus.Action.Email.To"` (address or variable expression), `"Octopus.Action.Email.Subject"` and `"Octopus.Action.Email.Body"` in `execution_properties`. Optional: `"Octopus.Action.Email.Priority"` = `"Normal"` or `"High"`.
+* Email to a TEAM ("Octopus Managers", "Space Managers") → `"Octopus.Action.Email.ToTeamIds"` with the same team IDs as `ResponsibleTeamIds` (`teams-managers`, `teams-spacemanagers-${trimspace(var.octopus_space_id)}`), comma-separated; never put a team in `Email.To`, which holds only addresses/variable expressions (`CCTeamIds`/`BccTeamIds`, `Email.CC`/`Email.Bcc` likewise). An HTML body adds `"Octopus.Action.Email.IsHtml" = "True"`.
 * Preserve Octopus variable syntax in prompt subject/body verbatim (e.g. `#{Octopus.Project.Name}`, `#{Octopus.Release.Number}`, `#{Octopus.Environment.Name}`); never replace with plain text.
 * Email steps do NOT require `"Octopus.Action.TargetRoles"`; use `properties = {}`. E.g. `"Octopus.Action.Email.Subject"  = "Deployment #{Octopus.Project.Name} #{Octopus.Release.Number} complete"`, `"Octopus.Action.Email.Priority" = "Normal"`.
 
@@ -2515,6 +2528,8 @@ Add a community step template step called "Slack - Detailed Notification - Bash"
   * `"Tomcat.Deploy.Controller"` (manager URL, e.g. `"http://localhost:8080/manager"`), `"Tomcat.Deploy.Name"` (application name), `"Tomcat.Deploy.User"` (manager admin user), `"Tomcat.Deploy.Password"` (sensitive variable reference)
 
 **CRITICAL:** `Tomcat.Deploy.User` and `Tomcat.Deploy.Password` are API-enforced: ALWAYS non-empty, even if the prompt gives no credentials — then default to `"Tomcat.Deploy.User" = "#{Tomcat.User}"` and `"Tomcat.Deploy.Password" = "#{Tomcat.Password}"` and create project variables `Tomcat.User` (`String`, value `"tomcat"`) and `Tomcat.Password` (`Sensitive`).
+
+**CRITICAL — WildFly / JBoss EAP is a native step: `type = "Octopus.WildFlyDeploy"`** (never `Octopus.TomcatDeploy`, never a script). Package step with `primary_package`, target tag in `properties`, `Octopus.Features.WildflyDeployCLI` in `EnabledFeatures`. `execution_properties` keys: `WildFly.Deploy.Controller` (host), `WildFly.Deploy.Port`, `WildFly.Deploy.Protocol` (`remote+http`), `WildFly.Deploy.User`, `WildFly.Deploy.Password` (a `#{...}` variable reference, as for Tomcat), `WildFly.Deploy.Name`, `WildFly.Deploy.ServerType` (`Standalone`/`Domain`; server groups imply `Domain`), `WildFly.Deploy.Enabled` (`True`/`False`), `WildFly.Deploy.EnabledServerGroup` / `WildFly.Deploy.DisabledServerGroup` (comma-separated).
 
 **CRITICAL:** `Tomcat.Deploy.Password` MUST be a VARIABLE REFERENCE (e.g. `"#{Tomcat.Password}"` + sensitive variable), never a literal, invented password or placeholder like `"changeme"`/`"Change Me!"` (else `inconsistent values for sensitive attribute`).
 * **Observed failure:** a prompt "Set the Tomcat manager password to 'X'" produced `"Tomcat.Deploy.Password" = "Change Me!"` written literally into `execution_properties` — this is exactly the forbidden case this rule already calls out by name, not a new pattern. `Change Me!` belongs only as the DEFAULT VALUE of the sensitive `Tomcat.Password` project variable (`sensitive_value = "Change Me!"` or `var.<x> default = "Change Me!"`); the `execution_properties` value itself must always be the literal string `"#{Tomcat.Password}"`, never the placeholder text. Self-check: grep `execution_properties` for `Tomcat.Deploy.Password` — the value must start with `#{`; `"Change Me!"` appearing there directly is always wrong regardless of what the prompt asked for.
@@ -2570,6 +2585,8 @@ Self-check: every `octopusdeploy_process_step` with `type = "Octopus.TomcatDeplo
 ## AWS Create S3 Step Instructions
 
 * Steps of type "Octopus.AwsCreateS3" (create an Amazon S3 bucket) need a `container` block with the GitHub Container Registry feed and `ghcr.io/octopusdeploylabs/aws-workertools`, and execution properties `"Octopus.Action.AwsAccount.Variable"` (AWS account variable), `"Octopus.Action.Aws.AssumeRole" = "False"`, `"Octopus.Action.Aws.Region"` (e.g. `"us-east-1"`), `"Octopus.Action.Aws.S3.BucketName"` (name or variable reference), `"Octopus.Action.Aws.S3.PublicAccess" = "False"`, `"Octopus.Action.Aws.S3.ObjectWriterOwnership" = "False"`, `"Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([])`.
+
+* `Octopus.AwsRunCloudFormation` template parameters and stack tags are JSON ARRAYS, not maps: `"Octopus.Action.Aws.CloudFormationTemplateParameters" = jsonencode([{ ParameterKey = "BucketName", ParameterValue = "site-#{Octopus.Environment.Name | ToLower}-assets" }])` and `"Octopus.Action.Aws.CloudFormation.Tags" = jsonencode([{ key = "app", value = "static-site" }])`. Requested stack tags ("tags app=static-site and env=X") must be emitted, never dropped.
 
 ## Octopus step template instructions
 
@@ -2627,6 +2644,7 @@ parameters = [{ default_sensitive_value = null, default_value = "info", display_
 
 ## Octopus Variable Instructions
 
+* **CRITICAL:** never emit long repeated text. A value the prompt describes rather than gives (e.g. "a 600-character string made of the word X repeated", "a 10KB blob") gets a short placeholder (e.g. `"octopus (placeholder for a 600-character repeated value)"`) and a `description` noting it; repetition loops truncate the output ("Unterminated template string").
 * A variable scoped to a runbook sets the `processes` scope to the runbook ID:
 
 ```
@@ -2989,7 +3007,7 @@ Library credential (a `octopusdeploy_git_credential` the prompt asked for): same
 * `github_connection_id` is always `""` (GitHub connections are never created).
 * `git_credential_id` is never null.
 * `file_path_filters`: `null` for the whole repository, `["path/to/file"]` when the prompt names a file path.
-* `default_branch` and `repository_uri` always have values.
+* `default_branch` and `repository_uri` always have values. `repository_uri` is the prompt's Git URL copied character-for-character (e.g. `https://github.com/acme/platform-api-deploy.git`, never shortened to `.../platform-api.git` or replaced by an example URL).
 * `Set the Repository Branch to "<branch>"` for a "Deploy Kubernetes YAML" step → that step's `git_dependencies` uses `default_branch = "<branch>"` exactly. Without that instruction, `default_branch = "main"`; never `"main"` when the prompt specifies another branch.
 * **CRITICAL:** set each step's `default_branch` INDEPENDENTLY from that step's own `Set the Repository Branch to` instruction; never assume steps share a branch or copy it between steps:
 e.g. "Deploy Service" said `Set the Repository Branch to "master"` → `default_branch = "master"`; "Deploy Worker" said `Set the Repository Branch to "develop"` → `default_branch = "develop"` (not "master" copied from the first step).
@@ -3402,6 +3420,7 @@ References: `"${length(local.environment_dev_matches) != 0 ? local.environment_d
 **CRITICAL:** A step's environment scope from the prompt MUST be written to `environments`; easy to lose on manual intervention steps. `Add a manual intervention step called "Approve Blue/Green Swap" scoped to Production` sets that step's `environments` (never leave `environments = null` on the `Octopus.Manual` step).
 
 * Use the allowlist form: `environments = ["${length(data.octopusdeploy_environments.environment_production.environments) != 0 ? data.octopusdeploy_environments.environment_production.environments[0].id : octopusdeploy_environment.environment_production[0].id}"]`. Never use `excluded_environments` for a scope stated as an allowlist.
+* A denylist ("skipped in Development", "never runs in Test", "all environments except Development") → `excluded_environments = [<those env IDs>]` with `environments = null`. Never drop it: an unscoped step runs everywhere.
 
 ## Security Environment Exclusion for Kubernetes Steps
 
@@ -3477,6 +3496,7 @@ Self-check: every prompt-requested `octopusdeploy_certificate`, `octopusdeploy_*
 **CRITICAL:** `actions` in a `scope` block MUST always be `null`. `octopusdeploy_process_step.<name>.id` is a step ID, not the action ID `Scope.Actions` needs: `actions = [octopusdeploy_process_step.process_step_drain_connections.id]` shows `Creation complete`/`Apply complete!` but the variable is silently discarded.
 
 * For `scoped to the "<Step Name>" step`: no `actions`; scope to any environments/channels/tenant tags/target tags also named. If the step was the ONLY scope, OMIT the `scope` block — an empty or all-`null` block aborts the apply (`.scope: block count changed from 1 to 0`). Still create the variable; never drop it.
+* `processes` holds only a PROJECT or RUNBOOK id; NO scope attribute (`actions`, `processes`, `machines`, `roles`) may hold a step id. Never invent a `roles` scope.
 * **ONE VALUE PER STEP for one name → ONE unscoped variable with the FIRST value; record the rest in `description`** (list-shortfall rule). E.g. `Add a project variable "Canary.Weight" with the value "10" scoped to the "Shift 10%" step, "50" scoped to "Shift 50%", and "100" scoped to "Shift 100%"` → `value = "10"` (not `100`), description like `The prompt also asked for 50 on "Shift 50%" and 100 on "Shift 100%". Octopus cannot scope a variable to a step, so a single unscoped variable holding the first value is created; per-step values must be set inside each step's script instead.`
 
 **CRITICAL:** Environment-scoped variables MUST list those environment IDs using the ternary:

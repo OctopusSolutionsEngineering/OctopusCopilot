@@ -307,3 +307,64 @@ output "octopusdeploy_projects" "project2" {
 }""",
             fixed,
         )
+
+    def test_ignores_blocks_inside_heredocs(self):
+        config = """resource "octopusdeploy_process_step" "plan" {
+  execution_properties = {
+    "Octopus.Action.Terraform.Template" = <<-EOT
+resource "azurerm_resource_group" "rg" {
+  name = "rg-net-$${var.env}"
+}
+variable "env" { type = string }
+EOT
+  }
+}
+resource "octopusdeploy_process_step" "apply" {
+  execution_properties = {
+    "Octopus.Action.Terraform.Template" = <<-EOT
+resource "azurerm_resource_group" "rg" {
+  name = "rg-net-$${var.env}"
+}
+variable "env" { type = string }
+EOT
+  }
+}"""
+        self.assertEqual(config, remove_duplicate_definitions(config))
+
+    def test_removes_duplicate_single_line_blocks(self):
+        fixed = remove_duplicate_definitions(
+            """variable "env" { type = string }
+resource "octopusdeploy_project" "project" {
+    name = "Test Project"
+}
+variable "env" { type = string }"""
+        )
+        self.assertEqual(
+            """resource "octopusdeploy_project" "project" {
+    name = "Test Project"
+}
+variable "env" { type = string }""",
+            fixed,
+        )
+
+    def test_removes_duplicates_around_heredocs(self):
+        fixed = remove_duplicate_definitions(
+            """resource "octopusdeploy_process_step" "step" {
+  script = <<EOT
+}
+EOT
+}
+resource "octopusdeploy_process_step" "step" {
+  script = <<EOT
+}
+EOT
+}"""
+        )
+        self.assertEqual(
+            """resource "octopusdeploy_process_step" "step" {
+  script = <<EOT
+}
+EOT
+}""",
+            fixed,
+        )

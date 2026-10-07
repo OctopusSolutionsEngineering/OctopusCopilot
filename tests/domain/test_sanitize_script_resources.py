@@ -1332,3 +1332,41 @@ resource "octopusdeploy_git_credential" "gitcredential_mock" {
    }"""
 
         self.assertEqual(set_mock_git_credential(config, "newuser", "newpass"), config)
+
+
+class FixScriptSourcePackageStepTest(unittest.TestCase):
+    def test_keeps_primary_package_on_package_deployment_step(self):
+        config = """resource "octopusdeploy_process_step" "deploy" {
+  name                  = "Deploy NGINX Site"
+  type                  = "Octopus.TentaclePackage"
+  primary_package       = { acquisition_location = "Server", feed_id = "Feeds-1", id = null, package_id = "EdgeProxy.Config", properties = { SelectionMode = "immediate" } }
+  execution_properties  = {
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.ScriptBody" = "echo hi"
+  }
+}"""
+        self.assertEqual(config, fix_script_source(config))
+
+    def test_keeps_primary_package_on_wildfly_step(self):
+        config = """resource "octopusdeploy_process_step" "deploy" {
+  name                  = "Deploy Claims EAR"
+  type                  = "Octopus.WildFlyDeploy"
+  primary_package       = { acquisition_location = "Server", feed_id = "Feeds-1", id = null, package_id = "com.example:claims-engine:ear", properties = { SelectionMode = "immediate" } }
+  execution_properties  = {
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "WildFly.Deploy.Controller" = "localhost"
+  }
+}"""
+        self.assertEqual(config, fix_script_source(config))
+
+    def test_removes_primary_package_from_inline_script_step(self):
+        config = """resource "octopusdeploy_process_step" "script" {
+  name                  = "Run Script"
+  type                  = "Octopus.Script"
+  primary_package       = { acquisition_location = "Server", feed_id = "Feeds-1", id = null, package_id = "Scripts", properties = { SelectionMode = "immediate" } }
+  execution_properties  = {
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Script.ScriptBody" = "echo hi"
+  }
+}"""
+        self.assertNotIn("primary_package", fix_script_source(config))

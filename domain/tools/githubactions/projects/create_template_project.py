@@ -33,6 +33,9 @@ from domain.sanitizers.terraform import (
     fix_empty_execution_properties_block,
     fix_empty_properties_block,
     fix_script_source,
+    add_missing_enabled_features,
+    link_projects_to_existing_deployment_freezes,
+    disable_gcp_impersonation_without_emails,
     fix_empty_strings,
     replace_passwords,
     replace_invalid_azure_guids,
@@ -143,6 +146,7 @@ from domain.sanitizers.terraform import (
     fix_empty_terraform_params,
     fix_use_guided_infrastructure,
     fix_invalid_worker_type,
+    truncate_long_project_names,
     fix_unescaped_variables,
     fix_yaml_source,
     set_mock_git_user_variable,
@@ -941,6 +945,8 @@ def sanitize_configuration(configuration):
     configuration = fix_use_guided_infrastructure(configuration)
     # Deal with the LLM returning an invalid dynamic worker pool worker_type
     configuration = fix_invalid_worker_type(configuration)
+    # Shorten project names the Octopus API would reject as longer than 200 characters
+    configuration = truncate_long_project_names(configuration)
     # Deal with the LLM returning a single line for a tentacle_retention_policy block
     configuration = fix_single_line_tentacle_retention_policy(configuration)
     # Deal with the LLM returning a single line for a connectivity_policy block
@@ -1062,6 +1068,9 @@ def sanitize_configuration(configuration):
     configuration = fix_empty_properties_block(configuration)
     # Remove invalid script configuration
     configuration = fix_script_source(configuration)
+    configuration = add_missing_enabled_features(configuration)
+    configuration = link_projects_to_existing_deployment_freezes(configuration)
+    configuration = disable_gcp_impersonation_without_emails(configuration)
     # Remove empty string default values
     configuration = fix_empty_strings(configuration)
     configuration = fix_blank_resource_names(configuration)
