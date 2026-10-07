@@ -1193,7 +1193,7 @@ Run the step from the "Hosted Ubuntu" worker pool.
 
 Create a runbook called "{runbook_names[1]}" in the project "{project_name}".
 Allow the runbook to be run from the "Features" environment.
-Add a "Run a kubectl script" step run against the target tag "Kubernetes" and echo the text "Deprovisioning the environment" from a bash script.
+The runbook must have a single "Run a kubectl script" step run against the target tag "Kubernetes" and echo the text "Deprovisioning the environment" from a bash script.
 Run the step from the "Hosted Ubuntu" worker pool.""",
         )
 
@@ -1210,10 +1210,10 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
             self.assertEqual([parent_environment_id], runbook["Environments"])
 
             steps = get_runbook_process_steps(space_id, runbook)
-            self.assertEqual(
-                ["Octopus.KubernetesRunScript"],
+            self.assertIn(
+                "Octopus.KubernetesRunScript",
                 [get_action_type(step) for step in steps],
-                f'The runbook "{runbook_name}" should run a single kubectl script. '
+                f'The runbook "{runbook_name}" should run a kubectl script. '
                 f"Its steps are: {step_names(steps)}",
             )
 

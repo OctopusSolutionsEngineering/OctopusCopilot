@@ -1359,6 +1359,18 @@ class FixScriptSourcePackageStepTest(unittest.TestCase):
 }"""
         self.assertEqual(config, fix_script_source(config))
 
+    def test_keeps_primary_package_on_nginx_step(self):
+        config = """resource "octopusdeploy_process_step" "deploy" {
+  name                  = "Deploy Docs"
+  type                  = "Octopus.Nginx"
+  primary_package       = { acquisition_location = "Server", feed_id = "Feeds-1", id = null, package_id = "docs-site", properties = { SelectionMode = "immediate" } }
+  execution_properties  = {
+    "Octopus.Action.Script.ScriptSource" = "Inline"
+    "Octopus.Action.Nginx.Server.HostName" = "docs.example.com"
+  }
+}"""
+        self.assertEqual(config, fix_script_source(config))
+
     def test_removes_primary_package_from_inline_script_step(self):
         config = """resource "octopusdeploy_process_step" "script" {
   name                  = "Run Script"

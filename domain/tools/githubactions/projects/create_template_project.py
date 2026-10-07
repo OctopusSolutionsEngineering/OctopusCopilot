@@ -36,6 +36,7 @@ from domain.sanitizers.terraform import (
     add_missing_enabled_features,
     link_projects_to_existing_deployment_freezes,
     disable_gcp_impersonation_without_emails,
+    fix_empty_s3_custom_bucket_key,
     fix_empty_strings,
     replace_passwords,
     replace_invalid_azure_guids,
@@ -133,6 +134,7 @@ from domain.sanitizers.terraform import (
     fix_invalid_octopus_variable_type,
     fix_literal_variable_template_id,
     fix_underscore_quoted_strings,
+    fix_underscore_count_operators,
     fix_community_step_template_count,
     escape_bare_interpolations,
     remove_worker_pool_from_target_steps,
@@ -146,6 +148,7 @@ from domain.sanitizers.terraform import (
     fix_empty_terraform_params,
     fix_use_guided_infrastructure,
     fix_invalid_worker_type,
+    fix_provider_block,
     truncate_long_project_names,
     fix_unescaped_variables,
     fix_yaml_source,
@@ -945,6 +948,8 @@ def sanitize_configuration(configuration):
     configuration = fix_use_guided_infrastructure(configuration)
     # Deal with the LLM returning an invalid dynamic worker pool worker_type
     configuration = fix_invalid_worker_type(configuration)
+    # SpaceBuilder supplies the server and credentials, so the provider block must only set the space ID
+    configuration = fix_provider_block(configuration)
     # Shorten project names the Octopus API would reject as longer than 200 characters
     configuration = truncate_long_project_names(configuration)
     # Deal with the LLM returning a single line for a tentacle_retention_policy block
@@ -965,6 +970,8 @@ def sanitize_configuration(configuration):
     configuration = add_missing_project_description_default(configuration)
     # Deal with the LLM wrapping quoted comparison strings in underscores
     configuration = fix_underscore_quoted_strings(configuration)
+    # Deal with the LLM writing underscores in place of the != and ? operators in count ternaries
+    configuration = fix_underscore_count_operators(configuration)
     # Community step templates must only be created when the space has no step template of the same name
     configuration = fix_community_step_template_count(configuration)
     # Escape bare ${NAME} references inside Terraform templates held in strings
@@ -1071,6 +1078,7 @@ def sanitize_configuration(configuration):
     configuration = add_missing_enabled_features(configuration)
     configuration = link_projects_to_existing_deployment_freezes(configuration)
     configuration = disable_gcp_impersonation_without_emails(configuration)
+    configuration = fix_empty_s3_custom_bucket_key(configuration)
     # Remove empty string default values
     configuration = fix_empty_strings(configuration)
     configuration = fix_blank_resource_names(configuration)

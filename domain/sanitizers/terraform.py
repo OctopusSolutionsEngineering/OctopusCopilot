@@ -751,6 +751,30 @@ def fix_invalid_worker_type(config):
     return re.sub(r'(\bworker_type\s*=\s*")([^"]*)(")', replace, config)
 
 
+PROVIDER_BLOCK_REGEX = re.compile(r'provider\s+"octopusdeploy"\s*\{')
+PROVIDER_BLOCK = 'provider "octopusdeploy" {\n  space_id = "${trimspace(var.octopus_space_id)}"\n}'
+
+
+def fix_provider_block(config):
+    """
+    SpaceBuilder supplies the server and credentials to the provider itself, so the provider block must only set
+    space_id. The LLM sometimes sets address and api_key from the octopus_server and octopus_apikey variables. SpaceBuilder
+    only passes octopus_space_id, so those variables keep their placeholder defaults and the plan fails with
+    "either an APIKey or an AccessToken is required to connect to the Octopus Server instance", or, with only address
+    set, "cannot get endpoint .../api/ from server. failure from http client invalid character 'M'".
+    """
+
+    match = PROVIDER_BLOCK_REGEX.search(config)
+    if not match:
+        return config
+
+    end = find_block_end(config, match.end())
+    if end is None:
+        return config
+
+    return config[: match.start()] + PROVIDER_BLOCK + config[end:]
+
+
 def fix_bad_feed_data(config):
     """
     The LLM kept building feed blocks with unmatched curly quotes
@@ -937,6 +961,20 @@ def fix_underscore_quoted_strings(config):
     return re.sub(
         r'(==|!=)\s*_"([^"\n]*?)_"',
         r'\1 "\2"',
+        config,
+    )
+
+
+def fix_underscore_count_operators(config):
+    """
+    The LLM sometimes writes underscores in place of the != and ? operators in a count ternary, like
+    count = "${length([for env in ... : env if env.name == "Development"]) _= 0 _ 0 : 1}", which fails init with:
+    Error: Extra characters after interpolation expression
+    """
+
+    return re.sub(
+        r"\)\s*(?:_=\s*0\s*[_?]|!=\s*0\s*_)\s*([01])\s*:\s*([01])\b",
+        r") != 0 ? \1 : \2",
         config,
     )
 
@@ -4420,7 +4458,7 @@ def remove_non_octopus_data_sources(config):
 # Step types that deploy their primary package. A stray ScriptSource property on these steps (e.g. an
 # LLM writing pre/post deployment scripts as an inline script body) must not cause the package to be removed.
 PACKAGE_DEPLOYMENT_STEP_TYPE_REGEX = re.compile(
-    r'^\s*type\s*=\s*"Octopus\.(?:TentaclePackage|IIS|WindowsService|TomcatDeploy|WildFlyDeploy|JavaArchive|'
+    r'^\s*type\s*=\s*"Octopus\.(?:TentaclePackage|IIS|WindowsService|TomcatDeploy|WildFlyDeploy|Nginx|JavaArchive|'
     r'AzureWebApp|AzureAppService|TransferPackage|AwsUploadS3|DeployRelease)"'
 )
 
@@ -4923,6 +4961,35 @@ def add_missing_enabled_features(config):
                 )
                 added = True
         return fixed_lines
+
+    return process_resource_blocks(config, process_resource)
+
+
+S3_CUSTOM_BUCKET_KEY_BEHAVIOUR_REGEX = re.compile(
+    r'^(\s*"bucketKeyBehaviour"\s*=\s*)"Custom"(.*)$'
+)
+S3_BUCKET_KEY_REGEX = re.compile(r'^\s*"bucketKey"\s*=\s*"([^"]*)"')
+
+
+def fix_empty_s3_custom_bucket_key(config):
+    """
+    An "Octopus.AwsUploadS3" step with a "Custom" bucket key behaviour must define the bucket key, otherwise Octopus
+    rejects the step with "'Bucket Key' must not be empty." and the entire apply fails. Fall back to using the
+    file name as the key when the custom key is empty.
+    """
+    if not config:
+        return config
+
+    def process_resource(resource_lines):
+        keys = [S3_BUCKET_KEY_REGEX.match(line) for line in resource_lines]
+        keys = [key.group(1) for key in keys if key]
+        if not keys or any(key.strip() for key in keys):
+            return resource_lines
+
+        return [
+            S3_CUSTOM_BUCKET_KEY_BEHAVIOUR_REGEX.sub(r'\1"Filename"\2', line)
+            for line in resource_lines
+        ]
 
     return process_resource_blocks(config, process_resource)
 
