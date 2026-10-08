@@ -1676,6 +1676,107 @@ Create an Orchestration project called "{orchestration_project_name}" managing t
                 f"It defines: {variable_names(variables)}",
             )
 
+    @skip("This is used for local testing")
+    def test_large_prompt(self):
+        prompt = """1. Environments
+
+Create the environments "UT", "IT", "RL", "Pre-Prod", and "Prod".
+
+2. Lifecycles
+
+Create a lifecycle named "MF Normal" with five phases. Phase "UT" contains the "UT" environment. Phase "IT" contains the "IT" environment. Phase "RL" contains the "RL" environment. Phase "Pre-Prod" contains the "Pre-Prod" environment. Phase "Prod" contains the "Prod" environment.
+Create a lifecycle named "MF Emergency" with one phase. Phase "Prod" contains the "Prod" environment.
+
+3. Tenant tag sets
+
+Create a tenant tag set named "MF Component" with the tags "COBOL", "IMS", and "DB2".
+Create a tenant tag set named "MF Market" with the tags "UK", "APAC", "US West", and "US East".
+
+4. Tenants
+
+Create a tenant named "EPRD" with the tenant tags "MF Component/COBOL" and "MF Market/UK".
+Create a tenant named "ERDIMS0" with the tenant tags "MF Component/IMS" and "MF Market/UK".
+Create a tenant named "AROC2" with the tenant tag "MF Component/COBOL".
+Create a tenant named "PDEV" with the tenant tags "MF Component/COBOL" and "MF Market/APAC".
+Create a tenant named "ERDDB2A" with the tenant tags "MF Component/DB2" and "MF Market/UK".
+Create a tenant named "ERDDSNP" with the tenant tags "MF Component/DB2" and "MF Market/UK".
+Create a tenant named "IPCW" with the tenant tags "MF Component/COBOL" and "MF Market/US West".
+Create a tenant named "PCWDB2V" with the tenant tags "MF Component/DB2" and "MF Market/US West".
+Create a tenant named "IPCE" with the tenant tags "MF Component/COBOL" and "MF Market/US East".
+Create a tenant named "PCEIMS5" with the tenant tags "MF Component/IMS" and "MF Market/US East".
+Create a tenant named "PCEDB2X" with the tenant tags "MF Component/DB2" and "MF Market/US East".
+Create a tenant named "DC1PROD" with the tenant tag "MF Component/COBOL".
+Create a tenant named "PCWIMSV" with the tenant tags "MF Component/IMS" and "MF Market/US West".
+
+5. Library variable sets
+
+Create a library variable set named "ISPW Connection".
+Add a variable "ISPW.CES.Url" with value "https://ces.example.internal".
+Add a sensitive variable "ISPW.CES.Token" with value "changeme".
+Add a variable "ISPW.RuntimeConfig" with value "ISPW".
+Add a variable "SNOW.Url" with value "https://snow.example.internal".
+
+Create a library variable set named "ISPW Sites".
+Add a tenant variable template "ISPW.Site.Code" with the label "ISPW site code" and default value "#{Octopus.Deployment.Tenant.Name}".
+
+6. Targets
+
+Create a Cloud Region target named "ispw-levels" scoped to the "UT", "IT", and "RL" environments with the target tag called "mf-site", allowing untenanted deployments only.
+Create a Cloud Region target named "site-eprd" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "EPRD" tenant.
+Create a Cloud Region target named "site-erdims0" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "ERDIMS0" tenant.
+Create a Cloud Region target named "site-aroc2" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "AROC2" tenant.
+Create a Cloud Region target named "site-pdev" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "PDEV" tenant.
+Create a Cloud Region target named "site-erddb2a" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "ERDDB2A" tenant.
+Create a Cloud Region target named "site-erddsnp" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "ERDDSNP" tenant.
+Create a Cloud Region target named "site-ipcw" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "IPCW" tenant.
+Create a Cloud Region target named "site-pcwdb2v" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "PCWDB2V" tenant.
+Create a Cloud Region target named "site-ipce" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "IPCE" tenant.
+Create a Cloud Region target named "site-pceims5" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "PCEIMS5" tenant.
+Create a Cloud Region target named "site-pcedb2x" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "PCEDB2X" tenant.
+Create a Cloud Region target named "site-dc1prod" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "DC1PROD" tenant.
+Create a Cloud Region target named "site-pcwimsv" scoped to the "Pre-Prod" and "Prod" environments with the target tag called "mf-site", allowing tenanted deployments only, linked to the "PCWIMSV" tenant.
+
+7. Project: MF Application 1
+7a. Project, channels, variables
+
+Create a project named "MF Application 1" in a project group named "Mainframe" using the "MF Normal" lifecycle, with the tenanted deployment mode set to "Tenanted or untenanted", including the library variable sets "ISPW Connection" and "ISPW Sites".
+Add a channel named "Normal" using the "MF Normal" lifecycle and make it the default channel.
+Add a channel named "Emergency" using the "MF Emergency" lifecycle.
+Add a project variable "ISPW.Application" with value "APP1".
+Add a project variable "ISPW.CentralId" with value "CI0000001".
+Add a required prompted variable "ISPW.AssignmentContainer" with the label "Assignment container" scoped to the "UT", "IT", and "RL" environments.
+Add an optional prompted variable "ISPW.ReleaseContainer" with the label "Release container (blank = generate new)" scoped to the "RL", "Pre-Prod", and "Prod" environments.
+Add a required prompted variable "SNOW.RFC" with the label "RFC number" scoped to the "Prod" environment.
+Add a project tenant variable template "ISPW.Site.DeployEnvironment" with the label "ISPW deploy environment for this app at this site" and default value "#{ISPW.Site.Code}".
+Add a project tenant variable template "ISPW.Site.Regions" with the label "CICS/IMS regions at this site" and default value "ALL".
+Add a project tenant variable template "ISPW.Site.ChangeWindow" with the label "Change window (local time)" and default value "20:00-23:59".
+
+7b. Deployment process. Every script step runs on a worker on behalf of the mf-site target tag. The scripts are stubs, so paste the real ones in through the UI.
+
+In the "MF Application 1" project, add the following deployment process steps:
+Step "Promote Assignment Container": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "UT", "IT", and "RL" environments and the "Normal" channel, with the bash script: echo "Promoting #{ISPW.AssignmentContainer} for #{ISPW.Application} to #{Octopus.Environment.Name}"
+Step "Await ISPW Promote Callback": Manual Intervention with the instructions "Waiting for ISPW completion callback", for the "UT", "IT", and "RL" environments and the "Normal" channel.
+Step "Manual Testing Sign-off": Manual Intervention with the instructions "Confirm testing passed", for the "IT" and "RL" environments and the "Normal" channel.
+Step "Transfer to Release Container": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "RL" environment and the "Normal" channel, with the bash script: echo "Transferring #{ISPW.AssignmentContainer} to release container #{ISPW.ReleaseContainer}"
+Step "Promote Release Container": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "RL" environment and the "Normal" channel, with the bash script: echo "Promoting release container #{ISPW.ReleaseContainer}"
+Step "Await ISPW Release Callback": Manual Intervention with the instructions "Waiting for ISPW release promotion callback", for the "RL" environment and the "Normal" channel.
+Step "Validate RFC in ServiceNow": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "Prod" environment, with the bash script: echo "Validating RFC #{SNOW.RFC} against #{SNOW.Url}"
+Step "Deploy Release Container to Site": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "Pre-Prod" and "Prod" environments, with the bash script: echo "Deploying #{ISPW.ReleaseContainer} to #{ISPW.Site.DeployEnvironment} (regions: #{ISPW.Site.Regions}, window: #{ISPW.Site.ChangeWindow})"
+Step "Await ISPW Deploy Callback": Manual Intervention with the instructions "Waiting for ISPW deploy callback for #{Octopus.Deployment.Tenant.Name}", for the "Pre-Prod" and "Prod" environments.
+Step "Pre-Prod Testing Sign-off": Manual Intervention with the instructions "Confirm pre-prod validation", for the "Pre-Prod" environment.
+Step "Regress": Run a Script on a worker on behalf of each target with the target tag "mf-site", with the run condition "only run when a previous step failed", with the bash script: echo "Regressing #{Octopus.Environment.Name} for #{ISPW.Application}"
+Step "Create ServiceNow Incident": Run a Script on a worker on behalf of each target with the target tag "mf-site", for the "Pre-Prod" and "Prod" environments, with the run condition "only run when a previous step failed", with the bash script: echo "Creating SNOW incident for #{ISPW.Application} at #{Octopus.Deployment.Tenant.Name}"
+
+7c. Connect the tenants (App 1's sites from the scratch pad) *** This one did not work ***
+
+Connect the tenants "EPRD", "ERDIMS0", "IPCE", and "DC1PROD" to the "MF Application 1" project for the "Pre-Prod" and "Prod" environments.
+
+7d. Backout runbook (optional, supports MF-04 and the backout story)
+
+In the "MF Application 1" project, create a runbook named "Backout Release" with a required prompted variable "ISPW.PromoteSetId" labeled "Promote set ID to back out", and a Run a Script step on a worker on behalf of each target with the target tag "mf-site" with the bash script: echo "Backing out promote set #{ISPW.PromoteSetId} at #{Octopus.Deployment.Tenant.Name}"
+"""
+        run_prompt(self, prompt)
+
 
 if __name__ == "__main__":
     unittest.main()

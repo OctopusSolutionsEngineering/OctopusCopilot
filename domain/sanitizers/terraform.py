@@ -965,16 +965,17 @@ def fix_underscore_quoted_strings(config):
     )
 
 
-def fix_underscore_count_operators(config):
+def fix_underscore_ternary_operators(config):
     """
-    The LLM sometimes writes underscores in place of the != and ? operators in a count ternary, like
-    count = "${length([for env in ... : env if env.name == "Development"]) _= 0 _ 0 : 1}", which fails init with:
-    Error: Extra characters after interpolation expression
+    The LLM sometimes writes underscores in place of the != and ? operators in a length ternary, like
+    count = "${length([for env in ... : env if env.name == "Development"]) _= 0 _ 0 : 1}" or
+    optional_deployment_targets = [length([...]) _= 0 _ [...][0].id : octopusdeploy_environment.environment_ut[0].id],
+    which fails init with "Extra characters after interpolation expression" or "Missing item separator".
     """
 
     return re.sub(
-        r"\)\s*(?:_=\s*0\s*[_?]|!=\s*0\s*_)\s*([01])\s*:\s*([01])\b",
-        r") != 0 ? \1 : \2",
+        r"\)\s*(?:_=\s*0\s*(?:_|\?)|!=\s*0\s*_)(?=\s)\s*",
+        ") != 0 ? ",
         config,
     )
 

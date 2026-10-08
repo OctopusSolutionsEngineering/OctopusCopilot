@@ -134,7 +134,7 @@ from domain.sanitizers.terraform import (
     fix_invalid_octopus_variable_type,
     fix_literal_variable_template_id,
     fix_underscore_quoted_strings,
-    fix_underscore_count_operators,
+    fix_underscore_ternary_operators,
     fix_community_step_template_count,
     escape_bare_interpolations,
     remove_worker_pool_from_target_steps,
@@ -970,8 +970,8 @@ def sanitize_configuration(configuration):
     configuration = add_missing_project_description_default(configuration)
     # Deal with the LLM wrapping quoted comparison strings in underscores
     configuration = fix_underscore_quoted_strings(configuration)
-    # Deal with the LLM writing underscores in place of the != and ? operators in count ternaries
-    configuration = fix_underscore_count_operators(configuration)
+    # Deal with the LLM writing underscores in place of the != and ? operators in length ternaries
+    configuration = fix_underscore_ternary_operators(configuration)
     # Community step templates must only be created when the space has no step template of the same name
     configuration = fix_community_step_template_count(configuration)
     # Escape bare ${NAME} references inside Terraform templates held in strings
