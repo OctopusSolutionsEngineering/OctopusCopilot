@@ -161,6 +161,19 @@ from domain.sanitizers.terraform import (
     remove_non_octopus_resources,
     remove_non_octopus_data_sources,
     fix_stale_project_resource_label,
+    fix_undeclared_deployment_freeze_lookup,
+    remove_empty_variable_scope_blocks,
+    add_trailing_slash_to_listening_worker_uri,
+    remove_git_triggers_without_git_dependency,
+    enforce_exact_name_matches,
+    configuration_has_octopus_resources,
+    remove_empty_action_properties,
+    fix_invalid_slugs,
+    convert_numeric_version_channel_tags,
+    fix_bare_comparison_in_condition_expression,
+    remove_duplicate_unscoped_tenant_common_variables,
+    add_linked_tenants_to_tenanted_targets,
+    fix_invalid_tentacle_ports,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -472,6 +485,29 @@ def create_template_project_callback(
             # Apply all fixes to fresh and cached configurations
             configuration = sanitize_configuration(configuration)
 
+            # A configuration without any Octopus resources applies "successfully" with 0 resources added and would
+            # then be cached, so the same prompt keeps returning it. Generate it once more, bypassing the cache.
+            if not configuration_has_octopus_resources(configuration):
+                configuration = sanitize_configuration(
+                    generate_terraform_configuration(
+                        general_examples_values,
+                        general_system_message_values,
+                        project_example_values,
+                        project_example_context_name,
+                        project_system_message_values,
+                        context,
+                        log_query,
+                        region,
+                        ollama_model,
+                    )
+                )
+
+            if not configuration_has_octopus_resources(configuration):
+                return CopilotResponse(
+                    "The AI Assistant did not generate any Octopus resources for this prompt. "
+                    + "Rephrase the prompt and try again."
+                )
+
             # Get a fresh password for the mock git server
             configuration = configure_mock_git_server(configuration)
 
@@ -543,9 +579,12 @@ def create_template_project_callback(
                 # Cache the template if it resulted in a valid plan.
                 # If the plan is particularly big (over the limit of 32K characters), the save operation might fail.
                 # This is a best effort operation, so we silently ignore exceptions.
-                none_on_exception(
-                    lambda: cache_terraform(cache_sha, configuration, connection_string)
-                )
+                if configuration_has_octopus_resources(configuration):
+                    none_on_exception(
+                        lambda: cache_terraform(
+                            cache_sha, configuration, connection_string
+                        )
+                    )
 
             arguments = {
                 "plan_id": response["data"]["id"],
@@ -926,6 +965,8 @@ def sanitize_configuration(configuration):
     configuration = sanitize_account_type(configuration)
     # Remove invalid slugs
     configuration = sanitize_slugs(configuration)
+    # Slugs copied from names in scripts without letter case, like Japanese, are rejected
+    configuration = fix_invalid_slugs(configuration)
     # Add the space ID variable
     configuration = add_space_id_variable(configuration)
     # Fix up half created primary package definitions
@@ -991,6 +1032,8 @@ def sanitize_configuration(configuration):
     configuration = add_missing_target_role_to_package_steps(configuration)
     configuration = add_missing_s3_package_options(configuration)
     configuration = fix_polling_tentacle_uri(configuration)
+    configuration = add_trailing_slash_to_listening_worker_uri(configuration)
+    configuration = fix_invalid_tentacle_ports(configuration)
     configuration = fix_deployment_target_trigger_type(configuration)
     configuration = fix_trigger_event_categories(configuration)
     configuration = remove_worker_pool_from_package_steps_with_roles(configuration)
@@ -1019,13 +1062,21 @@ def sanitize_configuration(configuration):
     configuration = add_missing_git_script_source(configuration)
     configuration = add_missing_script_body(configuration)
     configuration = fix_quoted_condition_expression(configuration)
+    # Octostache only compares inside #{if}, so a bare #{A == "B"} run condition never evaluates to true
+    configuration = fix_bare_comparison_in_condition_expression(configuration)
     configuration = remove_type_from_templated_steps(configuration)
     configuration = remove_template_parameters_from_execution_properties(configuration)
     configuration = remove_named_packages_from_package_deploy_steps(configuration)
     configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
+    # An unscoped variable must not have a scope block, or the apply fails with a changed block count
+    configuration = remove_empty_variable_scope_blocks(configuration)
     configuration = fix_steps_order_project_id(configuration)
     configuration = remove_case_insensitive_duplicate_environments(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
+    # partial_name is a substring match, so other lookups must also be filtered to the exact name
+    configuration = enforce_exact_name_matches(configuration)
+    # A tenanted target must be associated with tenants, so it gets the tenants linked to the project
+    configuration = add_linked_tenants_to_tenanted_targets(configuration)
     configuration = remove_default_channel_resources(configuration)
     configuration = add_steps_order_dependency_to_channels_with_rules(configuration)
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
@@ -1038,6 +1089,8 @@ def sanitize_configuration(configuration):
     configuration = fix_channel_count_depending_on_new_project(configuration)
     configuration = fix_channel_rule_step_slugs(configuration)
     configuration = remove_empty_attributes_from_channel_rules(configuration)
+    # A whole-version regex in a channel rule tag blocks every normal release, so it becomes a version range
+    configuration = convert_numeric_version_channel_tags(configuration)
     configuration = fix_lifecycle_phase_without_environments(configuration)
     # An inline ARM template step must say its template source
     configuration = fix_arm_template_source(configuration)
@@ -1067,6 +1120,10 @@ def sanitize_configuration(configuration):
     configuration = fix_invalid_octopus_variable_type(configuration)
     # A tenant variable must reference the template it sets rather than a hard-coded GUID
     configuration = fix_literal_variable_template_id(configuration)
+    # A library variable set value is tenant-wide, so only one unscoped value per tenant and template is allowed
+    configuration = remove_duplicate_unscoped_tenant_common_variables(configuration)
+    # Octopus drops step properties with empty string values, which fails the apply
+    configuration = remove_empty_action_properties(configuration)
     # Deal with the LLM returning a execution_properties blocks
     configuration = fix_execution_properties_block(configuration)
     # Deal with the LLM returning an empty execution_properties blocks
@@ -1077,6 +1134,8 @@ def sanitize_configuration(configuration):
     configuration = fix_script_source(configuration)
     configuration = add_missing_enabled_features(configuration)
     configuration = link_projects_to_existing_deployment_freezes(configuration)
+    # The freeze lookup written above needs a declared data source
+    configuration = fix_undeclared_deployment_freeze_lookup(configuration)
     configuration = disable_gcp_impersonation_without_emails(configuration)
     configuration = fix_empty_s3_custom_bucket_key(configuration)
     # Remove empty string default values
@@ -1097,6 +1156,8 @@ def sanitize_configuration(configuration):
     configuration = fix_unescaped_variables(configuration)
     # Add a placeholder filename for YAML steps referencing files from git repos
     configuration = fix_yaml_source(configuration)
+    # A git trigger must only reference steps that have a git dependency
+    configuration = remove_git_triggers_without_git_dependency(configuration)
     # Set fixed values for certificates
     configuration = set_mock_certificate(configuration)
     # Remove resources from other providers

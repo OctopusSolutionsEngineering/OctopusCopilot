@@ -11,10 +11,17 @@ from domain.sanitizers.sanitized_list import (
 
 class SanitizeTests(unittest.TestCase):
     def test_api_key_removed(self):
-        self.assertNotIn("API-ABCDEFG", sanitize_message("Api key is API-ABCDEFG"))
-        self.assertNotIn("api-AbCD123", sanitize_message("Api key is api-AbCD123"))
-        self.assertNotIn("aPi-AbCD123", sanitize_message("Api key is aPi-AbCD123"))
-        self.assertEqual("Api key is *****", sanitize_message("Api key is API-ABCDEFG"))
+        self.assertNotIn("API-ABCDEFGHIJKLMNOPQRSTUVWXYZ", sanitize_message("Api key is API-ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+        self.assertNotIn("api-ABCD1234ABCD1234ABCD12", sanitize_message("Api key is api-ABCD1234ABCD1234ABCD12"))
+        self.assertNotIn("aPi-ABCD1234ABCD1234ABCD12", sanitize_message("Api key is aPi-ABCD1234ABCD1234ABCD12"))
+        self.assertEqual("Api key is *****", sanitize_message("Api key is API-ABCDEFGHIJKLMNOPQRSTUVWXYZ"))
+
+    def test_api_words_in_names_are_kept(self):
+        self.assertEqual(
+            'Create a target called "ledger-api-prod"',
+            sanitize_message('Create a target called "ledger-api-prod"'),
+        )
+        self.assertEqual("Deploy orders-api-v2 and api-gateway", sanitize_message("Deploy orders-api-v2 and api-gateway"))
 
     def test_message_email_removed(self):
         self.assertTrue(
@@ -45,7 +52,7 @@ class SanitizeTests(unittest.TestCase):
         self.assertEqual(None, get_item_or_none(None, 0))
 
     def test_sanitize_message_api_key(self):
-        message = "Api key is API-ABCDEFG"
+        message = "Api key is API-ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         sanitized_message = sanitize_message(message)
         self.assertEqual(sanitized_message, "Api key is *****")
 
@@ -70,6 +77,6 @@ class SanitizeTests(unittest.TestCase):
         self.assertEqual(sanitized_message, "This is a safe message.")
 
     def test_sanitize_message_multiple_sensitive_data(self):
-        message = "Api key is API-ABCDEFG and GitHub PAT is ghp_abcdefghijklmnopqrstuvwxyzABCD012345"
+        message = "Api key is API-ABCDEFGHIJKLMNOPQRSTUVWXYZ and GitHub PAT is ghp_abcdefghijklmnopqrstuvwxyzABCD012345"
         sanitized_message = sanitize_message(message)
         self.assertEqual(sanitized_message, "Api key is ***** and GitHub PAT is *****")

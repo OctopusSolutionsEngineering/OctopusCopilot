@@ -1,6 +1,7 @@
 import os
 import hashlib
 import re
+import unicodedata
 import uuid
 
 from lxml.html.diff import fixup_ins_del_tags
@@ -5085,3 +5086,539 @@ def link_projects_to_existing_deployment_freezes(config):
         return fixed_lines
 
     return process_resource_blocks(config, process_resource)
+
+
+DEPLOYMENT_FREEZE_LOOKUP_REGEX = re.compile(
+    r"length\(data\.octopusdeploy_deployment_freezes\.(?P<data>\w+)\.deployment_freezes\)\s*!=\s*0\s*\?\s*"
+    r"data\.octopusdeploy_deployment_freezes\.(?P=data)\.deployment_freezes\[0\]\.id\s*:\s*"
+    r"(?P<resource>octopusdeploy_deployment_freeze\.\w+\[0\]\.id)"
+)
+
+
+def fix_undeclared_deployment_freeze_lookup(config):
+    """
+    A freeze link references the freeze through the usual lookup-or-create ternary but the data source is never
+    declared (link_projects_to_existing_deployment_freezes writes this ternary whenever the link references the freeze
+    resource directly), which fails the plan and creates nothing:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_deployment_freezes"
+    "deploymentfreeze_holiday_freeze" definition in the root module.
+    The canonical example references the freeze resource directly, so an undeclared lookup is replaced with the
+    resource reference.
+    """
+
+    if not config or "data.octopusdeploy_deployment_freezes." not in config:
+        return config
+
+    def replace(match):
+        declared = re.search(
+            rf'data\s+"octopusdeploy_deployment_freezes"\s+"{re.escape(match.group("data"))}"\s*\{{', config
+        )
+        return match.group(0) if declared else match.group("resource")
+
+    return DEPLOYMENT_FREEZE_LOOKUP_REGEX.sub(replace, config)
+
+
+SCOPE_BLOCK_HEADER_REGEX = re.compile(r"(?m)^[ \t]*scope[ \t]*\{")
+EMPTY_SCOPE_ATTRIBUTE_REGEX = re.compile(r"^\s*\w+\s*=\s*(?:null|\[\s*\])\s*$")
+
+
+def remove_empty_variable_scope_blocks(config):
+    """
+    An unscoped variable written with "scope {}" or a scope block whose attributes are all null or empty lists is
+    stored by Octopus without a scope, so the provider reports a changed block count and aborts the whole apply:
+    Error: Provider produced inconsistent result after apply ... .scope: block count changed from 1 to 0.
+    The instructions already forbid this, but a weaker model still emits it for "X for everything else" values.
+    Such a scope block is removed from octopusdeploy_variable resources.
+    """
+
+    if not config or "octopusdeploy_variable" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = VARIABLE_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            position = header.end()
+            continue
+
+        block = result[header.end() : end]
+        new_block = block
+        scope_position = 0
+        while True:
+            scope = SCOPE_BLOCK_HEADER_REGEX.search(new_block, scope_position)
+            if not scope:
+                break
+            scope_end = find_block_end(new_block, scope.end())
+            if scope_end is None:
+                break
+            body = new_block[scope.end() : scope_end - 1]
+            lines = [line for line in body.splitlines() if line.strip()]
+            if all(EMPTY_SCOPE_ATTRIBUTE_REGEX.match(line) for line in lines):
+                line_start = new_block.rfind("\n", 0, scope.start()) + 1
+                line_end = new_block.find("\n", scope_end)
+                line_end = len(new_block) if line_end == -1 else line_end + 1
+                new_block = new_block[:line_start] + new_block[line_end:]
+                scope_position = line_start
+            else:
+                scope_position = scope_end
+
+        result = result[: header.end()] + new_block + result[end:]
+        position = header.end() + len(new_block)
+
+
+LISTENING_WORKER_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_listening_tentacle_worker"\s+"\w+"\s*\{')
+LISTENING_WORKER_URI_REGEX = re.compile(r'(?m)^([ \t]*uri[ \t]*=[ \t]*")(https?://[^"/\s]+)(")')
+
+
+def add_trailing_slash_to_listening_worker_uri(config):
+    """
+    Octopus stores the URI of a listening worker with a trailing slash, so a URI written without one aborts the apply:
+    Error: Provider produced inconsistent result after apply ... octopusdeploy_listening_tentacle_worker ...
+    .uri: was cty.StringVal("https://worker-01.example.local:10933"), but now
+    cty.StringVal("https://worker-01.example.local:10933/").
+    A URI made of only a scheme, host and port has the slash appended.
+    """
+
+    if not config or "octopusdeploy_listening_tentacle_worker" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = LISTENING_WORKER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        block = LISTENING_WORKER_URI_REGEX.sub(r"\g<1>\g<2>/\g<3>", result[header.start() : end])
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+
+GIT_TRIGGER_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_git_trigger"\s+"\w+"\s*\{')
+GIT_TRIGGER_SLUG_REGEX = re.compile(r'deployment_action_slug\s*=\s*"(?P<slug>[^"]*)"')
+STEP_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_process_(?:templated_)?step"\s+"\w+"\s*\{')
+STEP_SLUG_REGEX = re.compile(r'(?m)^[ \t]*slug\s*=\s*"(?P<slug>[^"]*)"')
+GIT_DEPENDENCIES_REGEX = re.compile(r"(?m)^[ \t]*git_dependencies\s*=\s*(?!null\b)\S")
+
+
+def remove_git_triggers_without_git_dependency(config):
+    """
+    A git trigger whose source step has no git dependency (for example an inline script step) aborts the apply after
+    the project is created:
+    octopus deploy api returned an error on endpoint /api/Spaces-1/projecttriggers - [The specified Git dependency ''
+    for trigger 'Git Trigger' does not exist on the action 'Gate'.]
+    The instructions already say to repoint or delete such a trigger. A trigger is removed when any step it names
+    either does not exist or has no git_dependencies.
+    """
+
+    if not config or "octopusdeploy_git_trigger" not in config:
+        return config
+
+    steps_with_git = {}
+    for header in STEP_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        block = config[header.end() : end]
+        slug = STEP_SLUG_REGEX.search(block)
+        if slug:
+            steps_with_git[slug.group("slug")] = bool(GIT_DEPENDENCIES_REGEX.search(block))
+
+    result = config
+    position = 0
+    while True:
+        header = GIT_TRIGGER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        slugs = [m.group("slug") for m in GIT_TRIGGER_SLUG_REGEX.finditer(result[header.end() : end])]
+        if slugs and not all(steps_with_git.get(slug, False) for slug in slugs):
+            line_end = result.find("\n", end)
+            line_end = len(result) if line_end == -1 else line_end + 1
+            result = result[: header.start()] + result[line_end:]
+            position = header.start()
+        else:
+            position = end
+
+
+# (data source type, collection attribute, loop variable) for lookups that must match an exact name. Environments
+# are handled by enforce_exact_environment_name_matches.
+EXACT_NAME_LOOKUPS = [
+    ("octopusdeploy_accounts", "accounts", "account"),
+    ("octopusdeploy_project_groups", "project_groups", "group"),
+    ("octopusdeploy_lifecycles", "lifecycles", "lifecycle"),
+    ("octopusdeploy_library_variable_sets", "library_variable_sets", "set"),
+    ("octopusdeploy_feeds", "feeds", "feed"),
+    ("octopusdeploy_worker_pools", "worker_pools", "pool"),
+    ("octopusdeploy_tenants", "tenants", "tenant"),
+    ("octopusdeploy_git_credentials", "git_credentials", "credential"),
+    ("octopusdeploy_certificates", "certificates", "certificate"),
+    ("octopusdeploy_projects", "projects", "project"),
+]
+LOOKUP_NAME_REGEX = re.compile(r'(?m)^[ \t]*name[ \t]*=[ \t]*"(?P<name>(?:[^"\\\n]|\\.)*)"')
+BUILT_IN_FEED_TYPE_REGEX = re.compile(r'(?m)^[ \t]*feed_type[ \t]*=[ \t]*"(?:BuiltIn|OctopusProject)"')
+
+
+def enforce_exact_name_matches(config):
+    """
+    partial_name is a substring match, so a lookup finds any existing resource whose name contains the requested one,
+    the count of the resource becomes 0, the requested resource is never created, and everything that references it
+    silently uses the other resource. Observed in a space that already holds "AWS OIDC", "Default Project Group",
+    "Default Lifecycle", "OctoAI Prompts" and "Easy Mode Administration":
+    an account "AWS", project group "Default", lifecycle "Default" and library variable sets "Prompts" and "Admin" were
+    all bound to those existing resources instead of being created (and the set's variables were skipped).
+    Every named lookup of the listed types is filtered to the exact name in a local, and every use of the lookup goes
+    through that local, mirroring enforce_exact_environment_name_matches.
+    """
+
+    if not config:
+        return config
+
+    result = config
+    new_locals = []
+    for data_type, collection, item in EXACT_NAME_LOOKUPS:
+        if data_type not in result:
+            continue
+        header_regex = re.compile(rf'data\s+"{data_type}"\s+"(?P<label>\w+)"\s*\{{')
+        for header in list(header_regex.finditer(result)):
+            label = header.group("label")
+            start = result.find(header.group(0))
+            if start == -1:
+                continue
+            end = find_block_end(result, start + len(header.group(0)))
+            if end is None:
+                continue
+            block = result[start:end]
+            # Git credential lookups filter on "name" rather than "partial_name"
+            partial = ENVIRONMENT_PARTIAL_NAME_REGEX.search(block) or (
+                data_type == "octopusdeploy_git_credentials" and LOOKUP_NAME_REGEX.search(block)
+            )
+            if not partial or not partial.group("name"):
+                continue
+            # Built-in feeds are looked up by part of their name on purpose, e.g. "Octopus Server Releases" for
+            # "Octopus Server Releases (built-in)", so an exact filter would find nothing and fail the plan
+            if BUILT_IN_FEED_TYPE_REGEX.search(block):
+                continue
+            name = partial.group("name")
+            if name.startswith("${"):
+                variable = re.match(r"^\$\{var\.(\w+)\}$", name)
+                default = variable and re.search(
+                    rf'variable\s+"{variable.group(1)}"\s*\{{[^{{}}]*?\bdefault\s*=\s*"(?P<value>(?:[^"\\\n]|\\.)*)"',
+                    result,
+                )
+                if not default:
+                    continue
+                name = default.group("value")
+
+            local = f"{label}_{collection}_matches"
+            if not re.search(rf"\b{local}\s*=", result):
+                new_locals.append(
+                    f"  {local} = [for {item} in data.{data_type}.{label}.{collection} : {item} if {item}.name == \"{name}\"]"
+                )
+
+            updated = re.sub(r"(\btake\s*=\s*)\d+", r"\g<1>100", block)
+            result = result[:start] + updated + result[end:]
+            result = result.replace(f"length(data.{data_type}.{label}.{collection})", f"length(local.{local})")
+            result = result.replace(f"data.{data_type}.{label}.{collection}[0]", f"local.{local}[0]")
+
+    if new_locals:
+        result = result.rstrip("\n") + "\n\nlocals {\n" + "\n".join(new_locals) + "\n}\n"
+    return result
+
+
+OCTOPUS_RESOURCE_REGEX = re.compile(r'(?m)^\s*resource\s+"octopusdeploy_\w+"\s+"\w+"\s*\{')
+
+
+def configuration_has_octopus_resources(configuration):
+    """
+    True when the configuration declares at least one octopusdeploy resource. A configuration with none (an empty or
+    truncated LLM response, or one whose every block was stripped by sanitization) applies "successfully" with
+    "Resources: 0 added", and the user is told their resources were created.
+    """
+    return bool(configuration and OCTOPUS_RESOURCE_REGEX.search(configuration))
+
+
+STEP_PROPERTY_MAP_REGEX = re.compile(r"(?m)^[ \t]*(?:execution_properties|properties)[ \t]*=[ \t]*\{[ \t]*\n")
+EMPTY_ACTION_PROPERTY_LINE_REGEX = re.compile(r'(?m)^[ \t]*"Octopus\.[^"\n]+"[ \t]*=[ \t]*""[ \t]*\n')
+
+
+def remove_empty_action_properties(config):
+    """
+    Octopus does not store a step property whose value is an empty string, so the provider reports that the property
+    disappeared and aborts the whole apply:
+    Provider produced inconsistent result after apply ... .execution_properties: element
+    "Octopus.Action.Package.JsonConfigurationVariablesTargets" has vanished.
+    Earlier sanitizers fixed this one key at a time (KubernetesContainers.Namespace, Terraform.AdditionalActionParams,
+    Script.PreDeployPackageOnWorker). Every Octopus.* entry with an empty string value is removed from the
+    execution_properties and properties maps of process steps.
+    """
+
+    if not config or "octopusdeploy_process_" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = STEP_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.start() : end]
+        new_block = block
+        map_position = 0
+        while True:
+            properties = STEP_PROPERTY_MAP_REGEX.search(new_block, map_position)
+            if not properties:
+                break
+            map_end = find_block_end(new_block, properties.end() - 1)
+            if map_end is None:
+                break
+            body = new_block[properties.end() : map_end]
+            cleaned = EMPTY_ACTION_PROPERTY_LINE_REGEX.sub("", body)
+            new_block = new_block[: properties.end()] + cleaned + new_block[map_end:]
+            map_position = properties.end() + len(cleaned)
+
+        result = result[: header.start()] + new_block + result[end:]
+        position = header.start() + len(new_block)
+
+
+SLUG_ATTRIBUTE_REGEX = re.compile(r'(?m)^(?P<prefix>[ \t]*slug[ \t]*=[ \t]*")(?P<slug>[^"\n]*)(?P<suffix>")')
+
+
+def _slug_is_valid(slug):
+    # Octopus accepts lowercase letters (any script with a lowercase form, e.g. "begrüßung"), digits and dashes, and
+    # rejects other characters such as CJK ideographs, which have no case.
+    return all(char == "-" or char.isdigit() or unicodedata.category(char) == "Ll" for char in slug)
+
+
+def fix_invalid_slugs(config):
+    """
+    A slug copied from a name in a script without letter case aborts the apply:
+    Octopus API error: There was a problem with your request. [Invalid slug '日本語ステップ', slugs can only contain
+    lowercase letters, numbers, and dashes.]
+    Invalid characters are lowered where possible and otherwise replaced with dashes; a slug left without any letter or
+    digit becomes a stable "slug-<hash>" derived from the original text.
+    """
+
+    if not config or "slug" not in config:
+        return config
+
+    def fix(match):
+        slug = match.group("slug")
+        if not slug or "${" in slug or _slug_is_valid(slug):
+            return match.group(0)
+        cleaned = "".join(char if _slug_is_valid(char) else ("-" if not _slug_is_valid(char.lower()) else char.lower()) for char in slug)
+        cleaned = re.sub(r"-{2,}", "-", cleaned).strip("-")
+        if not any(char != "-" for char in cleaned):
+            cleaned = "slug-" + hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
+        return match.group("prefix") + cleaned + match.group("suffix")
+
+    return SLUG_ATTRIBUTE_REGEX.sub(fix, config)
+
+
+CHANNEL_RULE_HEADER_REGEX = re.compile(r"(?m)^[ \t]*rule[ \t]*\{")
+CHANNEL_RULE_TAG_LINE_REGEX = re.compile(r'(?m)^(?P<indent>[ \t]*)tag[ \t]*=[ \t]*"(?P<tag>[^"\n]*)"[ \t]*\n')
+# A whole version with a fixed major, e.g. ^3\.\d+\.\d+$ or ^15\.[0-9]+\.[0-9]+$, as written in HCL (doubled backslashes)
+NUMERIC_VERSION_TAG_REGEX = re.compile(r"^\^(?P<major>\d+)(?:\\\\\.(?:\\\\d\+|\[0-9\]\+))+\$?$")
+
+
+def convert_numeric_version_channel_tags(config):
+    """
+    A channel rule's tag is matched against the pre-release label only, so a regex over the whole version (the prompt
+    "only allow package versions matching the regex ^3.<digits>.<digits>$" was written as that regex in tag) never
+    matches a normal release, whose pre-release label is empty, and the channel blocks every release. A tag that only
+    fixes the major version is replaced with tag = "^$" plus the equivalent version_range. A rule that already has a
+    version_range keeps it (observed: version_range = "[7.0,8.0)" next to tag = "^7\\.[0-9]+\\.[0-9]+$").
+    """
+
+    if not config or "octopusdeploy_channel" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        new_block = block
+        rule_position = 0
+        while True:
+            rule = CHANNEL_RULE_HEADER_REGEX.search(new_block, rule_position)
+            if not rule:
+                break
+            rule_end = find_block_end(new_block, rule.end())
+            if not rule_end:
+                break
+            body = new_block[rule.end() : rule_end]
+            tag = CHANNEL_RULE_TAG_LINE_REGEX.search(body)
+            numeric = tag and NUMERIC_VERSION_TAG_REGEX.match(tag.group("tag"))
+            if numeric:
+                major = int(numeric.group("major"))
+                indent = tag.group("indent")
+                replacement = f'{indent}tag = "^$"\n'
+                if not re.search(r"(?m)^[ \t]*version_range[ \t]*=", body):
+                    replacement = f'{indent}version_range = "[{major}.0,{major + 1}.0)"\n' + replacement
+                body = body[: tag.start()] + replacement + body[tag.end() :]
+                new_block = new_block[: rule.end()] + body + new_block[rule_end:]
+                rule_end = rule.end() + len(body)
+            rule_position = rule_end
+
+        result = result[: header.start()] + new_block + result[end:]
+        position = header.start() + len(new_block)
+
+
+CONDITION_EXPRESSION_VALUE_REGEX = re.compile(
+    r'(?m)^(?P<prefix>[ \t]*"Octopus\.Step\.ConditionVariableExpression"[ \t]*=[ \t]*")(?P<value>(?:[^"\\\n]|\\.)*)(?P<suffix>")'
+)
+# A comparison written as a plain substitution, e.g. #{Search.Enabled == \"true\"}, rather than inside #{if}
+BARE_CONDITION_COMPARISON_REGEX = re.compile(r"#\{(?!\s*(?:if|unless|each|/)\b)(?P<comparison>[^{}#]+?(?:==|!=)[^{}#]+?)\}")
+
+
+def fix_bare_comparison_in_condition_expression(config):
+    """
+    Octostache only evaluates a comparison inside #{if}, so a run condition written as
+    "#{Search.PreflightEnabled == \"true\"}" never renders as true and the step never runs. A bare comparison in
+    Octopus.Step.ConditionVariableExpression is wrapped as #{if <comparison>}true#{/if}.
+    """
+
+    if not config or "Octopus.Step.ConditionVariableExpression" not in config:
+        return config
+
+    def fix(match):
+        value = BARE_CONDITION_COMPARISON_REGEX.sub(
+            lambda comparison: "#{if " + comparison.group("comparison").strip() + "}true#{/if}", match.group("value")
+        )
+        return match.group("prefix") + value + match.group("suffix")
+
+    return CONDITION_EXPRESSION_VALUE_REGEX.sub(fix, config)
+
+
+TENANT_COMMON_VARIABLE_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_tenant_common_variable"\s+"\w+"\s*\{')
+TENANT_COMMON_VARIABLE_KEY_REGEX = re.compile(r'(?m)^[ \t]*(?P<key>tenant_id|template_id)[ \t]*=[ \t]*(?P<value>"[^"\n]*")')
+
+
+def remove_duplicate_unscoped_tenant_common_variables(config):
+    """
+    A library variable set value is tenant-wide, so a second unscoped value for the same tenant and template fails the
+    apply: Octopus API error: Tenant variable validation failed. [Duplicate unscoped variable found for the variable
+    template 'Claims.RegionCode'. Only 1 unscoped variable should be provided per variable template.]
+    The model wrote one copy per environment, each without a scope. Every unscoped octopusdeploy_tenant_common_variable
+    after the first for the same tenant_id and template_id is removed.
+    """
+
+    if not config or "octopusdeploy_tenant_common_variable" not in config:
+        return config
+
+    seen = set()
+    result = config
+    position = 0
+    while True:
+        header = TENANT_COMMON_VARIABLE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        block = result[header.end() : end]
+        keys = {m.group("key"): m.group("value") for m in TENANT_COMMON_VARIABLE_KEY_REGEX.finditer(block)}
+        unscoped = not re.search(r"(?m)^[ \t]*scope[ \t]*\{", block)
+        identity = (keys.get("tenant_id"), keys.get("template_id"))
+        if unscoped and None not in identity and identity in seen:
+            line_end = result.find("\n", end)
+            line_end = len(result) if line_end == -1 else line_end + 1
+            result = result[: header.start()] + result[line_end:]
+            position = header.start()
+            continue
+        if unscoped:
+            seen.add(identity)
+        position = end
+
+
+DEPLOYMENT_TARGET_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_\w+_deployment_target"\s+"\w+"\s*\{')
+TENANTED_TARGET_REGEX = re.compile(r'(?m)^[ \t]*tenanted_deployment_participation[ \t]*=[ \t]*"(?:Tenanted|TenantedOrUntenanted)"')
+EMPTY_TARGET_TENANTS_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)tenants[ \t]*=[ \t]*\[[ \t]*\][ \t]*$")
+EMPTY_TARGET_TENANT_TAGS_REGEX = re.compile(r"(?m)^[ \t]*tenant_tags[ \t]*=[ \t]*(?:\[[ \t]*\]|null)[ \t]*$")
+TENANT_PROJECT_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_tenant_project"\s+"\w+"\s*\{')
+TENANT_ID_LINE_REGEX = re.compile(r'(?m)^[ \t]*tenant_id[ \t]*=[ \t]*(?P<value>"[^"\n]*")')
+
+
+def add_linked_tenants_to_tenanted_targets(config):
+    """
+    A tenanted deployment target with no tenants and no tenant tags fails the apply:
+    Octopus API error: There was a problem with your request. [You must associate this item with tenants to use
+    Tenanted deployment mode.]
+    The instructions say a target in a tenanted project lists the project's tenants, but the template's "Mock K8s"
+    target was emitted with tenants = []. Such a target gets the tenants linked to projects in the same configuration,
+    using the tenant_id expressions of the octopusdeploy_tenant_project resources.
+    """
+
+    if not config or "_deployment_target" not in config or "octopusdeploy_tenant_project" not in config:
+        return config
+
+    tenant_ids = []
+    for header in TENANT_PROJECT_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        tenant_id = end and TENANT_ID_LINE_REGEX.search(config, header.end(), end)
+        if tenant_id and tenant_id.group("value") not in tenant_ids:
+            tenant_ids.append(tenant_id.group("value"))
+    if not tenant_ids:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = DEPLOYMENT_TARGET_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        block = result[header.end() : end]
+        tenants = EMPTY_TARGET_TENANTS_REGEX.search(block)
+        if TENANTED_TARGET_REGEX.search(block) and tenants and EMPTY_TARGET_TENANT_TAGS_REGEX.search(block):
+            replacement = f"{tenants.group('indent')}tenants = [{', '.join(tenant_ids)}]"
+            block = block[: tenants.start()] + replacement + block[tenants.end() :]
+            result = result[: header.end()] + block + result[end:]
+            end = header.end() + len(block)
+        position = end
+
+
+TENTACLE_URI_PORT_REGEX = re.compile(
+    r'(?m)^(?P<prefix>[ \t]*(?:tentacle_url|uri)[ \t]*=[ \t]*"https?://[^"/:\s]+:)(?P<port>\d+)(?P<suffix>[/"])'
+)
+
+
+def fix_invalid_tentacle_ports(config):
+    """
+    A listening Tentacle URL with a port above 65535 fails the apply:
+    Octopus API error: Invalid URI: Invalid port specified.
+    The prompt supplied "https://chaos-01.example.local:99999". An out-of-range port in the tentacle_url or uri of a
+    listening tentacle target or worker is replaced with 10933, the default listening Tentacle port.
+    """
+
+    if not config or "listening_tentacle" not in config:
+        return config
+
+    def fix(match):
+        if int(match.group("port")) <= 65535:
+            return match.group(0)
+        return match.group("prefix") + "10933" + match.group("suffix")
+
+    return TENTACLE_URI_PORT_REGEX.sub(fix, config)

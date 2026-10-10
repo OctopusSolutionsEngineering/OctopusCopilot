@@ -8,7 +8,10 @@ from domain.validation.argument_validation import ensure_string
 
 # https://github.com/odomojuli/regextokens
 sensitive_vars = [
-    "[Aa][Pp][Ii]-[A-Za-z0-9]+",
+    # Octopus API keys are "API-" followed by a long run of uppercase letters and digits. Matching any "api-" word
+    # also masked names in user prompts before they reached the LLM: "ledger-api-prod" became "ledger-*****", and
+    # the project was created with a target called "ledger-_____".
+    r"\b[Aa][Pp][Ii]-[A-Z0-9]{16,}\b",
     "xoxe.xoxp-1-[0-9a-zA-Z]{166}",
     "xoxb-[0-9]{11}-[0-9]{11}-[0-9a-zA-Z]{24}",
     "xoxp-[0-9]{11}-[0-9]{11}-[0-9a-zA-Z]{24}",
