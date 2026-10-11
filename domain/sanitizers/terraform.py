@@ -2804,6 +2804,7 @@ def add_run_on_server_to_worker_pool_steps(config):
 CHANNEL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_channel"\s+"(?P<label>\w+)"\s*\{')
 CHANNEL_REFERENCE_REGEX = re.compile(r"octopusdeploy_channel\.(?P<label>\w+)")
 DEPENDS_ON_REGEX = re.compile(r"(?P<head>\bdepends_on\s*=\s*\[)(?P<items>[^\]]*)(?P<tail>\])")
+STEPS_ORDER_REFERENCE_REGEX = re.compile(r"octopusdeploy_process_steps_order\.")
 
 
 def add_depends_on_references(body, references):
@@ -2818,7 +2819,6 @@ def add_depends_on_references(body, references):
     items = depends_on.group("items").strip()
     replacement = depends_on.group("head") + (f"{items}, {added}" if items else added) + depends_on.group("tail")
     return body[: depends_on.start()] + replacement + body[depends_on.end() :]
-STEPS_ORDER_REFERENCE_REGEX = re.compile(r"octopusdeploy_process_steps_order\.")
 
 
 def remove_steps_order_dependency_from_referenced_channels(config):
