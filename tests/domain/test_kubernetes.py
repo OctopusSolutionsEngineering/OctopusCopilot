@@ -217,7 +217,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         expected_output = """
         resource "octopusdeploy_project" "project" {
-          name = "Blue_Green deployment"
+          name = "Blue-Green deployment"
           description = "This is a Blue/Green deployment project"
         }
         """
@@ -289,7 +289,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
           name = "Ledger Lifecycle (Regional)"
         }
         resource "octopusdeploy_environment" "environment2" {
-          name = "Staging (EU-West-1) _ Primary"
+          name = "Staging (EU-West-1) - Primary"
         }
         """
 
@@ -336,7 +336,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
           name = "Étape 1: Préparer"
         }
         resource "octopusdeploy_environment" "environment" {
-          name = "Développement_QA"
+          name = "Développement-QA"
         }
         """
 
@@ -357,7 +357,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
     def test_sanitize_name_attributes_still_replaces_other_backslashes(self):
         input_config = 'name = "DOMAIN\\\\user and a/b"'
         result = sanitize_name_attributes(input_config)
-        self.assertEqual(result, 'name = "DOMAIN__user and a_b"')
+        self.assertEqual(result, 'name = "DOMAIN__user and a-b"')
 
     def test_sanitize_name_attributes_allow_interpolation(self):
         # Input with slashes in name
@@ -416,7 +416,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         expected_output = """
         resource "octopusdeploy_project" "project1" {
-          name = "Project_1"
+          name = "Project-1"
         }
         resource "octopusdeploy_project" "project2" {
           name = "Project_2"
@@ -439,7 +439,7 @@ class TestKubernetesSanitizer(unittest.TestCase):
 
         expected_output = """
         resource "octopusdeploy_project" "project1" {
-          name = "Project_1"
+          name = "Project-1"
         }
         resource "octopusdeploy_project" "project2" {
           name = 'Project_2'

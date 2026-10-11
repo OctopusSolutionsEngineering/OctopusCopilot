@@ -142,20 +142,21 @@ def _sanitize_name_value(yaml_config):
     # replace string that look like
     # name: "Blue/Green deployment"
     # with
-    # name: "Blue_Green deployment"
+    # name: "Blue-Green deployment"
     #
     # Brackets and ampersands are left alone. The Octopus API accepts them in
     # the name of a project, environment, lifecycle, channel, project group,
     # runbook and worker pool, so replacing them corrupts a name the prompt
     # asked for. Forward and back slashes are still replaced, because the API
-    # rejects a name containing a slash.
+    # rejects a name containing a slash. A forward slash becomes a dash, as the
+    # instructions ask for (Build/Publish -> Build-Publish); the other characters become an underscore.
     # Letters outside ASCII (Équipe, Café, emoji) are accepted by the API too, so only
     # the ASCII characters that are not in the allowed set are replaced.
     # An escaped quote (\") is kept as it is: the backslash is the HCL escape, not part of the name, and
     # replacing it leaves a bare quote that ends the string early.
     line = re.sub(
         r'\\"|[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]',
-        lambda match: match.group(0) if match.group(0) == '\\"' else "_",
+        lambda match: match.group(0) if match.group(0) == '\\"' else "-" if match.group(0) == "/" else "_",
         yaml_config,
     )
 
@@ -1068,7 +1069,12 @@ def fix_community_step_template_count(config):
 BARE_INTERPOLATION_REGEX = re.compile(r"(?<!\$)\$\{([A-Za-z_][A-Za-z0-9_]*)\}")
 # An Octopus variable name written as ${DNS.Zone}: Terraform references never start with a capital letter
 OCTOPUS_VARIABLE_INTERPOLATION_REGEX = re.compile(
-    r"(?<!\$)\$\{([A-Z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_-]+)+)\}"
+    r"(?<!\$)\$\{([A-Z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_-]+)+(?:\s*\|(?!\|)[^{}\"|]+)*)\}"
+)
+# An Octopus variable with an Octostache filter that was already escaped, like $${Octopus.Environment.Name | ToLower}.
+# A filter pipe is never valid Terraform, CloudFormation or shell interpolation.
+ESCAPED_OCTOPUS_FILTER_INTERPOLATION_REGEX = re.compile(
+    r"\$\$\{([A-Z][A-Za-z0-9_]*(?:\.[A-Za-z0-9_-]+)+(?:\s*\|(?!\|)[^{}\"|]+)+)\}"
 )
 # A CloudFormation pseudo parameter written as ${AWS::AccountId} in an inline template
 CLOUDFORMATION_PSEUDO_PARAMETER_REGEX = re.compile(r"(?<!\$)\$\{(AWS::[A-Za-z]+)\}")
@@ -1081,7 +1087,9 @@ def escape_bare_interpolations(config):
     Error: Invalid reference ... A reference to a resource type must be followed by at least one attribute access
     Escape it as $${TF_VAR_region}. A bare identifier is left alone where it is the iterator of a for expression.
     A capitalised dotted name like ${DNS.Zone} is an Octopus variable (fails with: Reference to undeclared resource),
-    so it becomes the Octostache template #{DNS.Zone}.
+    so it becomes the Octostache template #{DNS.Zone}. This includes a name with an Octostache filter, like
+    ${Octopus.Environment.Name | ToLower} or $${Octopus.Environment.Name | ToLower} in a CloudFormation stack name,
+    which Octopus would otherwise pass through literally.
     """
 
     def escape(match):
@@ -1090,7 +1098,12 @@ def escape_bare_interpolations(config):
             return match.group(0)
         return "$" + match.group(0)
 
+    if not config:
+        return config
     config = OCTOPUS_VARIABLE_INTERPOLATION_REGEX.sub(
+        lambda match: "#{" + match.group(1) + "}", config
+    )
+    config = ESCAPED_OCTOPUS_FILTER_INTERPOLATION_REGEX.sub(
         lambda match: "#{" + match.group(1) + "}", config
     )
     config = CLOUDFORMATION_PSEUDO_PARAMETER_REGEX.sub(r"$${\1}", config)
@@ -2791,6 +2804,20 @@ def add_run_on_server_to_worker_pool_steps(config):
 CHANNEL_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_channel"\s+"(?P<label>\w+)"\s*\{')
 CHANNEL_REFERENCE_REGEX = re.compile(r"octopusdeploy_channel\.(?P<label>\w+)")
 DEPENDS_ON_REGEX = re.compile(r"(?P<head>\bdepends_on\s*=\s*\[)(?P<items>[^\]]*)(?P<tail>\])")
+
+
+def add_depends_on_references(body, references):
+    """
+    Add the references to the depends_on list of a block body, creating the list when the block has none.
+    """
+
+    added = ", ".join(references)
+    depends_on = DEPENDS_ON_REGEX.search(body)
+    if not depends_on:
+        return f"\n  depends_on = [{added}]" + body
+    items = depends_on.group("items").strip()
+    replacement = depends_on.group("head") + (f"{items}, {added}" if items else added) + depends_on.group("tail")
+    return body[: depends_on.start()] + replacement + body[depends_on.end() :]
 STEPS_ORDER_REFERENCE_REGEX = re.compile(r"octopusdeploy_process_steps_order\.")
 
 
@@ -2962,14 +2989,7 @@ def add_steps_order_dependency_to_channels_with_rules(config):
             position = header.end()
             continue
 
-        reference = f"octopusdeploy_process_steps_order.{label}"
-        depends_on = DEPENDS_ON_REGEX.search(body)
-        if depends_on:
-            items = depends_on.group("items").strip()
-            replacement = depends_on.group("head") + (f"{items}, {reference}" if items else reference) + depends_on.group("tail")
-            body = body[: depends_on.start()] + replacement + body[depends_on.end() :]
-        else:
-            body = f"\n  depends_on = [{reference}]" + body
+        body = add_depends_on_references(body, [f"octopusdeploy_process_steps_order.{label}"])
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
 
@@ -2980,6 +3000,33 @@ CHILD_STEPS_ORDER_HEADER_REGEX = re.compile(
 ANY_STEP_HEADER_REGEX = re.compile(
     r'resource\s+"octopusdeploy_process_(?:step|child_step|templated_step|templated_child_step)"\s+"\w+"\s*\{'
 )
+
+
+def channels_referenced_by_steps(config):
+    """
+    The labels of the channels that any step is scoped to.
+    """
+
+    referenced = set()
+    for step in ANY_STEP_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, step.end())
+        if end is not None:
+            referenced.update(match.group("label") for match in CHANNEL_REFERENCE_REGEX.finditer(config[step.end() : end]))
+    return referenced
+
+
+def child_steps_order_references(body, labels):
+    """
+    The child steps orders a channel body does not yet reference. A channel of a known project gets the child steps
+    orders of that project, and a channel whose project can not be identified gets all of them.
+    """
+
+    project = PROJECT_REFERENCE_LABEL_REGEX.search(body)
+    if project:
+        prefix = f"process_child_step_order_{project.group('label')}_"
+        labels = [label for label in labels if label.startswith(prefix)]
+    references = [f"octopusdeploy_process_child_steps_order.{label}" for label in labels]
+    return [reference for reference in references if reference not in body]
 
 
 def add_child_steps_order_dependency_to_channels_with_rules(config):
@@ -2999,11 +3046,7 @@ def add_child_steps_order_dependency_to_channels_with_rules(config):
     if not labels:
         return config
 
-    referenced = set()
-    for step in ANY_STEP_HEADER_REGEX.finditer(config):
-        end = find_block_end(config, step.end())
-        if end is not None:
-            referenced.update(match.group("label") for match in CHANNEL_REFERENCE_REGEX.finditer(config[step.end() : end]))
+    referenced = channels_referenced_by_steps(config)
 
     result = config
     position = 0
@@ -3016,32 +3059,13 @@ def add_child_steps_order_dependency_to_channels_with_rules(config):
             return result
 
         body = result[header.end() : end]
-        if not CHANNEL_RULE_REGEX.search(body) or header.group("label") in referenced:
-            position = header.end()
-            continue
-
-        project = PROJECT_REFERENCE_LABEL_REGEX.search(body)
-        prefix = f"process_child_step_order_{project.group('label')}_" if project else None
-        matching = [label for label in labels if prefix and label.startswith(prefix)] or (
-            labels if not project else []
-        )
-        references = [
-            f"octopusdeploy_process_child_steps_order.{label}"
-            for label in matching
-            if f"octopusdeploy_process_child_steps_order.{label}" not in body
-        ]
+        has_rule = CHANNEL_RULE_REGEX.search(body) and header.group("label") not in referenced
+        references = child_steps_order_references(body, labels) if has_rule else []
         if not references:
             position = header.end()
             continue
 
-        depends_on = DEPENDS_ON_REGEX.search(body)
-        if depends_on:
-            items = depends_on.group("items").strip()
-            added = ", ".join(references)
-            replacement = depends_on.group("head") + (f"{items}, {added}" if items else added) + depends_on.group("tail")
-            body = body[: depends_on.start()] + replacement + body[depends_on.end() :]
-        else:
-            body = f"\n  depends_on = [{', '.join(references)}]" + body
+        body = add_depends_on_references(body, references)
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
 
