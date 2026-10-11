@@ -58,6 +58,7 @@ from domain.sanitizers.terraform import (
     fix_bad_feed_data,
     fix_bad_maven_feed_resource,
     fix_maven_feed_acquisition_options,
+    fix_container_registry_acquisition_options,
     add_missing_project_description_default,
     fix_bare_data_lookup_reference,
     fix_created_worker_pool_fallback,
@@ -93,6 +94,7 @@ from domain.sanitizers.terraform import (
     escape_template_directives_in_script_bodies,
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
+    add_child_steps_order_dependency_to_channels_with_rules,
     remove_default_channel_resources,
     enforce_exact_environment_name_matches,
     remove_case_insensitive_duplicate_environments,
@@ -1005,6 +1007,8 @@ def sanitize_configuration(configuration):
     configuration = fix_bad_maven_feed_resource(configuration)
     # Maven feeds do not support the NotAcquired acquisition location
     configuration = fix_maven_feed_acquisition_options(configuration)
+    # Container registry feeds only support the ExecutionTarget and NotAcquired acquisition locations
+    configuration = fix_container_registry_acquisition_options(configuration)
     # Project default_guided_failure_mode only accepts EnvironmentDefault, On, or Off
     configuration = fix_default_guided_failure_mode(configuration)
     # The project description variable needs a default, even when the LLM only wrote a description
@@ -1080,6 +1084,8 @@ def sanitize_configuration(configuration):
     configuration = remove_default_channel_resources(configuration)
     configuration = add_steps_order_dependency_to_channels_with_rules(configuration)
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
+    # Channel rules that name a child step must also wait for the child steps
+    configuration = add_child_steps_order_dependency_to_channels_with_rules(configuration)
     configuration = remove_environments_when_excluded_environments_are_set(configuration)
     configuration = fix_stray_bracket_before_interpolation_end(configuration)
     # The server rejects a project name with a forward slash

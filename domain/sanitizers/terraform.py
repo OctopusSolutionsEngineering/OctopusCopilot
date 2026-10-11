@@ -108,43 +108,64 @@ def sanitize_name_attributes(config):
     # A channel rule's action_package names its step in "deployment_action", so it gets the same replacement as the
     # step "name". Observed failure: step "Canary 5%" became "Canary 5_" while the rule kept "Canary 5%", and the API
     # rejected the channel with "Channel version rule references step 'Canary 5%' which does not exist".
-    yaml_configs = re.findall(
-        r"\b(?:name|deployment_action)\s*=\s*.*",
-        config,
+    # The attribute must start a line or follow "{" or "," (an inline object). Observed failure: an inline Terraform
+    # template stored in a variable value ("...{\n  name     = \"rg-${var.cidr}\"\n  location = ...") matched mid-string,
+    # and every "\n" escape after it became "_n", corrupting the template.
+    # Heredoc bodies (script bodies, YAML, INI or TOML text) are content, not attributes. Observed failure: an INI line
+    # 'name = "orders/eu-west"' inside a ScriptBody heredoc became 'name = "orders_eu-west"'.
+    if not config:
+        return config
+
+    attribute = re.compile(r"(?:^|(?<=[{,]))[ \t]*(\b(?:name|deployment_action)\s*=\s*.*)")
+    heredoc_start = re.compile(r'<<-?\s*"?([A-Za-z_][A-Za-z0-9_]*)"?\s*$')
+
+    lines = config.split("\n")
+    heredoc_marker = None
+    for index, text in enumerate(lines):
+        if heredoc_marker:
+            if text.strip() == heredoc_marker:
+                heredoc_marker = None
+            continue
+
+        match = attribute.search(text)
+        if match:
+            lines[index] = text[: match.start(1)] + _sanitize_name_value(match.group(1))
+
+        start = heredoc_start.search(text)
+        if start:
+            heredoc_marker = start.group(1)
+
+    return "\n".join(lines)
+
+
+def _sanitize_name_value(yaml_config):
+    # replace string that look like
+    # name: "Blue/Green deployment"
+    # with
+    # name: "Blue_Green deployment"
+    #
+    # Brackets and ampersands are left alone. The Octopus API accepts them in
+    # the name of a project, environment, lifecycle, channel, project group,
+    # runbook and worker pool, so replacing them corrupts a name the prompt
+    # asked for. Forward and back slashes are still replaced, because the API
+    # rejects a name containing a slash.
+    # Letters outside ASCII (Équipe, Café, emoji) are accepted by the API too, so only
+    # the ASCII characters that are not in the allowed set are replaced.
+    # An escaped quote (\") is kept as it is: the backslash is the HCL escape, not part of the name, and
+    # replacing it leaves a bare quote that ends the string early.
+    line = re.sub(
+        r'\\"|[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]',
+        lambda match: match.group(0) if match.group(0) == '\\"' else "_",
+        yaml_config,
     )
 
-    fixed_config = config
-    for yaml_config in yaml_configs:
+    # Octopus trims the name, so leading and trailing spaces make the provider report an inconsistent result:
+    # Provider produced inconsistent result after apply ... .name was cty.StringVal("  My Name  "), but now ...
+    quoted = re.match(r'^(\b(?:name|deployment_action)\s*=\s*")(.*?)("\s*)$', line)
+    if quoted and quoted.group(2) != quoted.group(2).strip():
+        line = quoted.group(1) + quoted.group(2).strip() + quoted.group(3)
 
-        # replace string that look like
-        # name: "Blue/Green deployment"
-        # with
-        # name: "Blue_Green deployment"
-        #
-        # Brackets and ampersands are left alone. The Octopus API accepts them in
-        # the name of a project, environment, lifecycle, channel, project group,
-        # runbook and worker pool, so replacing them corrupts a name the prompt
-        # asked for. Forward and back slashes are still replaced, because the API
-        # rejects a name containing a slash.
-        # Letters outside ASCII (Équipe, Café, emoji) are accepted by the API too, so only
-        # the ASCII characters that are not in the allowed set are replaced.
-        # An escaped quote (\") is kept as it is: the backslash is the HCL escape, not part of the name, and
-        # replacing it leaves a bare quote that ends the string early.
-        line = re.sub(
-            r'\\"|[\x00-\x1f!%*+/;<>?@\\^`|~\x7f]',
-            lambda match: match.group(0) if match.group(0) == '\\"' else "_",
-            yaml_config,
-        )
-
-        # Octopus trims the name, so leading and trailing spaces make the provider report an inconsistent result:
-        # Provider produced inconsistent result after apply ... .name was cty.StringVal("  My Name  "), but now ...
-        quoted = re.match(r'^(\b(?:name|deployment_action)\s*=\s*")(.*?)("\s*)$', line)
-        if quoted and quoted.group(2) != quoted.group(2).strip():
-            line = quoted.group(1) + quoted.group(2).strip() + quoted.group(3)
-
-        fixed_config = fixed_config.replace(yaml_config, line)
-
-    return fixed_config
+    return line
 
 
 def fix_empty_namespace(config):
@@ -830,24 +851,58 @@ def fix_maven_feed_acquisition_options(config):
     was cty.StringVal("ExecutionTarget"), but now cty.StringVal("Server").
     """
 
+    return _set_feed_acquisition_options(
+        config, ["octopusdeploy_maven_feed"], '["Server", "ExecutionTarget"]'
+    )
+
+
+CONTAINER_REGISTRY_FEED_RESOURCES = [
+    "octopusdeploy_docker_container_registry",
+    "octopusdeploy_aws_elastic_container_registry",
+    "octopusdeploy_azure_container_registry",
+    "octopusdeploy_google_container_registry",
+]
+
+
+def fix_container_registry_acquisition_options(config):
+    """
+    Container registry feeds only support the ExecutionTarget and NotAcquired package acquisition
+    locations. The LLM copies the Maven/NuGet value, and the provider returns:
+    When applying changes to octopusdeploy_docker_container_registry.feed_model_registry[0],
+    produced an unexpected new value: .package_acquisition_location_options[0]:
+    was cty.StringVal("Server"), but now cty.StringVal("ExecutionTarget").
+    """
+
+    return _set_feed_acquisition_options(
+        config, CONTAINER_REGISTRY_FEED_RESOURCES, '["ExecutionTarget", "NotAcquired"]'
+    )
+
+
+def _set_feed_acquisition_options(config, resource_types, value):
+    if not config:
+        return config
+
+    header = re.compile(
+        r'\s*resource\s+"(?:'
+        + "|".join(re.escape(t) for t in resource_types)
+        + r')"\s+"[^"]*"\s*\{'
+    )
     lines = config.split("\n")
-    in_maven_feed = False
+    in_feed = False
     depth = 0
     for i, line in enumerate(lines):
-        if not in_maven_feed and re.match(
-            r'\s*resource\s+"octopusdeploy_maven_feed"\s+"[^"]*"\s*\{', line
-        ):
-            in_maven_feed = True
+        if not in_feed and header.match(line):
+            in_feed = True
             depth = 0
-        if in_maven_feed:
+        if in_feed:
             lines[i] = re.sub(
                 r"^(\s*package_acquisition_location_options\s*=\s*)\[.*?\]",
-                r'\1["Server", "ExecutionTarget"]',
+                lambda m: m.group(1) + value,
                 line,
             )
             depth += line.count("{") - line.count("}")
             if depth <= 0:
-                in_maven_feed = False
+                in_feed = False
     return "\n".join(lines)
 
 
@@ -2915,6 +2970,78 @@ def add_steps_order_dependency_to_channels_with_rules(config):
             body = body[: depends_on.start()] + replacement + body[depends_on.end() :]
         else:
             body = f"\n  depends_on = [{reference}]" + body
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+CHILD_STEPS_ORDER_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_process_child_steps_order"\s+"(?P<label>[^"]+)"\s*\{'
+)
+ANY_STEP_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_process_(?:step|child_step|templated_step|templated_child_step)"\s+"\w+"\s*\{'
+)
+
+
+def add_child_steps_order_dependency_to_channels_with_rules(config):
+    """
+    A channel version rule can name a child step of a rolling deployment. Child steps are created by their own
+    resources, so a channel that only depends on the steps order can still be created first:
+    Octopus API error: ... [Channel version rule references step 'deploy-to-tomcat-via-manager' which does not exist
+    in the deployment process.]
+    The channel gets a depends_on for every child steps order of its project. A channel that a step is scoped to is
+    skipped, because the dependency would be a cycle (see remove_steps_order_dependency_from_referenced_channels).
+    """
+
+    if not config:
+        return config
+
+    labels = [match.group("label") for match in CHILD_STEPS_ORDER_HEADER_REGEX.finditer(config)]
+    if not labels:
+        return config
+
+    referenced = set()
+    for step in ANY_STEP_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, step.end())
+        if end is not None:
+            referenced.update(match.group("label") for match in CHANNEL_REFERENCE_REGEX.finditer(config[step.end() : end]))
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        if not CHANNEL_RULE_REGEX.search(body) or header.group("label") in referenced:
+            position = header.end()
+            continue
+
+        project = PROJECT_REFERENCE_LABEL_REGEX.search(body)
+        prefix = f"process_child_step_order_{project.group('label')}_" if project else None
+        matching = [label for label in labels if prefix and label.startswith(prefix)] or (
+            labels if not project else []
+        )
+        references = [
+            f"octopusdeploy_process_child_steps_order.{label}"
+            for label in matching
+            if f"octopusdeploy_process_child_steps_order.{label}" not in body
+        ]
+        if not references:
+            position = header.end()
+            continue
+
+        depends_on = DEPENDS_ON_REGEX.search(body)
+        if depends_on:
+            items = depends_on.group("items").strip()
+            added = ", ".join(references)
+            replacement = depends_on.group("head") + (f"{items}, {added}" if items else added) + depends_on.group("tail")
+            body = body[: depends_on.start()] + replacement + body[depends_on.end() :]
+        else:
+            body = f"\n  depends_on = [{', '.join(references)}]" + body
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
 
