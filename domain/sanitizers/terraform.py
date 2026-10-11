@@ -1072,12 +1072,6 @@ HOSTED_UBUNTU_WORKER_POOL_DATA = """data "octopusdeploy_worker_pools" "workerpoo
   partial_name = "Hosted Ubuntu"
   skip         = 0
   take         = 1
-  lifecycle {
-    postcondition {
-      error_message = "Failed to resolve a worker pool called \\"Hosted Ubuntu\\". This resource must exist in the space before this Terraform configuration is applied."
-      condition     = length(self.worker_pools) != 0
-    }
-  }
 }
 """
 
@@ -1087,31 +1081,56 @@ def fix_lookup_worker_pool_default_fallback(config):
     When the prompt asks to look up an existing worker pool that does not exist, the LLM falls back to the Default
     Worker Pool data source. A fresh space has no pool called Default Worker Pool, so the plan fails with:
     Error: Invalid index ... data.octopusdeploy_worker_pools.workerpool_default_worker_pool.worker_pools is empty list
-    Hosted Ubuntu is the pool that always exists, so use it as the fallback for lookup-only pools.
+    Hosted Ubuntu is the preferred fallback for lookup-only pools, but only Octopus Cloud has it, so a fallback to
+    Hosted Ubuntu fails the same way in a self-hosted space:
+    Error: Invalid index ... data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools is empty tuple
+    A step's worker_pool_id tries each lookup in turn and ends with an empty string, which selects the default worker
+    pool of the space.
     """
 
     hosted_ubuntu = "workerpool_hosted_ubuntu"
+
+    def is_created(name):
+        return re.search(rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(name)}"', config)
+
+    def replace_worker_pool_id(match):
+        name = match.group(2)
+        if is_created(name):
+            return match.group(0)
+        lookups = [name] if name == hosted_ubuntu else [name, hosted_ubuntu]
+        attempts = ", ".join(f"data.octopusdeploy_worker_pools.{lookup}.worker_pools[0].id" for lookup in lookups)
+        return f'{match.group(1)}${{try({attempts}, "")}}"'
+
+    result = re.sub(
+        r'((?<![\w.])worker_pool_id\s*=\s*")'
+        r"\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
+        r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*"
+        rf"data\.octopusdeploy_worker_pools\.(?:workerpool_default_worker_pool|{hosted_ubuntu})\.worker_pools\[0\]\.id\}}\"",
+        replace_worker_pool_id,
+        config,
+    )
 
     def replace_fallback(match):
         name = match.group(2)
         # Hosted Ubuntu with a Default Worker Pool fallback is the pattern from the system prompt. Replacing the
         # fallback would leave both branches indexing the same lookup.
-        if name == hosted_ubuntu or re.search(
-            rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(name)}"', config
-        ):
+        if name == hosted_ubuntu or is_created(name):
             return match.group(0)
         return f"{match.group(1)}data.octopusdeploy_worker_pools.{hosted_ubuntu}.worker_pools[0].id}}"
 
+    # Other attributes, like the value of a worker pool variable, can not be empty, so keep the ternary
     result = re.sub(
         r"(\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
         r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*)"
         r"data\.octopusdeploy_worker_pools\.workerpool_default_worker_pool\.worker_pools\[0\]\.id\}",
         replace_fallback,
-        config,
+        result,
     )
 
-    if result != config and not re.search(
-        rf'data\s+"octopusdeploy_worker_pools"\s+"{hosted_ubuntu}"', result
+    if (
+        result != config
+        and f"data.octopusdeploy_worker_pools.{hosted_ubuntu}." in result
+        and not re.search(rf'data\s+"octopusdeploy_worker_pools"\s+"{hosted_ubuntu}"', result)
     ):
         result = result.rstrip("\n") + "\n" + HOSTED_UBUNTU_WORKER_POOL_DATA
 

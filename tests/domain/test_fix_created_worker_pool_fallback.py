@@ -123,13 +123,55 @@ class TestFixLookupWorkerPoolDefaultFallback(unittest.TestCase):
 }
 """
 
-    def test_lookup_only_pool_falls_back_to_hosted_ubuntu(self):
+    def test_worker_pool_id_tries_lookup_then_hosted_ubuntu_then_empty_string(self):
         result = fix_lookup_worker_pool_default_fallback(self.LOOKUP)
+        self.assertIn(
+            'worker_pool_id = "${try(data.octopusdeploy_worker_pools.workerpool_gcp_workers.worker_pools[0].id, '
+            'data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id, "")}"',
+            result,
+        )
+        self.assertNotIn("workerpool_default_worker_pool", result)
+        self.assertNotIn("length(", result)
+
+    def test_worker_pool_id_hosted_ubuntu_fallback_tries_empty_string(self):
+        config = self.LOOKUP.replace(
+            "workerpool_default_worker_pool", "workerpool_hosted_ubuntu"
+        ).replace("workerpool_gcp_workers", "workerpool_hosted_windows")
+        result = fix_lookup_worker_pool_default_fallback(config)
+        self.assertIn(
+            'worker_pool_id = "${try(data.octopusdeploy_worker_pools.workerpool_hosted_windows.worker_pools[0].id, '
+            'data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id, "")}"',
+            result,
+        )
+
+    def test_worker_pool_id_hosted_ubuntu_lookup_tries_empty_string(self):
+        config = self.LOOKUP.replace("workerpool_gcp_workers", "workerpool_hosted_ubuntu")
+        result = fix_lookup_worker_pool_default_fallback(config)
+        self.assertIn(
+            'worker_pool_id = "${try(data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id, "")}"',
+            result,
+        )
+        self.assertNotIn("workerpool_default_worker_pool", result)
+
+    def test_worker_pool_id_of_created_pool_unchanged(self):
+        config = CREATED_POOL + self.LOOKUP.replace(
+            "workerpool_gcp_workers", "workerpool_dns_workers"
+        )
+        self.assertEqual(fix_lookup_worker_pool_default_fallback(config), config)
+
+    def test_hosted_ubuntu_data_source_has_no_postcondition(self):
+        result = fix_lookup_worker_pool_default_fallback(self.LOOKUP)
+        self.assertNotIn("postcondition", result)
+
+    def test_lookup_only_variable_falls_back_to_hosted_ubuntu(self):
+        config = VARIABLE.replace("workerpool_dns_workers", "workerpool_gcp_workers")
+        result = fix_lookup_worker_pool_default_fallback(config)
         self.assertIn(
             ': data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools[0].id}"',
             result,
         )
         self.assertNotIn("workerpool_default_worker_pool", result)
+        self.assertNotIn("try(", result)
 
     def test_adds_hosted_ubuntu_data_source_once(self):
         result = fix_lookup_worker_pool_default_fallback(self.LOOKUP)
