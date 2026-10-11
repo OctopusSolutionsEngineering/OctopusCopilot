@@ -1084,8 +1084,8 @@ def fix_lookup_worker_pool_default_fallback(config):
     Hosted Ubuntu is the preferred fallback for lookup-only pools, but only Octopus Cloud has it, so a fallback to
     Hosted Ubuntu fails the same way in a self-hosted space:
     Error: Invalid index ... data.octopusdeploy_worker_pools.workerpool_hosted_ubuntu.worker_pools is empty tuple
-    A step's worker_pool_id tries each lookup in turn and ends with an empty string, which selects the default worker
-    pool of the space.
+    A step's worker_pool_id and a worker pool variable's value try each lookup in turn and end with an empty string,
+    which selects the default worker pool of the space.
     """
 
     hosted_ubuntu = "workerpool_hosted_ubuntu"
@@ -1093,7 +1093,7 @@ def fix_lookup_worker_pool_default_fallback(config):
     def is_created(name):
         return re.search(rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(name)}"', config)
 
-    def replace_worker_pool_id(match):
+    def replace_with_try(match):
         name = match.group(2)
         if is_created(name):
             return match.group(0)
@@ -1102,11 +1102,11 @@ def fix_lookup_worker_pool_default_fallback(config):
         return f'{match.group(1)}${{try({attempts}, "")}}"'
 
     result = re.sub(
-        r'((?<![\w.])worker_pool_id\s*=\s*")'
+        r'((?<![\w.])(?:worker_pool_id|value)\s*=\s*")'
         r"\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
         r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*"
         rf"data\.octopusdeploy_worker_pools\.(?:workerpool_default_worker_pool|{hosted_ubuntu})\.worker_pools\[0\]\.id\}}\"",
-        replace_worker_pool_id,
+        replace_with_try,
         config,
     )
 
@@ -1118,7 +1118,7 @@ def fix_lookup_worker_pool_default_fallback(config):
             return match.group(0)
         return f"{match.group(1)}data.octopusdeploy_worker_pools.{hosted_ubuntu}.worker_pools[0].id}}"
 
-    # Other attributes, like the value of a worker pool variable, can not be empty, so keep the ternary
+    # Any other reference keeps the ternary
     result = re.sub(
         r"(\$\{length\(data\.octopusdeploy_worker_pools\.(\w+)\.worker_pools\)\s*!=\s*0\s*\?\s*"
         r"data\.octopusdeploy_worker_pools\.\2\.worker_pools\[0\]\.id\s*:\s*)"
