@@ -627,9 +627,29 @@ class EasyModeTest(EasyModeTestBase):
         )
 
         variables = get_variable_set_variables(space_id, variable_set["VariableSetId"])
-        values = {variable["Name"]: variable["Value"] for variable in variables}
-        self.assertEqual(connection_string, values.get("ConnectionString"))
-        self.assertEqual(api_endpoint, values.get("ApiEndpoint"))
+        variables_by_name = {variable["Name"]: variable for variable in variables}
+        self.assertIn(
+            "ConnectionString",
+            variables_by_name,
+            f"The library variable set should define ConnectionString. It defines: {list(variables_by_name)}",
+        )
+        self.assertIn(
+            "ApiEndpoint",
+            variables_by_name,
+            f"The library variable set should define ApiEndpoint. It defines: {list(variables_by_name)}",
+        )
+
+        # The connection string embeds a password, so the instructions make the variable sensitive with a
+        # placeholder value instead of storing the credential in plain text. Octopus never returns the value
+        # of a sensitive variable, so only the type is checked.
+        connection_string_variable = variables_by_name["ConnectionString"]
+        self.assertTrue(
+            connection_string_variable["IsSensitive"],
+            "ConnectionString contains a password and should be a sensitive variable.",
+        )
+        self.assertEqual("Sensitive", connection_string_variable["Type"])
+
+        self.assertEqual(api_endpoint, variables_by_name["ApiEndpoint"]["Value"])
 
         # The library variable set is linked to the project.
         self.assertIn(
