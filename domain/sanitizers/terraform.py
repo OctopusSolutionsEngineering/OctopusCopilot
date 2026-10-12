@@ -2936,6 +2936,79 @@ def remove_steps_order_dependency_from_referenced_channels(config):
         position = header.end() + len(body)
 
 
+ANY_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
+RUNBOOK_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_runbook"\s+"(?P<label>\w+)"\s*\{')
+RUNBOOK_ID_REFERENCE_REGEX = re.compile(r"\brunbook_id\s*=\s*\"[^\"\n]*octopusdeploy_runbook\.(?P<label>\w+)")
+
+
+def remove_own_process_dependency_from_runbooks(config):
+    """
+    The runbook's process references the runbook ID, so a runbook that depends on its own process, steps or steps
+    order is a cycle:
+    Error: Cycle: octopusdeploy_runbook.x, octopusdeploy_process.y, octopusdeploy_process_step.z,
+    octopusdeploy_process_steps_order.w
+    The LLM copied the channel pattern of depending on the steps order onto a runbook. Those dependencies are removed
+    from the runbook's depends_on. Dependencies on other resources are kept.
+    """
+
+    if not config or "octopusdeploy_runbook" not in config:
+        return config
+
+    blocks = []
+    for header in ANY_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is not None:
+            blocks.append((f'{header.group("type")}.{header.group("label")}', config[header.end() : end]))
+
+    # Each runbook owns the processes that reference it, and everything that references those owned resources
+    owned = {}
+    for address, body in blocks:
+        if address.startswith("octopusdeploy_process."):
+            runbook = RUNBOOK_ID_REFERENCE_REGEX.search(body)
+            if runbook:
+                owned.setdefault(runbook.group("label"), set()).add(address)
+    if not owned:
+        return config
+
+    for addresses in owned.values():
+        changed = True
+        while changed:
+            changed = False
+            for address, body in blocks:
+                if address not in addresses and address.startswith("octopusdeploy_process") and any(
+                    re.search(rf"\b{re.escape(owned_address)}\b", body) for owned_address in addresses
+                ):
+                    addresses.add(address)
+                    changed = True
+
+    result = config
+    position = 0
+    while True:
+        header = RUNBOOK_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        addresses = owned.get(header.group("label"))
+        if addresses:
+
+            def remove_owned(match):
+                items = [item for item in match.group("items").split(",") if item.strip()]
+                kept = [
+                    item
+                    for item in items
+                    if not any(re.search(rf"\b{re.escape(address)}\b", item) for address in addresses)
+                ]
+                return match.group("head") + ",".join(kept) + match.group("tail")
+
+            body = DEPENDS_ON_REGEX.sub(remove_owned, body)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
 STEP_ENVIRONMENTS_REGEX = re.compile(r"(?m)^([ \t]*)environments([ \t]*=[ \t]*)")
 STEP_EXCLUDED_ENVIRONMENTS_REGEX = re.compile(r"(?m)^[ \t]*excluded_environments[ \t]*=[ \t]*")
 

@@ -130,6 +130,7 @@ from domain.sanitizers.terraform import (
     remove_named_packages_from_package_deploy_steps,
     remove_duplicate_variables_with_same_name_and_scope,
     remove_steps_order_dependency_from_referenced_channels,
+    remove_own_process_dependency_from_runbooks,
     remove_environments_when_excluded_environments_are_set,
     fix_stray_bracket_before_interpolation_end,
     replace_slash_in_project_name,
@@ -1089,6 +1090,8 @@ def sanitize_configuration(configuration):
     configuration = remove_default_channel_resources(configuration)
     configuration = add_steps_order_dependency_to_channels_with_rules(configuration)
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
+    # A runbook that depends on its own process, steps or steps order is a cycle
+    configuration = remove_own_process_dependency_from_runbooks(configuration)
     # Channel rules that name a child step must also wait for the child steps
     configuration = add_child_steps_order_dependency_to_channels_with_rules(configuration)
     # A gcloud step that does not use the VM service account must name the Google Cloud account variable
