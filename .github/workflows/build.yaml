@@ -226,6 +226,7 @@ jobs:
           OCTOPUS_TEST_REMOTE: FALSE
 #          REDIRECTION_DISABLE: !!str "true"
 #          REDIRECTION_FORCE: !!str "false"
+          AISERVICES_CACHE_DISABLED_PROJECT_GEN: !!str "true"
         shell: /usr/bin/bash --noprofile --norc {0}
 
       - name: Upload coverage
