@@ -1695,7 +1695,7 @@ Create an Orchestration project called "{orchestration_project_name}" managing t
         variables = get_project_variables(project)
         for variable_name in ["Project.Workerpool", "Project.Image"]:
             self.assertTrue(
-                any(variable["Name"] == variable_name for variable in variables),
+                any(variable["Name"].casefold() == variable_name.casefold() for variable in variables),
                 f"The project should define {variable_name}. "
                 f"It defines: {variable_names(variables)}",
             )

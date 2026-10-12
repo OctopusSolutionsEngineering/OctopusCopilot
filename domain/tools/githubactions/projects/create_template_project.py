@@ -87,6 +87,7 @@ from domain.sanitizers.terraform import (
     replace_unverified_community_templated_step,
     remove_unsupported_trigger_description,
     fix_trigger_primary_package_reference,
+    fix_trigger_empty_package_reference,
     fix_parenthesis_octopus_variable_syntax,
     fix_variable_condition_without_expression,
     fix_donor_package_attribute,
@@ -1051,6 +1052,8 @@ def sanitize_configuration(configuration):
     # The create release trigger has no description argument
     configuration = remove_unsupported_trigger_description(configuration)
     configuration = fix_trigger_primary_package_reference(configuration)
+    # An empty trigger package reference must name the packages map key when the step has no primary package
+    configuration = fix_trigger_empty_package_reference(configuration)
     configuration = fix_parenthesis_octopus_variable_syntax(configuration)
     configuration = fix_variable_condition_without_expression(configuration)
     configuration = fix_donor_package_attribute(configuration)

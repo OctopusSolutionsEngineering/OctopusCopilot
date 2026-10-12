@@ -2669,6 +2669,62 @@ def fix_trigger_primary_package_reference(config):
         position = header.end() + len(body)
 
 
+PACKAGES_MAP_FIRST_KEY_REGEX = re.compile(r'\bpackages\s*=\s*\{\s*"?(?P<key>[^"\s={}]+)"?\s*=\s*\{')
+TRIGGER_EMPTY_PACKAGE_REFERENCE_REGEX = re.compile(
+    r'(?P<slug>\bdeployment_action_slug\s*=\s*"(?P<value>[^"\n]+)"\s*\n\s*)(?P<prefix>package_reference\s*=\s*)""'
+)
+
+
+def fix_trigger_empty_package_reference(config):
+    """
+    An empty package reference means the step's primary package, but the LLM uses "" for a step that only has a
+    packages map, and the apply fails with:
+    Error: ... [The specified package reference '' for trigger 'External Feed Trigger' does not exist on the action
+    'Deploy Azure Web App Container'.]
+    The empty reference is replaced with the first key of the packages map of the step whose slug the trigger names.
+    Nothing changes when that step has a primary package, or has no packages map.
+    """
+
+    if not config or "octopusdeploy_external_feed_create_release_trigger" not in config:
+        return config
+
+    step_package_keys = {}
+    for header in PROCESS_STEP_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        body = config[header.end() : end]
+        slug = re.search(r'^\s*slug\s*=\s*"([^"\n]+)"', body, re.MULTILINE)
+        if not slug or PRIMARY_PACKAGE_HEADER_REGEX.search(body):
+            continue
+        key = PACKAGES_MAP_FIRST_KEY_REGEX.search(body)
+        if key:
+            step_package_keys[slug.group(1)] = key.group("key")
+
+    if not step_package_keys:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = EXTERNAL_FEED_TRIGGER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        def replace_reference(match):
+            key = step_package_keys.get(match.group("value"))
+            if key is None:
+                return match.group(0)
+            return f'{match.group("slug")}{match.group("prefix")}"{key}"'
+
+        body = TRIGGER_EMPTY_PACKAGE_REFERENCE_REGEX.sub(replace_reference, result[header.end() : end])
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
 PARENTHESIS_OCTOPUS_VARIABLE_REGEX = re.compile(r"\$\((Octopus\.[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)*)\)")
 
 
