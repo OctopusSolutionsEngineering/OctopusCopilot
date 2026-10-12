@@ -2110,6 +2110,7 @@ POLLING_TARGET_HEADER_REGEX = re.compile(
     r'(?m)^[ \t]*resource\s+"octopusdeploy_polling_tentacle_deployment_target"\s+"\w+"\s*\{'
 )
 TENTACLE_URL_REGEX = re.compile(r'(tentacle_url\s*=\s*")([^"]*)(")')
+POLLING_SUBSCRIPTION_ID_REGEX = re.compile(r'\bsubscription_id(\s*=\s*")([^"]*)(")')
 VALID_POLLING_SUBSCRIPTION_REGEX = re.compile(r"^poll://[a-z0-9]{20}/$")
 
 
@@ -2119,6 +2120,10 @@ def fix_polling_tentacle_uri(config):
     and a trailing slash. The LLM writes poll://abc123/ or an https address, which fails the apply:
     Octopus API error: [A polling tentacle URI should look like 'poll://nvpv4doqf2f3id45t1xn/']
     An invalid URL is replaced with a valid subscription derived from it, so the same text always gives the same one.
+    The LLM also writes the subscription as subscription_id, which the resource does not have:
+    Error: Missing required argument ... The argument "tentacle_url" is required ... An argument named
+    "subscription_id" is not expected here.
+    A subscription_id in a block without a tentacle_url becomes tentacle_url = "poll://<subscription>/".
     """
 
     if not config or "octopusdeploy_polling_tentacle_deployment_target" not in config:
@@ -2139,7 +2144,16 @@ def fix_polling_tentacle_uri(config):
         end = find_block_end(result, header.end())
         if end is None:
             return result
-        block = TENTACLE_URL_REGEX.sub(fix_url, result[header.start() : end])
+        block = result[header.start() : end]
+        if not TENTACLE_URL_REGEX.search(block):
+            block = POLLING_SUBSCRIPTION_ID_REGEX.sub(
+                lambda match: f"tentacle_url{match.group(1)}"
+                f"{match.group(2) if match.group(2).startswith('poll://') else 'poll://' + match.group(2).strip('/') + '/'}"
+                f"{match.group(3)}",
+                block,
+                count=1,
+            )
+        block = TENTACLE_URL_REGEX.sub(fix_url, block)
         result = result[: header.start()] + block + result[end:]
         position = header.start() + len(block)
 
@@ -5792,3 +5806,94 @@ def fix_invalid_tentacle_ports(config):
         return match.group("prefix") + "10933" + match.group("suffix")
 
     return TENTACLE_URI_PORT_REGEX.sub(fix, config)
+
+
+GOOGLE_CLOUD_STEP_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_(?:process_step|process_child_step)"\s+"\w+"\s*\{'
+)
+VARIABLE_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_variable"\s+"\w+"\s*\{')
+GOOGLE_CLOUD_VM_SERVICE_ACCOUNT_OFF_REGEX = re.compile(
+    r'^([ \t]*)("Octopus\.Action\.GoogleCloud\.UseVMServiceAccount"\s*=\s*"False")', re.MULTILINE
+)
+
+
+def add_missing_google_cloud_account_variable(config):
+    """
+    A gcloud step (Octopus.GoogleCloudScripting) that does not use the VM service account must name the
+    Google Cloud account variable, or the apply fails with:
+    Octopus API error: There was a problem with your request. [Please provide a variable expression for the
+    Account ID to use.]
+    The LLM set "Octopus.Action.GoogleCloud.UseVMServiceAccount" = "False" on a runbook step but left out
+    "Octopus.Action.GoogleCloudAccount.Variable", while the Terraform steps in the same configuration used a
+    GoogleCloudAccount project variable. The missing property is set to that variable. Nothing changes when the
+    configuration has no variable of type GoogleCloudAccount.
+    """
+
+    if not config or "Octopus.GoogleCloudScripting" not in config:
+        return config
+
+    account_variable = None
+    for header in VARIABLE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            continue
+        body = config[header.end() : end]
+        if re.search(r'\btype\s*=\s*"GoogleCloudAccount"', body):
+            name = re.search(r'\bname\s*=\s*"([^"]+)"', body)
+            if name:
+                account_variable = name.group(1)
+                break
+
+    if not account_variable:
+        return config
+
+    result = []
+    position = 0
+    for header in GOOGLE_CLOUD_STEP_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None or header.start() < position:
+            continue
+        body = config[header.end() : end]
+        if (
+            re.search(r'\btype\s*=\s*"Octopus\.GoogleCloudScripting"', body)
+            and "Octopus.Action.GoogleCloudAccount.Variable" not in body
+        ):
+            body = GOOGLE_CLOUD_VM_SERVICE_ACCOUNT_OFF_REGEX.sub(
+                lambda match: f'{match.group(1)}{match.group(2)}\n{match.group(1)}'
+                f'"Octopus.Action.GoogleCloudAccount.Variable" = "{account_variable}"',
+                body,
+                count=1,
+            )
+        result.append(config[position : header.end()])
+        result.append(body)
+        position = end
+    result.append(config[position:])
+    return "".join(result)
+
+
+ARGOCD_INPUT_PATH_REGEX = re.compile(r'("Octopus\.Action\.ArgoCD\.InputPath"\s*=\s*")([^"]*)(")')
+
+
+def remove_glob_from_argocd_input_path(config):
+    """
+    The Argo CD Update Manifests step takes a file or a directory, and the apply fails with:
+    Octopus API error: There was a problem with your request. [The path to your YAML file(s) cannot stem from a
+    root/absolute directory, use '..' nor contain glob patterns.]
+    The LLM copied a prompt path like "templates/#{Octopus.Environment.Name | ToLower}/*.yaml" verbatim. The path is
+    cut back to the directory before the first segment holding a glob character. A path whose first segment is a
+    glob is left alone, as there is no directory to fall back to.
+    """
+
+    if not config or "Octopus.Action.ArgoCD.InputPath" not in config:
+        return config
+
+    def fix(match):
+        segments = match.group(2).split("/")
+        for index, segment in enumerate(segments):
+            if re.search(r"[*?]", re.sub(r"#\{[^}]*}", "", segment)):
+                if index == 0:
+                    return match.group(0)
+                return match.group(1) + "/".join(segments[:index]) + match.group(3)
+        return match.group(0)
+
+    return ARGOCD_INPUT_PATH_REGEX.sub(fix, config)

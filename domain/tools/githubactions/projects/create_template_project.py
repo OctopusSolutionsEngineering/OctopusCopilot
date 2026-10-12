@@ -95,6 +95,8 @@ from domain.sanitizers.terraform import (
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
     add_child_steps_order_dependency_to_channels_with_rules,
+    add_missing_google_cloud_account_variable,
+    remove_glob_from_argocd_input_path,
     remove_default_channel_resources,
     enforce_exact_environment_name_matches,
     remove_case_insensitive_duplicate_environments,
@@ -1086,6 +1088,10 @@ def sanitize_configuration(configuration):
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
     # Channel rules that name a child step must also wait for the child steps
     configuration = add_child_steps_order_dependency_to_channels_with_rules(configuration)
+    # A gcloud step that does not use the VM service account must name the Google Cloud account variable
+    configuration = add_missing_google_cloud_account_variable(configuration)
+    # The Argo CD manifest input path must not contain glob patterns
+    configuration = remove_glob_from_argocd_input_path(configuration)
     configuration = remove_environments_when_excluded_environments_are_set(configuration)
     configuration = fix_stray_bracket_before_interpolation_end(configuration)
     # The server rejects a project name with a forward slash
