@@ -1209,14 +1209,14 @@ Create a Kubernetes target with the tag "Kubernetes", the URL https://mockk8s.oc
         run_prompt(
             self,
             f"""Create a runbook called "{runbook_names[0]}" in the project "{project_name}".
-Allow the runbook to be run from the "Features" environment.
+Allow the runbook to be run from the "Features" parent environment.
 Add a "Run a kubectl script" step run against the target tag "Kubernetes" and echo the text "Provisioning the environment" from a bash script.
 Run the step from the "Hosted Ubuntu" worker pool.
 
 ---
 
 Create a runbook called "{runbook_names[1]}" in the project "{project_name}".
-Allow the runbook to be run from the "Features" environment.
+Allow the runbook to be run from the "Features" parent environment.
 The runbook must have a single "Run a kubectl script" step run against the target tag "Kubernetes" and echo the text "Deprovisioning the environment" from a bash script.
 Run the step from the "Hosted Ubuntu" worker pool.""",
         )

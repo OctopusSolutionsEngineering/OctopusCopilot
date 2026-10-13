@@ -180,6 +180,12 @@ from domain.sanitizers.terraform import (
     remove_duplicate_unscoped_tenant_common_variables,
     add_linked_tenants_to_tenanted_targets,
     fix_invalid_tentacle_ports,
+    remove_bare_resource_types_from_depends_on,
+    remove_duplicate_data_sources,
+    remove_unreferenced_zero_count_blocks,
+    remove_undeclared_resource_fallbacks,
+    fix_null_process_id_for_runbook_steps,
+    remove_index_from_single_instance_resource_references,
 )
 from domain.tools.debug import get_params_message
 from domain.url.hostname import get_hostname_from_url
@@ -1082,6 +1088,10 @@ def sanitize_configuration(configuration):
     configuration = remove_empty_variable_scope_blocks(configuration)
     configuration = fix_steps_order_project_id(configuration)
     configuration = remove_case_insensitive_duplicate_environments(configuration)
+    # A data source declared twice with different arguments fails the plan, and would get two exact match locals
+    configuration = remove_duplicate_data_sources(configuration)
+    # A placeholder data source or resource with count = 0 that nothing uses may not even be a real type
+    configuration = remove_unreferenced_zero_count_blocks(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
     # partial_name is a substring match, so other lookups must also be filtered to the exact name
     configuration = enforce_exact_name_matches(configuration)
@@ -1092,6 +1102,8 @@ def sanitize_configuration(configuration):
     configuration = remove_steps_order_dependency_from_referenced_channels(configuration)
     # A runbook that depends on its own process, steps or steps order is a cycle
     configuration = remove_own_process_dependency_from_runbooks(configuration)
+    # A depends_on entry that is only a resource type, like [octopusdeploy_process], fails the plan
+    configuration = remove_bare_resource_types_from_depends_on(configuration)
     # Channel rules that name a child step must also wait for the child steps
     configuration = add_child_steps_order_dependency_to_channels_with_rules(configuration)
     # A gcloud step that does not use the VM service account must name the Google Cloud account variable
@@ -1184,6 +1196,12 @@ def sanitize_configuration(configuration):
     configuration = remove_non_octopus_data_sources(configuration)
     # Fix stale references to an example file's generic project label left undeclared
     configuration = fix_stale_project_resource_label(configuration)
+    # A lookup-or-create ternary must not fall back to a resource that was never declared
+    configuration = remove_undeclared_resource_fallbacks(configuration)
+    # A runbook process exists whenever its project does, so its steps must not get a null process_id
+    configuration = fix_null_process_id_for_runbook_steps(configuration)
+    # A resource without count or for_each must not be referenced with an index
+    configuration = remove_index_from_single_instance_resource_references(configuration)
     return configuration
 
 

@@ -1697,6 +1697,37 @@ resource "octopusdeploy_runbook" "runbook_my_project_provision_preview" {
 * Do NOT rename either resource or drop the parent environment; emit exactly one resource, the `octopusdeploy_parent_environment`.
 * **CRITICAL — a lifecycle phase takes only regular environment IDs, never a parent environment ID** (`automatic_deployment_targets` / `optional_deployment_targets` with a parent environment fail with "The phase ... has an invalid environment ID"). An `EphemeralEnvironment` channel MUST NOT have a `lifecycle_id` at all (fails with "A lifecycle must not be provided for an Ephemeral Environment channel"), even if the prompt says it "uses a lifecycle"; use `parent_environment_id`, omit `lifecycle_id`, and do not create a lifecycle for it.
 * Self-check: if any name appears as both a parent and a regular environment, delete the `octopusdeploy_environment` and repoint its references to the parent environment's ternary.
+
+**CRITICAL — when it is unclear whether an environment is a parent or a regular environment, look up BOTH.** This applies when the prompt adds runbooks, steps, targets or triggers to an EXISTING project (the project is only looked up, not created) and names an environment that this configuration does not otherwise create, without saying whether it is a parent environment, e.g. `Create a runbook called "Provision Environment" in the project "My App". Allow the runbook to be run from the "Features" environment.` You cannot see which kind already exists in the space. An `octopusdeploy_environments` lookup NEVER returns parent environments, so treating a parent environment as a regular one makes the configuration create a duplicate and the apply aborts with `An environment with this name already exists in this space.` Instead:
+1. Declare BOTH an `octopusdeploy_environments` data source and an `octopusdeploy_parent_environments` data source for the name.
+2. Create the regular `octopusdeploy_environment` only when NEITHER lookup finds it. Never create an `octopusdeploy_parent_environment` in this case.
+3. Reference the environment everywhere (runbook `environments`, step `environments`, target `environments`, trigger environments) with a three-way ternary: the regular environment, then the parent environment, then the created resource.
+```hcl
+data "octopusdeploy_environments" "environment_features" {
+  ids          = null
+  partial_name = "Features"
+  skip         = 0
+  take         = 100
+}
+data "octopusdeploy_parent_environments" "parent_environment_features" {
+  ids          = null
+  partial_name = "Features"
+  skip         = 0
+  take         = 100
+}
+resource "octopusdeploy_environment" "environment_features" {
+  count                        = "${length(data.octopusdeploy_environments.environment_features.environments) != 0 || length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? 0 : 1}"
+  name                         = "Features"
+  allow_dynamic_infrastructure = true
+  use_guided_failure           = false
+}
+resource "octopusdeploy_runbook" "runbook_my_app_provision_environment" {
+  environment_scope = "Specified"
+  environments      = ["${length(data.octopusdeploy_environments.environment_features.environments) != 0 ? data.octopusdeploy_environments.environment_features.environments[0].id : length(data.octopusdeploy_parent_environments.parent_environment_features.parent_environments) != 0 ? data.octopusdeploy_parent_environments.parent_environment_features.parent_environments[0].id : octopusdeploy_environment.environment_features[0].id}"]
+  ...
+}
+```
+* Do NOT use this pattern when the prompt says "parent environment" (use the parent environment pattern above), when this configuration itself creates the environment, or in a lifecycle phase (phases accept only regular environment IDs).
 * When a target is scoped to a parent environment, create both the `octopusdeploy_parent_environment` resource and the `octopusdeploy_parent_environments` data source. Example target referencing a regular (Development) and a parent (Features) environment:
 
 ```

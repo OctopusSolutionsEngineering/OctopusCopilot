@@ -1,10 +1,19 @@
+import os
 import unittest
+from unittest import mock
 from urllib.parse import urlparse
 
 from domain.url.build_url import build_url, is_octopus_cloud_local_or_example
 
 
 class BuildUrl(unittest.TestCase):
+    def setUp(self):
+        # The redirector settings are read from the environment, and a shell configured for the remote tests sets
+        # REDIRECTION_FORCE=true, which routes even example.org through the redirector. Pin them to the defaults.
+        patcher = mock.patch.dict(os.environ, {"REDIRECTION_FORCE": "false", "REDIRECTION_DISABLE": "false"})
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_url_partial_name(self):
         url, headers = build_url(
             "https://example.org", "API-123", "/path", dict(partialname="value")

@@ -2936,6 +2936,232 @@ def remove_steps_order_dependency_from_referenced_channels(config):
         position = header.end() + len(body)
 
 
+BARE_RESOURCE_TYPE_REGEX = re.compile(r"^\s*[A-Za-z_]\w*\s*$")
+
+
+def remove_bare_resource_types_from_depends_on(config):
+    """
+    A depends_on entry must be a resource address, so a bare resource type fails the plan:
+    Error: Invalid reference ... depends_on = [octopusdeploy_process]
+    A reference to a resource type must be followed by at least one attribute access, specifying the resource name.
+    The bare resource types are removed from the depends_on lists. Full resource addresses are kept.
+    """
+
+    if not config or "depends_on" not in config:
+        return config
+
+    def remove_bare(match):
+        items = [item for item in match.group("items").split(",") if item.strip()]
+        kept = [item for item in items if not BARE_RESOURCE_TYPE_REGEX.match(item)]
+        if len(kept) == len(items):
+            return match.group(0)
+        return match.group("head") + ",".join(kept) + match.group("tail")
+
+    return DEPENDS_ON_REGEX.sub(remove_bare, config)
+
+DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*data\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
+
+
+def remove_duplicate_data_sources(config):
+    """
+    The LLM declares the same data source twice with slightly different arguments, like take = 100 and take = 1,
+    so remove_duplicate_definitions does not see them as copies and the plan fails with:
+    Error: Duplicate data "octopusdeploy_projects" configuration
+    A data source with the same type and label as an earlier one is removed, keeping the first. This must run before
+    enforce_exact_name_matches, which writes a local for each data source and would otherwise redefine the local.
+    """
+
+    if not config or "data" not in config:
+        return config
+
+    seen = set()
+    result = config
+    position = 0
+    while True:
+        header = DATA_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        key = (header.group("type"), header.group("label"))
+        if key in seen:
+            # Remove the block and the line break that follows it
+            if result[end : end + 1] == "\n":
+                end += 1
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            seen.add(key)
+            position = end
+
+
+ZERO_COUNT_REGEX = re.compile(r'(?m)^\s*count\s*=\s*"?0"?\s*$')
+
+
+ZERO_COUNT_BLOCK_HEADER_REGEX = re.compile(
+    r'(?m)^[ \t]*(?P<kind>data|resource)\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{'
+)
+
+
+def remove_unreferenced_zero_count_blocks(config):
+    """
+    The LLM adds placeholder blocks that are never used, like data "octopusdeploy_libraries" "x" { count = 0 } or
+    resource "octopusdeploy_channels" "unused_channels" { count = 0 }, and the type does not even exist, so the plan
+    fails with:
+    Error: Invalid data source ... The provider octopusdeploy/octopusdeploy does not support data source
+    "octopusdeploy_libraries".
+    Error: Invalid resource type ... The provider octopusdeploy/octopusdeploy does not support resource type
+    "octopusdeploy_channels".
+    A data source or resource with count = 0 that nothing references does nothing, so it is removed.
+    """
+
+    if not config or "count" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = ZERO_COUNT_BLOCK_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        address = f'{header.group("type")}.{header.group("label")}'
+        if header.group("kind") == "data":
+            address = "data." + address
+        rest = result[: header.start()] + result[end:]
+        if ZERO_COUNT_REGEX.search(result[header.end() : end]) and not re.search(
+            rf"(?<![\w.]){re.escape(address)}\b", rest
+        ):
+            if result[end : end + 1] == "\n":
+                end += 1
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            position = end
+
+
+PROCESS_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_process"\s+"(?P<label>\w+)"\s*\{')
+NULL_PROCESS_ID_REGEX = re.compile(
+    r'(?P<head>\bprocess_id\s*=\s*)"\$\{[^?{}"\n]+\?\s*null\s*:\s*'
+    r'(?P<process>octopusdeploy_process\.(?P<label>\w+)\[0\]\.id)\s*\}"'
+)
+RUNBOOK_STEPS_ORDER_PROCESS_REGEX = re.compile(r"\bprocess_id\s*=\s*\"[^\"\n]*octopusdeploy_process\.(?P<label>\w+)\[0\]")
+NULL_STEP_REFERENCE_REGEX = re.compile(
+    r'"\$\{[^?{}"\n]+\?\s*null\s*:\s*(?P<step>octopusdeploy_process_(?:step|child_step|templated_step|templated_child_step)\.\w+\[0\]\.id)\s*\}"'
+)
+def fix_null_process_id_for_runbook_steps(config):
+    """
+    The LLM copies the deployment process pattern onto a runbook in an existing project:
+    process_id = "${length(local.project_matches) != 0 ? null : octopusdeploy_process.runbook_process[0].id}"
+    A runbook process exists exactly when the project does, so the step gets a null process_id and the plan fails with:
+    Error: Missing required argument ... Must set a configuration value for the process_id attribute
+    Where the process is a runbook process, the ternary is replaced with the process reference, and likewise for the
+    step references in the steps order of that process.
+    """
+
+    if not config or "? null" not in config:
+        return config
+
+    runbook_processes = set()
+    for header in PROCESS_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is not None and re.search(r"(?m)^\s*runbook_id\s*=", config[header.end() : end]):
+            runbook_processes.add(header.group("label"))
+
+    if not runbook_processes:
+        return config
+
+    def replace(match):
+        if match.group("label") not in runbook_processes:
+            return match.group(0)
+        return match.group("head") + '"${' + match.group("process") + '}"'
+
+    result = NULL_PROCESS_ID_REGEX.sub(replace, config)
+
+    # The steps order of a runbook process gets the same inverted ternary in its steps list, which plans as [null]
+    # and fails the apply with: Provider produced inconsistent result after apply ... .steps[0]: was null
+    position = 0
+    while True:
+        header = STEPS_ORDER_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        process = RUNBOOK_STEPS_ORDER_PROCESS_REGEX.search(body)
+        if process and process.group("label") in runbook_processes:
+            body = NULL_STEP_REFERENCE_REGEX.sub(lambda match: '"${' + match.group("step") + '}"', body)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+UNDECLARED_RESOURCE_FALLBACK_REGEX = re.compile(
+    r"(?P<condition>[^?{}\":\n]+)\?\s*(?P<lookup>[^?{}\n]+?)\s*:\s*"
+    r"(?P<type>octopusdeploy_\w+)\.(?P<label>\w+)\[0\]\.id(?=\s*\})"
+)
+
+
+def remove_undeclared_resource_fallbacks(config):
+    """
+    The resource already exists in the space, so the LLM declares only its lookup, but it copies the lookup-or-create
+    ternary that falls back to a resource it never declared:
+    "${length(data.octopusdeploy_parent_environments.x.parent_environments) != 0 ? data...[0].id : octopusdeploy_parent_environment.x[0].id}"
+    The plan fails with:
+    Error: Reference to undeclared resource ... There is no managed resource "octopusdeploy_parent_environment" "x"
+    definition in the root module.
+    The fallback can never be used, so the innermost ternary is replaced with its lookup branch. In a nested ternary,
+    like a regular environment lookup, then a parent environment lookup, then the resource, the outer branches are kept.
+    """
+
+    if not config or "[0].id" not in config:
+        return config
+
+    declared = {(match.group("type"), match.group("label")) for match in ANY_RESOURCE_HEADER_REGEX.finditer(config)}
+
+    def replace(match):
+        if (match.group("type"), match.group("label")) in declared:
+            return match.group(0)
+        leading = re.match(r"\s*", match.group("condition")).group(0)
+        return leading + match.group("lookup")
+
+    return UNDECLARED_RESOURCE_FALLBACK_REGEX.sub(replace, config)
+
+
+COUNT_OR_FOR_EACH_REGEX = re.compile(r"(?m)^\s*(?:count|for_each)\s*=")
+
+
+def remove_index_from_single_instance_resource_references(config):
+    """
+    The LLM indexes a reference to a resource it declared without count or for_each, like
+    runbook_id = "${octopusdeploy_runbook.x[0].id}", which fails the plan with:
+    Error: Unexpected resource instance key ... Because octopusdeploy_runbook.x does not have "count" or "for_each"
+    set, references to it must not include an index key.
+    The index is removed from references to such resources.
+    """
+
+    if not config or "[0]" not in config:
+        return config
+
+    single = set()
+    for header in ANY_RESOURCE_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is not None and not COUNT_OR_FOR_EACH_REGEX.search(config[header.end() : end]):
+            single.add(f'{header.group("type")}.{header.group("label")}')
+
+    if not single:
+        return config
+
+    def replace(match):
+        return match.group("address") if match.group("address") in single else match.group(0)
+
+    return re.sub(r"(?<![\w.])(?P<address>octopusdeploy_\w+\.\w+)\[0\]", replace, config)
+
 ANY_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
 RUNBOOK_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_runbook"\s+"(?P<label>\w+)"\s*\{')
 RUNBOOK_ID_REFERENCE_REGEX = re.compile(r"\brunbook_id\s*=\s*\"[^\"\n]*octopusdeploy_runbook\.(?P<label>\w+)")
