@@ -3022,6 +3022,46 @@ def remove_bare_resource_types_from_depends_on(config):
     return DEPENDS_ON_REGEX.sub(remove_bare, config)
 
 
+DEPENDS_ON_ADDRESS_REGEX = re.compile(r"^\s*(?P<address>(?:data\.)?octopusdeploy_\w+\.\w+)\s*$")
+DECLARED_BLOCK_REGEX = re.compile(r'(?m)^[ \t]*(?P<kind>resource|data)\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
+
+
+def remove_undeclared_depends_on_references(config):
+    """
+    A depends_on entry must name a declared resource or data source, so an entry for one that was never declared, or
+    that an earlier sanitizer removed, fails the plan:
+    Error: Reference to undeclared resource ... depends_on = [octopusdeploy_tag_set.tagset_placeholder]
+    There is no managed resource "octopusdeploy_tag_set" "tagset_placeholder" definition in the root module.
+    Observed with a data "octopusdeploy_tag_sets" "tagset_placeholder" lookup and no matching resource.
+    The undeclared entries are removed. Entries for declared blocks, and anything that is not an Octopus address, are
+    kept.
+    """
+
+    if not config or "depends_on" not in config:
+        return config
+
+    declared = set()
+    for match in DECLARED_BLOCK_REGEX.finditer(config):
+        address = f'{match.group("type")}.{match.group("label")}'
+        declared.add("data." + address if match.group("kind") == "data" else address)
+
+    def remove_undeclared(match):
+        items = [item for item in match.group("items").split(",") if item.strip()]
+        kept = [
+            item
+            for item in items
+            if not (
+                DEPENDS_ON_ADDRESS_REGEX.match(item)
+                and DEPENDS_ON_ADDRESS_REGEX.match(item).group("address") not in declared
+            )
+        ]
+        if len(kept) == len(items):
+            return match.group(0)
+        return match.group("head") + ",".join(kept) + match.group("tail")
+
+    return DEPENDS_ON_REGEX.sub(remove_undeclared, config)
+
+
 DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*data\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
 
 
