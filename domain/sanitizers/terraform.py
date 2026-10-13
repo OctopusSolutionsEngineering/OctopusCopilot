@@ -1208,6 +1208,7 @@ def fix_lookup_worker_pool_default_fallback(config):
 BARE_DATA_REFERENCE_REGEX = re.compile(
     r"\$\{data\.(octopusdeploy_\w+)\.(\w+)\.(\w+)\[0\]\.id\}"
 )
+BARE_LOCAL_MATCHES_REFERENCE_REGEX = re.compile(r"\$\{local\.(?P<local>\w+_matches)\[0\]\.id\}")
 
 
 def fix_bare_data_lookup_reference(config):
@@ -1216,7 +1217,8 @@ def fix_bare_data_lookup_reference(config):
     nothing, then references only the data source, like feed_id = "${data.octopusdeploy_feeds.x.feeds[0].id}".
     In a fresh space the lookup is empty and the plan fails with:
     Error: Invalid index ... data.octopusdeploy_feeds.x.feeds is empty list of object
-    Where a counted resource with the same label exists, use the lookup-or-create form.
+    Where a counted resource with the same label exists, use the lookup-or-create form. The same applies to a bare
+    reference to the exact match local of the lookup.
     """
 
     def replace(match):
@@ -1233,7 +1235,29 @@ def fix_bare_data_lookup_reference(config):
             f"{resource.group(1)}.{label}[0].id}}"
         )
 
-    return BARE_DATA_REFERENCE_REGEX.sub(replace, config)
+    config = BARE_DATA_REFERENCE_REGEX.sub(replace, config)
+
+    # enforce_exact_name_matches has already replaced most data source references with exact match locals, like
+    # feed_id = "${local.feed_x_feeds_matches[0].id}", which are just as empty in a fresh space
+    counted = {
+        match.group(2): match.group(1)
+        for match in re.finditer(r'resource\s+"(octopusdeploy_\w+)"\s+"(\w+)"\s*\{\s*\n\s*count\b', config)
+    }
+
+    def replace_local(match):
+        local = match.group("local")
+        # The local is named <label>_matches or <label>_<collection>_matches, so find the longest label it starts with
+        labels = [
+            label
+            for label in counted
+            if local == f"{label}_matches" or (local.startswith(f"{label}_") and local.endswith("_matches"))
+        ]
+        if not labels:
+            return match.group(0)
+        label = max(labels, key=len)
+        return f"${{length(local.{local}) != 0 ? local.{local}[0].id : {counted[label]}.{label}[0].id}}"
+
+    return BARE_LOCAL_MATCHES_REFERENCE_REGEX.sub(replace_local, config)
 
 
 def remove_worker_pool_from_target_steps(config):
@@ -3101,6 +3125,75 @@ def fix_null_process_id_for_runbook_steps(config):
         process = RUNBOOK_STEPS_ORDER_PROCESS_REGEX.search(body)
         if process and process.group("label") in runbook_processes:
             body = NULL_STEP_REFERENCE_REGEX.sub(lambda match: '"${' + match.group("step") + '}"', body)
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+RUNBOOKS_DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*data\s+"octopusdeploy_runbooks?"\s+"(?P<label>\w+)"\s*\{')
+RUNBOOKS_LOOKUP_TERNARY_REGEX = re.compile(
+    r"\$\{\s*length\(data\.octopusdeploy_runbooks?\.\w+\.runbooks\)\s*!=\s*0\s*\?\s*"
+    r"data\.octopusdeploy_runbooks?\.\w+\.runbooks\[0\]\.id\s*:\s*(?P<fallback>[^{}\n]+?)\s*\}"
+)
+RUNBOOK_HEADER_WITH_LABEL_REGEX = re.compile(r'resource\s+"octopusdeploy_runbook"\s+"(?P<label>\w+)"\s*\{')
+COUNT_LINE_REGEX = re.compile(r"(?m)^(?P<head>[ \t]*count\s*=\s*)(?P<value>.+)$")
+
+
+def remove_runbooks_data_source(config):
+    """
+    The octopusdeploy_runbook and octopusdeploy_runbooks data sources do not exist, but the LLM copies the
+    lookup-or-create pattern onto a new runbook anyway, which fails the plan with:
+    Error: Invalid data source ... The provider octopusdeploy/octopusdeploy does not support data source
+    "octopusdeploy_runbooks".
+    The data source is removed. A runbook whose count used it gets the count of the project it belongs to, as the
+    Runbook Instructions prescribe, or "1" when it has no created project, and a lookup-or-create ternary over the
+    data source becomes the resource reference.
+    """
+
+    if not config or not RUNBOOKS_DATA_HEADER_REGEX.search(config):
+        return config
+
+    # Remove the data sources
+    result = config
+    while True:
+        header = RUNBOOKS_DATA_HEADER_REGEX.search(result)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if end is None:
+            return config
+        if result[end : end + 1] == "\n":
+            end += 1
+        result = result[: header.start()] + result[end:]
+
+    result = RUNBOOKS_LOOKUP_TERNARY_REGEX.sub(lambda match: "${" + match.group("fallback") + "}", result)
+
+    # Give runbooks that counted the lookup the count of their project
+    position = 0
+    while True:
+        header = RUNBOOK_HEADER_WITH_LABEL_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        count = COUNT_LINE_REGEX.search(body)
+        if count and "data.octopusdeploy_runbook" in count.group("value"):
+            value = '"1"'
+            project = re.search(r"\boctopusdeploy_project\.(?P<label>\w+)\b", body)
+            if project:
+                project_header = re.search(
+                    rf'resource\s+"octopusdeploy_project"\s+"{re.escape(project.group("label"))}"\s*\{{', result
+                )
+                if project_header:
+                    project_end = find_block_end(result, project_header.end())
+                    project_count = (
+                        COUNT_LINE_REGEX.search(result[project_header.end() : project_end]) if project_end else None
+                    )
+                    if project_count:
+                        value = project_count.group("value").strip()
+            body = body[: count.start()] + count.group("head") + value + body[count.end() :]
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
 

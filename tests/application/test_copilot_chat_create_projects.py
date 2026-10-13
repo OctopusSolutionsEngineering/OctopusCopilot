@@ -2,6 +2,7 @@ import glob
 import json
 import os
 import unittest
+import uuid
 
 import azure.functions as func
 import pytest
@@ -27,6 +28,19 @@ from infrastructure.terraform_context import save_terraform_context
 from infrastructure.users import save_users_octopus_url_from_login, save_default_values
 from tests.infrastructure.octopus_config import Octopus_Api_Key, Octopus_Url
 from tests.infrastructure.test_octopus_infrastructure import run_terraform
+from tests.infrastructure.remote_octopus import (
+    Remote_Octopus_Api_Key,
+    Remote_Octopus_Url,
+    Remote_Test,
+    create_remote_space,
+    delete_remote_space,
+    get_active_api_key,
+    get_active_octopus_url,
+)
+
+# The space the prompts are run against. When running remotely, a random space name is
+# generated to avoid collisions. When running locally, the space created by terraform is used.
+Space_Name = "Simple"
 
 
 @pytest.mark.split_group("group2")
@@ -46,49 +60,13 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        global Space_Name
+
         populate_blob_storage()
 
         # Simulate the result of a user login and saving their Octopus details
         try:
-            github_user = os.environ["TEST_GH_USER"]
-            save_users_octopus_url_from_login(
-                github_user,
-                Octopus_Url,
-                Octopus_Api_Key,
-                os.environ["ENCRYPTION_PASSWORD"],
-                os.environ["ENCRYPTION_SALT"],
-                os.environ["AzureWebJobsStorage"],
-            )
-            save_default_values(
-                github_user, "space", "Simple", os.environ["AzureWebJobsStorage"]
-            )
-            save_default_values(
-                github_user,
-                "project",
-                "Deploy Web App Container",
-                os.environ["AzureWebJobsStorage"],
-            )
-            save_default_values(
-                github_user,
-                "environment",
-                "Development",
-                os.environ["AzureWebJobsStorage"],
-            )
-            save_default_values(
-                github_user,
-                "owner",
-                "OctopusSolutionsEngineering",
-                os.environ["AzureWebJobsStorage"],
-            )
-            save_default_values(
-                github_user,
-                "repository",
-                "OctopusCopilot",
-                os.environ["AzureWebJobsStorage"],
-            )
-            save_default_values(
-                github_user, "workflow", "build.yaml", os.environ["AzureWebJobsStorage"]
-            )
+            save_user_details()
         except Exception as e:
             print(
                 "The tests will fail because Azurite is not running. Run Azurite with: "
@@ -100,6 +78,21 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             )
             print(e)
             return
+
+        if Remote_Test:
+            # Running against a remote Octopus instance. Create a temporary space.
+            cls.mssql = None
+            cls.octopus = None
+            space_name = f"EasyMode-{uuid.uuid4().hex[:8]}"
+            cls._remote_space_id = create_remote_space(space_name)
+            Space_Name = space_name
+
+            sync_community_step_templates(
+                Remote_Octopus_Api_Key, Remote_Octopus_Url
+            )
+            return
+
+        cls._remote_space_id = None
 
         try:
             terraform_dir = "../terraform/"
@@ -159,8 +152,23 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
             print(e)
             cls.tearDownClass()
 
+    def setUp(self):
+        # The user details are saved before each test, because the default space is only known once the
+        # remote space has been created, and a long running test class can otherwise reach a point where the
+        # details are no longer resolved and the assistant responds by asking the user to log in again.
+        save_user_details()
+
     @classmethod
     def tearDownClass(cls):
+        if Remote_Test:
+            # Delete the temporary space created for remote testing
+            if getattr(cls, "_remote_space_id", None):
+                try:
+                    delete_remote_space(cls._remote_space_id)
+                except Exception as e:
+                    print(f"Failed to delete remote space {cls._remote_space_id}: {e}")
+            return
+
         try:
             cls.octopus.stop()
         except Exception as e:
@@ -198,14 +206,14 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -237,10 +245,10 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
 
     @retry((AssertionError, RateLimitError), tries=2, delay=2)
@@ -266,14 +274,14 @@ class CopilotChatTestCreateProjects(unittest.TestCase):
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -313,14 +321,14 @@ Create a Kubernetes project called "{project_name}", and then:
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -352,14 +360,14 @@ Create a Kubernetes project called "{project_name}", and then:
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -396,15 +404,15 @@ Create a Kubernetes project called "{project_name}", and then:
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
 
         self.assertEqual(project["Name"], project_name)
 
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -447,10 +455,10 @@ Create 5 tag sets that represent counties from England and assign them to the te
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"].casefold(), project_name.casefold())
         project_tenant_mode = project["TenantedDeploymentMode"]
         self.assertTrue(
@@ -458,7 +466,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
             f"TenantedDeploymentMode was: {project_tenant_mode}",
         )
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -473,7 +481,7 @@ Create 5 tag sets that represent counties from England and assign them to the te
             f'The deployment process should have a step called "{mandatory_step}".',
         )
 
-        tenants = get_tenants(Octopus_Api_Key, Octopus_Url, space_id)
+        tenants = get_tenants(get_active_api_key(), get_active_octopus_url(), space_id)
         number_of_tenants = len(tenants)
         self.assertTrue(
             number_of_tenants >= 5,
@@ -509,23 +517,23 @@ Create 5 tag sets that represent counties from England and assign them to the te
         )
 
         space_id, space_name = get_space_id_and_name_from_name(
-            "Simple", Octopus_Api_Key, Octopus_Url
+            Space_Name, get_active_api_key(), get_active_octopus_url()
         )
 
-        project = get_project(space_id, project_name, Octopus_Api_Key, Octopus_Url)
+        project = get_project(space_id, project_name, get_active_api_key(), get_active_octopus_url())
         self.assertEqual(project["Name"], project_name)
         runbook = get_runbook_fuzzy(
             space_id,
             project["Id"],
             new_runbook_name,
-            Octopus_Api_Key,
-            Octopus_Url,
+            get_active_api_key(),
+            get_active_octopus_url(),
         )
         self.assertTrue(
             runbook["Name"] == new_runbook_name,
         )
         raw_deployment_process = get_raw_deployment_process(
-            space_name, project_name, Octopus_Api_Key, Octopus_Url
+            space_name, project_name, get_active_api_key(), get_active_octopus_url()
         )
         deployment_process = json.loads(raw_deployment_process)
         number_of_steps = len(deployment_process["Steps"])
@@ -543,6 +551,35 @@ Create 5 tag sets that represent counties from England and assign them to the te
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def save_user_details():
+    """
+    Simulate the result of a user login by saving the Octopus details and the default values the
+    prompts rely on.
+    """
+    github_user = os.environ["TEST_GH_USER"]
+    save_users_octopus_url_from_login(
+        github_user,
+        get_active_octopus_url(),
+        get_active_api_key(),
+        os.environ["ENCRYPTION_PASSWORD"],
+        os.environ["ENCRYPTION_SALT"],
+        os.environ["AzureWebJobsStorage"],
+    )
+
+    defaults = {
+        "space": Space_Name,
+        "project": "Deploy Web App Container",
+        "environment": "Development",
+        "owner": "OctopusSolutionsEngineering",
+        "repository": "OctopusCopilot",
+        "workflow": "build.yaml",
+    }
+    for name, value in defaults.items():
+        save_default_values(
+            github_user, name, value, os.environ["AzureWebJobsStorage"]
+        )
 
 
 def build_confirmation_body(confirmation_id):

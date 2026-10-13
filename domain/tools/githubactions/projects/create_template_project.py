@@ -182,6 +182,7 @@ from domain.sanitizers.terraform import (
     fix_invalid_tentacle_ports,
     remove_bare_resource_types_from_depends_on,
     remove_duplicate_data_sources,
+    remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
     remove_undeclared_resource_fallbacks,
     fix_null_process_id_for_runbook_steps,
@@ -1090,6 +1091,8 @@ def sanitize_configuration(configuration):
     configuration = remove_case_insensitive_duplicate_environments(configuration)
     # A data source declared twice with different arguments fails the plan, and would get two exact match locals
     configuration = remove_duplicate_data_sources(configuration)
+    # The runbook data sources do not exist, so a runbook must not be looked up before it is created
+    configuration = remove_runbooks_data_source(configuration)
     # A placeholder data source or resource with count = 0 that nothing uses may not even be a real type
     configuration = remove_unreferenced_zero_count_blocks(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
