@@ -25,6 +25,10 @@ resource "octopusdeploy_runbook" "runbook_switch_load_balancer" {{
 resource "octopusdeploy_process" "process_switch_load_balancer" {{
   runbook_id = "${{length(data.octopusdeploy_runbooks.runbook_switch_load_balancer.runbooks) != 0 ? data.octopusdeploy_runbooks.runbook_switch_load_balancer.runbooks[0].id : octopusdeploy_runbook.runbook_switch_load_balancer[0].id}}"
 }}
+resource "octopusdeploy_process" "process_aws_lambda_switch_load_balancer" {{
+  count      = "${{length(data.octopusdeploy_runbooks.runbook_switch_load_balancer.runbooks) != 0 ? 0 : 1}}"
+  runbook_id = "${{length(data.octopusdeploy_runbooks.runbook_switch_load_balancer.runbooks) != 0 ? null : octopusdeploy_runbook.runbook_switch_load_balancer[0].id}}"
+}}
 """
 
 
@@ -42,6 +46,25 @@ class TestRemoveRunbooksDataSource(unittest.TestCase):
     def test_lookup_ternary_becomes_resource_reference(self):
         result = remove_runbooks_data_source(CONFIG)
         self.assertIn('runbook_id = "${octopusdeploy_runbook.runbook_switch_load_balancer[0].id}"', result)
+
+    def test_process_count_follows_the_runbook(self):
+        result = remove_runbooks_data_source(CONFIG)
+        self.assertIn(
+            'count      = "${length(octopusdeploy_runbook.runbook_switch_load_balancer) == 0 ? 0 : 1}"', result
+        )
+
+    def test_null_ternary_follows_the_runbook(self):
+        result = remove_runbooks_data_source(CONFIG)
+        self.assertIn(
+            'runbook_id = "${length(octopusdeploy_runbook.runbook_switch_load_balancer) == 0 ? null : '
+            'octopusdeploy_runbook.runbook_switch_load_balancer[0].id}"',
+            result,
+        )
+
+    def test_lookup_without_a_runbook_resource_is_false(self):
+        config = 'x = "${length(data.octopusdeploy_runbooks.missing.runbooks) != 0 ? 0 : 1}"\n'
+        config = 'data "octopusdeploy_runbooks" "missing" {\n}\n' + config
+        self.assertIn('x = "${false ? 0 : 1}"', remove_runbooks_data_source(config))
 
     def test_runbook_without_created_project_gets_count_of_one(self):
         config = CONFIG.replace('resource "octopusdeploy_project" "project_aws_lambda"', 'resource "octopusdeploy_x" "y"')

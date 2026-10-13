@@ -3249,6 +3249,9 @@ RUNBOOKS_LOOKUP_TERNARY_REGEX = re.compile(
     r"\$\{\s*length\(data\.octopusdeploy_runbooks?\.\w+\.runbooks\)\s*!=\s*0\s*\?\s*"
     r"data\.octopusdeploy_runbooks?\.\w+\.runbooks\[0\]\.id\s*:\s*(?P<fallback>[^{}\n]+?)\s*\}"
 )
+RUNBOOKS_LOOKUP_TEST_REGEX = re.compile(
+    r"length\(data\.octopusdeploy_runbooks?\.(?P<label>\w+)\.runbooks\)\s*!=\s*0"
+)
 RUNBOOK_HEADER_WITH_LABEL_REGEX = re.compile(r'resource\s+"octopusdeploy_runbook"\s+"(?P<label>\w+)"\s*\{')
 COUNT_LINE_REGEX = re.compile(r"(?m)^(?P<head>[ \t]*count\s*=\s*)(?P<value>.+)$")
 
@@ -3261,7 +3264,8 @@ def remove_runbooks_data_source(config):
     "octopusdeploy_runbooks".
     The data source is removed. A runbook whose count used it gets the count of the project it belongs to, as the
     Runbook Instructions prescribe, or "1" when it has no created project, and a lookup-or-create ternary over the
-    data source becomes the resource reference.
+    data source becomes the resource reference. Any other test of the lookup, like the count of the runbook's
+    process, becomes a test of whether the runbook resource is created.
     """
 
     if not config or not RUNBOOKS_DATA_HEADER_REGEX.search(config):
@@ -3287,10 +3291,10 @@ def remove_runbooks_data_source(config):
     while True:
         header = RUNBOOK_HEADER_WITH_LABEL_REGEX.search(result, position)
         if not header:
-            return result
+            break
         end = find_block_end(result, header.end())
         if end is None:
-            return result
+            break
 
         body = result[header.end() : end]
         count = COUNT_LINE_REGEX.search(body)
@@ -3311,6 +3315,19 @@ def remove_runbooks_data_source(config):
             body = body[: count.start()] + count.group("head") + value + body[count.end() :]
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
+
+    # Everything else that tested the lookup, like the count of the runbook's process, steps and steps order, or
+    # runbook_id = "${length(data.octopusdeploy_runbooks.x.runbooks) != 0 ? null : octopusdeploy_runbook.x[0].id}",
+    # now tests whether this configuration creates the runbook, so it exists exactly when the runbook does
+    runbooks = set(RUNBOOK_HEADER_WITH_LABEL_REGEX.findall(result))
+
+    def replace_lookup(match):
+        label = match.group("label")
+        if label in runbooks:
+            return f"length(octopusdeploy_runbook.{label}) == 0"
+        return "false"
+
+    return RUNBOOKS_LOOKUP_TEST_REGEX.sub(replace_lookup, result)
 
 
 UNDECLARED_RESOURCE_FALLBACK_REGEX = re.compile(
