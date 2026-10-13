@@ -182,6 +182,7 @@ from domain.sanitizers.terraform import (
     fix_invalid_tentacle_ports,
     remove_bare_resource_types_from_depends_on,
     remove_undeclared_depends_on_references,
+    remove_unreferenced_data_sources,
     remove_duplicate_data_sources,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
@@ -1206,6 +1207,8 @@ def sanitize_configuration(configuration):
     configuration = fix_null_process_id_for_runbook_steps(configuration)
     # A resource without count or for_each must not be referenced with an index
     configuration = remove_index_from_single_instance_resource_references(configuration)
+    # A data source nothing references does nothing, and may not even be a real type
+    configuration = remove_unreferenced_data_sources(configuration)
     # A depends_on entry for a resource that was never declared, or that a sanitizer above removed, fails the plan
     configuration = remove_undeclared_depends_on_references(configuration)
     return configuration

@@ -3062,6 +3062,43 @@ def remove_undeclared_depends_on_references(config):
     return DEPENDS_ON_REGEX.sub(remove_undeclared, config)
 
 
+def remove_unreferenced_data_sources(config):
+    """
+    The LLM declares lookups it never uses, and sometimes for data source types that do not exist, which fails the
+    plan even though nothing reads them:
+    Error: Invalid data source ... The provider octopusdeploy/octopusdeploy does not support data source
+    "octopusdeploy_processes". Did you mean "octopusdeploy_process"?
+    A data source only reads, so one that nothing references does nothing and is removed. A data source with a
+    postcondition is kept, because the postcondition checks that the resource exists.
+    This must run after the sanitizers that add references to data sources.
+    """
+
+    if not config or "data" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = DATA_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        address = f'data.{header.group("type")}.{header.group("label")}'
+        rest = result[: header.start()] + result[end:]
+        if "postcondition" not in result[header.end() : end] and not re.search(
+            rf"(?<![\w.]){re.escape(address)}\b", rest
+        ):
+            if result[end : end + 1] == "\n":
+                end += 1
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            position = end
+
+
 DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*data\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
 
 
