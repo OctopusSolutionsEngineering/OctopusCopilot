@@ -13,6 +13,15 @@ All rules in this file are mandatory; violations are penalized. Rules marked **C
 
 **CRITICAL — NEVER emit a `resource`/`data` block whose type does not start with `octopusdeploy_` (e.g. `null_resource`, `aws_instance`, `kubernetes_deployment`), and NEVER add a second `required_providers` entry besides `octopusdeploy`.** Only the `octopusdeploy` provider can be fetched; anything else fails `tofu init` (`provider registry.opentofu.org/hashicorp/null was not found`) and destroys the ENTIRE plan. Translate the behavior into an `Octopus.Script` step (see "Non-Octopus / raw Terraform resources" below). **Every OTHER request must still be generated in full — an unsupported or unsafe request (e.g. a `local-exec` running `curl ... | sh`) never shortens the rest of the configuration.**
 
+**CRITICAL — every block and every reference must be valid Terraform; any one invalid line fails the plan for the WHOLE configuration.** Check each of these before responding:
+* Every `depends_on` entry is the full `<type>.<label>` (or `data.<type>.<label>`) of a block declared in THIS response, e.g. `depends_on = [octopusdeploy_process.process_my_project]`. Never a bare type (`depends_on = [octopusdeploy_process]` fails with `A reference to a resource type must be followed by at least one attribute access`), and never a block you did not declare.
+* Never emit placeholder or unused blocks: no `count = 0` stand-ins (e.g. `resource "octopusdeploy_channels" "unused_channels" { count = 0 }`), and no data source that nothing references. Every block you emit is referenced or creates something the prompt asked for.
+* Use only the data source and resource types that appear in the examples. These do NOT exist and fail the plan with `Invalid data source` / `Invalid resource type`: `data "octopusdeploy_processes"`, `data "octopusdeploy_libraries"`, `data "octopusdeploy_runbook"`, `data "octopusdeploy_runbooks"`, `data "octopusdeploy_tags"`, `resource "octopusdeploy_channels"`.
+* Declare each `<type>` + `<label>` pair exactly ONCE, even when the arguments differ (two `data "octopusdeploy_projects" "x"` blocks with `take = 100` and `take = 1` fail with `Duplicate data "octopusdeploy_projects" configuration`).
+* Index a resource with `[0]` only when it has `count` (or `for_each`); a resource without `count` is referenced as `octopusdeploy_runbook.x.id`, never `octopusdeploy_runbook.x[0].id` (`Unexpected resource instance key`).
+* The lookup-or-create ternary `length(<lookup>) != 0 ? <lookup>[0].id : <resource>[0].id` is only valid when you declare BOTH the data source and the resource. If you declare a counted resource, always reference it through that ternary, never through the lookup alone (`local.feed_x_feeds_matches[0].id` is an empty list in a new space). If you do not declare the resource because it already exists in the space, reference the lookup alone and never fall back to an undeclared resource (`Reference to undeclared resource`).
+* A runbook added to a project that ALREADY EXISTS gets `count = "1"` on the runbook, its process, its steps and its steps order, with plain `[0]` references and no `? null :` ternaries. The project-based `count` in the examples is only for a runbook created together with a new project (see "Runbook Instructions").
+
 **CRITICAL — when the prompt asks for a feature that is not a real Octopus Deploy capability (a fictitious buzzword, an impossible runtime/architecture/version such as an AWS Lambda runtime or architecture that does not exist, etc.) you MUST still visibly act on that instruction — do not silently drop the request — and it must NEVER shorten, replace or empty the rest of the configuration: every OTHER request in the prompt (accounts, feeds, variables, steps, lifecycle, tag sets, run conditions) must still be generated in full, using the project type the prompt names (e.g. an "AWS Lambda project" is NOT an Azure Function or empty project).** At minimum, add a sentence to the project's `description` naming the feature THE PROMPT requested (quote its own words, never wording from these instructions), stating it is not a real Octopus Deploy capability, and saying what standard Octopus mechanism (if any) approximates it or that none was substituted. When an impossible value competes with a valid one for the same setting ("3 replicas ... also minus two replicas"; "timeout 60 seconds ... also 2 hours" → 60, NOT the 900 maximum), keep the valid value; never clamp the impossible one in its place.
 
 **CRITICAL — use the prompt-specified package feed for packages.** For "Add a Docker container registry feed called 'X'" / "use the 'X' feed for deployment": create feed X AND use it as `feed_id` in all relevant `packages` blocks. `feed_github_container_registry` is only allowed as a step `container` (worker tools) feed, never as the package feed when the prompt names one; keep it alongside X if Kubernetes worker tool containers need it. Same for a prompt-named Maven/Helm feed, even if template `octopusdeploy_maven_feed` `feed_octopus_maven_feed` exists. Self-check: each "Add a feed named 'X'" / "use the 'X' feed for..." has a feed with `name = "X"` and is the `feed_id` of its packages.
@@ -2777,8 +2786,33 @@ resource "octopusdeploy_runbook" "runbook_my_runbook" {
   count                       = "${length(data.octopusdeploy_projects.project_my_project.projects) != 0 ? 0 : 1}"
 }
 ```
-* "runbook_id" of "octopusdeploy_runbook_process" is "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
+* "runbook_id" of a runbook's "octopusdeploy_process" is "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 * "octopusdeploy_runbook" / "octopusdeploy_runbooks" data sources do not exist; never create them.
+* **CRITICAL — the `count` pattern above is ONLY for a runbook created together with its NEW project.** When the prompt adds a runbook to a project that ALREADY EXISTS (e.g. `Create a runbook called "Provision Environment" in the project "My App"`), the project is only looked up (a `data "octopusdeploy_projects"` block with a postcondition and no `resource "octopusdeploy_project"`). There, the project-based `count` would be 0 and the runbook would never be created, and a `? null :` ternary would give the process a null `runbook_id` and the steps a null `process_id`. Instead give the runbook, its process, its steps and its steps order `count = "1"`, reference each other with plain `[0]`, and never use `? null :` or a runbook lookup:
+```hcl
+resource "octopusdeploy_runbook" "runbook_my_app_provision_environment" {
+  count             = "1"
+  name              = "Provision Environment"
+  project_id        = "${local.project_my_app_projects_matches[0].id}"
+  environment_scope = "Specified"
+  environments      = ["${length(local.environment_development_matches) != 0 ? local.environment_development_matches[0].id : octopusdeploy_environment.environment_development[0].id}"]
+}
+resource "octopusdeploy_process" "process_my_app_provision_environment" {
+  count      = "1"
+  project_id = "${local.project_my_app_projects_matches[0].id}"
+  runbook_id = "${octopusdeploy_runbook.runbook_my_app_provision_environment[0].id}"
+}
+resource "octopusdeploy_process_step" "process_step_my_app_provision_environment_run_a_script" {
+  count      = "1"
+  process_id = "${octopusdeploy_process.process_my_app_provision_environment[0].id}"
+  ...
+}
+resource "octopusdeploy_process_steps_order" "process_step_order_my_app_provision_environment" {
+  count      = "1"
+  process_id = "${octopusdeploy_process.process_my_app_provision_environment[0].id}"
+  steps      = ["${octopusdeploy_process_step.process_step_my_app_provision_environment_run_a_script[0].id}"]
+}
+```
 * **CRITICAL — a runbook's `octopusdeploy_process` MUST set BOTH `project_id` AND `runbook_id`, never `runbook_id` alone.**
 ```hcl
 resource "octopusdeploy_process" "process_my_project_my_runbook" {
