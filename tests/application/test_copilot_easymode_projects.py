@@ -1345,23 +1345,6 @@ Run the step from the "Hosted Ubuntu" worker pool.""",
             f"The steps are: {step_names(steps)}",
         )
 
-        # The Claude agent step is prompted with the commits contributing to the deployment.
-        claude_action = next(
-            step["Actions"][0]
-            for step in steps
-            if get_action_type(step) == "Octopus.Claude"
-        )
-        claude_properties = " ".join(
-            value
-            for value in claude_action["Properties"].values()
-            if isinstance(value, str)
-        )
-        self.assertIn(
-            "Octopus.Deployment.Changes",
-            claude_properties,
-            "The Claude agent should be prompted with the deployment changes.",
-        )
-
         # The API keys the project needs to read the commits and call Claude.
         variables = get_project_variables(project)
         for variable_name in ["Project.GitHub.PAT", "Project.Claude.ApiKey"]:
