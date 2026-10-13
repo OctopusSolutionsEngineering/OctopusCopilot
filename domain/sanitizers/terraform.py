@@ -2959,6 +2959,7 @@ def remove_bare_resource_types_from_depends_on(config):
 
     return DEPENDS_ON_REGEX.sub(remove_bare, config)
 
+
 DATA_HEADER_REGEX = re.compile(r'(?m)^[ \t]*data\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
 
 
@@ -3054,6 +3055,8 @@ RUNBOOK_STEPS_ORDER_PROCESS_REGEX = re.compile(r"\bprocess_id\s*=\s*\"[^\"\n]*oc
 NULL_STEP_REFERENCE_REGEX = re.compile(
     r'"\$\{[^?{}"\n]+\?\s*null\s*:\s*(?P<step>octopusdeploy_process_(?:step|child_step|templated_step|templated_child_step)\.\w+\[0\]\.id)\s*\}"'
 )
+
+
 def fix_null_process_id_for_runbook_steps(config):
     """
     The LLM copies the deployment process pattern onto a runbook in an existing project:
@@ -3100,6 +3103,7 @@ def fix_null_process_id_for_runbook_steps(config):
             body = NULL_STEP_REFERENCE_REGEX.sub(lambda match: '"${' + match.group("step") + '}"', body)
         result = result[: header.end()] + body + result[end:]
         position = header.end() + len(body)
+
 
 UNDECLARED_RESOURCE_FALLBACK_REGEX = re.compile(
     r"(?P<condition>[^?{}\":\n]+)\?\s*(?P<lookup>[^?{}\n]+?)\s*:\s*"
@@ -3161,6 +3165,7 @@ def remove_index_from_single_instance_resource_references(config):
         return match.group("address") if match.group("address") in single else match.group(0)
 
     return re.sub(r"(?<![\w.])(?P<address>octopusdeploy_\w+\.\w+)\[0\]", replace, config)
+
 
 ANY_RESOURCE_HEADER_REGEX = re.compile(r'resource\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
 RUNBOOK_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_runbook"\s+"(?P<label>\w+)"\s*\{')
