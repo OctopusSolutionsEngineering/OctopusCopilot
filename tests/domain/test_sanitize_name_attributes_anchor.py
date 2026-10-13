@@ -28,6 +28,32 @@ class TestSanitizeNameAttributesAnchor(unittest.TestCase):
         config = 'resource "x" "y" {\n  thing = {name = "A/B"}\n}\n'
         self.assertIn('name = "A-B"', sanitize_name_attributes(config))
 
+    def test_attributes_after_an_inline_name_are_untouched(self):
+        config = (
+            '    "Octopus.Action.Claude.McpServers" = jsonencode([{ type = "http", name = "GitHub", '
+            'url = "https://api.githubcopilot.com/mcp/", headers = { Authorization = "#{Project.GitHub.PAT}" }, '
+            'env = {}, allowedTools = ["*"] }])\n'
+        )
+        result = sanitize_name_attributes(config)
+        self.assertIn('url = "https://api.githubcopilot.com/mcp/"', result)
+        self.assertIn('allowedTools = ["*"]', result)
+        self.assertEqual(config, result)
+
+    def test_inline_name_is_sanitized_but_following_values_are_not(self):
+        config = '  thing = { name = "A/B", path = "c/d" }\n'
+        self.assertEqual('  thing = { name = "A-B", path = "c/d" }\n', sanitize_name_attributes(config))
+
+    def test_quotes_inside_an_interpolation_do_not_end_the_name(self):
+        config = '  name = "${var.env == "prod" ? "Live/Prod" : "Test"}", url = "a/b"\n'
+        result = sanitize_name_attributes(config)
+        self.assertTrue(result.endswith(', url = "a/b"\n'))
+
+    def test_escaped_quote_does_not_end_the_name(self):
+        config = '  thing = { name = "Say \\"hi\\"/bye", path = "c/d" }\n'
+        result = sanitize_name_attributes(config)
+        self.assertIn('path = "c/d"', result)
+        self.assertIn('-bye"', result)
+
     def test_heredoc_body_is_untouched(self):
         config = (
             'resource "octopusdeploy_process_step" "x" {\n'

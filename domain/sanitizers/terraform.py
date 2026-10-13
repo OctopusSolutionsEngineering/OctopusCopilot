@@ -129,13 +129,51 @@ def sanitize_name_attributes(config):
 
         match = attribute.search(text)
         if match:
-            lines[index] = text[: match.start(1)] + _sanitize_name_value(match.group(1))
+            # Only the name's own value is sanitized. The rest of the line is kept, because in an inline object the
+            # other attributes follow the name. Observed failure: a Claude step's
+            # jsonencode([{ type = "http", name = "GitHub", url = "https://api.githubcopilot.com/mcp/", allowedTools = ["*"] }])
+            # had its url turned into "https:--api.githubcopilot.com-mcp-" and its allowedTools into ["_"].
+            end = match.start(1) + _name_attribute_length(match.group(1))
+            lines[index] = text[: match.start(1)] + _sanitize_name_value(text[match.start(1) : end]) + text[end:]
 
         start = heredoc_start.search(text)
         if start:
             heredoc_marker = start.group(1)
 
     return "\n".join(lines)
+
+
+def _name_attribute_length(attribute):
+    """
+    Return the length of a name attribute, like name = "Blue/Green", at the start of the given text. A quoted value
+    ends at its closing quote, skipping escaped quotes and the quotes inside ${...} interpolations. Any other value
+    runs to the end of the text, as before.
+    """
+
+    value = re.match(r'\b(?:name|deployment_action)\s*=\s*', attribute)
+    position = value.end()
+    if position >= len(attribute) or attribute[position] != '"':
+        return len(attribute)
+
+    position += 1
+    depth = 0
+    while position < len(attribute):
+        character = attribute[position]
+        if character == "\\":
+            position += 2
+            continue
+        if attribute.startswith("${", position):
+            depth += 1
+            position += 2
+            continue
+        if depth and character == "{":
+            depth += 1
+        elif depth and character == "}":
+            depth -= 1
+        elif not depth and character == '"':
+            return position + 1
+        position += 1
+    return len(attribute)
 
 
 def _sanitize_name_value(yaml_config):
