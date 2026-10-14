@@ -5904,6 +5904,46 @@ def add_missing_standard_lifecycle_lookups(config):
     return config.rstrip("\n") + "\n" + "".join(missing)
 
 
+BARE_WORKER_POOL_LOOKUP_REGEX = re.compile(
+    r'(?P<head>(?<![\w.])(?:worker_pool_id|value)\s*=\s*")\$\{\s*'
+    r"(?:data\.octopusdeploy_worker_pools\.(?P<data>\w+)\.worker_pools|local\.(?P<local>\w+)_worker_pools_matches)"
+    r'\[0\]\.id\s*\}"'
+)
+
+
+def add_fallback_to_bare_worker_pool_lookups(config):
+    """
+    The LLM references a worker pool lookup without the fallback the examples use, like
+    worker_pool_id = "${local.workerpool_hosted_ubuntu_worker_pools_matches[0].id}". Only Octopus Cloud has Hosted
+    Ubuntu, so in a self-hosted space the lookup is empty and the plan fails with:
+    Error: Invalid index ... local.workerpool_hosted_ubuntu_worker_pools_matches is empty tuple
+    fix_lookup_worker_pool_default_fallback only rewrites the ternary forms, and enforce_exact_name_matches turns data
+    references into exact match locals, so a bare reference in either form tries each lookup in turn and ends with an
+    empty string, which selects the default worker pool of the space. A pool the configuration creates is left alone.
+    """
+
+    if not config or "worker_pool" not in config:
+        return config
+
+    hosted_ubuntu = "workerpool_hosted_ubuntu"
+
+    def lookup_reference(label, local):
+        if local and re.search(rf"(?<![\w.]){re.escape(label)}_worker_pools_matches\s*=", config):
+            return f"local.{label}_worker_pools_matches[0].id"
+        return f"data.octopusdeploy_worker_pools.{label}.worker_pools[0].id"
+
+    def replace(match):
+        label = match.group("data") or match.group("local")
+        if re.search(rf'resource\s+"octopusdeploy_\w*worker_pool"\s+"{re.escape(label)}"', config):
+            return match.group(0)
+        attempts = [lookup_reference(label, match.group("local"))]
+        if label != hosted_ubuntu and re.search(rf'data\s+"octopusdeploy_worker_pools"\s+"{hosted_ubuntu}"', config):
+            attempts.append(lookup_reference(hosted_ubuntu, bool(match.group("local"))))
+        return match.group("head") + "${try(" + ", ".join(attempts) + ', "")}"'
+
+    return BARE_WORKER_POOL_LOOKUP_REGEX.sub(replace, config)
+
+
 def fix_undeclared_deployment_freeze_lookup(config):
     """
     A freeze link references the freeze through the usual lookup-or-create ternary but the data source is never

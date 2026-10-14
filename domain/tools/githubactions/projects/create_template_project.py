@@ -185,6 +185,7 @@ from domain.sanitizers.terraform import (
     remove_unreferenced_data_sources,
     remove_duplicate_data_sources,
     add_missing_standard_lifecycle_lookups,
+    add_fallback_to_bare_worker_pool_lookups,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
     remove_undeclared_resource_fallbacks,
@@ -1210,6 +1211,8 @@ def sanitize_configuration(configuration):
     configuration = fix_null_process_id_for_runbook_steps(configuration)
     # A resource without count or for_each must not be referenced with an index
     configuration = remove_index_from_single_instance_resource_references(configuration)
+    # A bare worker pool lookup fails in a space without that pool, so it falls back to the space's default pool
+    configuration = add_fallback_to_bare_worker_pool_lookups(configuration)
     # A data source nothing references does nothing, and may not even be a real type
     configuration = remove_unreferenced_data_sources(configuration)
     # A depends_on entry for a resource that was never declared, or that a sanitizer above removed, fails the plan
