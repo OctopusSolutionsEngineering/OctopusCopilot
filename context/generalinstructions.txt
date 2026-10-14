@@ -20,6 +20,7 @@ All rules in this file are mandatory; violations are penalized. Rules marked **C
 * Declare each `<type>` + `<label>` pair exactly ONCE, even when the arguments differ (two `data "octopusdeploy_projects" "x"` blocks with `take = 100` and `take = 1` fail with `Duplicate data "octopusdeploy_projects" configuration`).
 * Index a resource with `[0]` only when it has `count` (or `for_each`); a resource without `count` is referenced as `octopusdeploy_runbook.x.id`, never `octopusdeploy_runbook.x[0].id` (`Unexpected resource instance key`).
 * The lookup-or-create ternary `length(<lookup>) != 0 ? <lookup>[0].id : <resource>[0].id` is only valid when you declare BOTH the data source and the resource. If you declare a counted resource, always reference it through that ternary, never through the lookup alone (`local.feed_x_feeds_matches[0].id` is an empty list in a new space). If you do not declare the resource because it already exists in the space, reference the lookup alone and never fall back to an undeclared resource (`Reference to undeclared resource`).
+* Never emit an `octopusdeploy_lifecycle` named like an `octopusdeploy_parent_environment`: Octopus creates that lifecycle itself, and the duplicate fails the apply with `UQ_LifecycleUniqueNamePerSpace` (see "Ephemeral Environment Instructions").
 * A runbook added to a project that ALREADY EXISTS gets `count = "1"` on the runbook, its process, its steps and its steps order, with plain `[0]` references and no `? null :` ternaries. The project-based `count` in the examples is only for a runbook created together with a new project (see "Runbook Instructions").
 
 **CRITICAL — when the prompt asks for a feature that is not a real Octopus Deploy capability (a fictitious buzzword, an impossible runtime/architecture/version such as an AWS Lambda runtime or architecture that does not exist, etc.) you MUST still visibly act on that instruction — do not silently drop the request — and it must NEVER shorten, replace or empty the rest of the configuration: every OTHER request in the prompt (accounts, feeds, variables, steps, lifecycle, tag sets, run conditions) must still be generated in full, using the project type the prompt names (e.g. an "AWS Lambda project" is NOT an Azure Function or empty project).** At minimum, add a sentence to the project's `description` naming the feature THE PROMPT requested (quote its own words, never wording from these instructions), stating it is not a real Octopus Deploy capability, and saying what standard Octopus mechanism (if any) approximates it or that none was substituted. When an impossible value competes with a valid one for the same setting ("3 replicas ... also minus two replicas"; "timeout 60 seconds ... also 2 hours" → 60, NOT the 900 maximum), keep the valid value; never clamp the impossible one in its place.
@@ -1707,6 +1708,7 @@ resource "octopusdeploy_runbook" "runbook_my_project_provision_preview" {
 ```
 * Do NOT rename either resource or drop the parent environment; emit exactly one resource, the `octopusdeploy_parent_environment`.
 * **CRITICAL — a lifecycle phase takes only regular environment IDs, never a parent environment ID** (`automatic_deployment_targets` / `optional_deployment_targets` with a parent environment fail with "The phase ... has an invalid environment ID"). An `EphemeralEnvironment` channel MUST NOT have a `lifecycle_id` at all (fails with "A lifecycle must not be provided for an Ephemeral Environment channel"), even if the prompt says it "uses a lifecycle"; use `parent_environment_id`, omit `lifecycle_id`, and do not create a lifecycle for it.
+* **CRITICAL — never emit an `octopusdeploy_lifecycle` with the same `name` as an `octopusdeploy_parent_environment`.** Octopus creates a lifecycle with the parent environment's name when it creates the parent environment, so a lifecycle you also called "Features" makes the parent environment fail with `Error creating parent environment … Violation of UNIQUE KEY constraint 'UQ_LifecycleUniqueNamePerSpace' … The duplicate key value is (Features, …)`, which aborts the apply. A parent environment and its `EphemeralEnvironment` channel need no lifecycle at all, so emit no `octopusdeploy_lifecycle` (and no `data "octopusdeploy_lifecycles"`) for them, e.g. never `resource "octopusdeploy_lifecycle" "lifecycle_features" { name = "Features", description = "Lifecycle for the Features preview environment." }`.
 * Self-check: if any name appears as both a parent and a regular environment, delete the `octopusdeploy_environment` and repoint its references to the parent environment's ternary.
 
 **CRITICAL — when it is unclear whether an environment is a parent or a regular environment, look up BOTH.** This applies when the prompt adds runbooks, steps, targets or triggers to an EXISTING project (the project is only looked up, not created) and names an environment that this configuration does not otherwise create, without saying whether it is a parent environment, e.g. `Create a runbook called "Provision Environment" in the project "My App". Allow the runbook to be run from the "Features" environment.` You cannot see which kind already exists in the space. An `octopusdeploy_environments` lookup NEVER returns parent environments, so treating a parent environment as a regular one makes the configuration create a duplicate and the apply aborts with `An environment with this name already exists in this space.` Instead:
@@ -2788,29 +2790,30 @@ resource "octopusdeploy_runbook" "runbook_my_runbook" {
 ```
 * "runbook_id" of a runbook's "octopusdeploy_process" is "${length(data.octopusdeploy_projects.<project>.projects) != 0 ? null : octopusdeploy_runbook.<runbook>[0].id}"
 * "octopusdeploy_runbook" / "octopusdeploy_runbooks" data sources do not exist; never create them.
-* **CRITICAL — the `count` pattern above is ONLY for a runbook created together with its NEW project.** When the prompt adds a runbook to a project that ALREADY EXISTS (e.g. `Create a runbook called "Provision Environment" in the project "My App"`), the project is only looked up (a `data "octopusdeploy_projects"` block with a postcondition and no `resource "octopusdeploy_project"`). There, the project-based `count` would be 0 and the runbook would never be created, and a `? null :` ternary would give the process a null `runbook_id` and the steps a null `process_id`. Instead give the runbook, its process, its steps and its steps order `count = "1"`, reference each other with plain `[0]`, and never use `? null :` or a runbook lookup:
+* **CRITICAL — the `count` pattern above is ONLY for a runbook created together with its NEW project.** When the prompt adds a runbook to a project that ALREADY EXISTS (e.g. `Create a runbook called "My Runbook" in the project "My App"`), the project is only looked up (a `data "octopusdeploy_projects"` block with a postcondition and no `resource "octopusdeploy_project"`). There, the project-based `count` would be 0 and the runbook would never be created, and a `? null :` ternary would give the process a null `runbook_id` and the steps a null `process_id`. Instead give the runbook, its process, its steps and its steps order `count = "1"`, reference each other with plain `[0]`, and never use `? null :` or a runbook lookup:
 ```hcl
-resource "octopusdeploy_runbook" "runbook_my_app_provision_environment" {
+resource "octopusdeploy_runbook" "runbook_my_app_my_runbook" {
   count             = "1"
-  name              = "Provision Environment"
+  name              = "My Runbook"
   project_id        = "${local.project_my_app_projects_matches[0].id}"
   environment_scope = "Specified"
   environments      = ["${length(local.environment_development_matches) != 0 ? local.environment_development_matches[0].id : octopusdeploy_environment.environment_development[0].id}"]
 }
-resource "octopusdeploy_process" "process_my_app_provision_environment" {
+resource "octopusdeploy_process" "process_my_app_my_runbook" {
   count      = "1"
   project_id = "${local.project_my_app_projects_matches[0].id}"
-  runbook_id = "${octopusdeploy_runbook.runbook_my_app_provision_environment[0].id}"
+  runbook_id = "${octopusdeploy_runbook.runbook_my_app_my_runbook[0].id}"
 }
-resource "octopusdeploy_process_step" "process_step_my_app_provision_environment_run_a_script" {
+resource "octopusdeploy_process_step" "process_step_my_app_my_runbook_my_step" {
   count      = "1"
-  process_id = "${octopusdeploy_process.process_my_app_provision_environment[0].id}"
+  process_id = "${octopusdeploy_process.process_my_app_my_runbook[0].id}"
+  # The step's name, type and properties come from the prompt, e.g. "Run a kubectl script" is an Octopus.KubernetesRunScript step
   ...
 }
-resource "octopusdeploy_process_steps_order" "process_step_order_my_app_provision_environment" {
+resource "octopusdeploy_process_steps_order" "process_step_order_my_app_my_runbook" {
   count      = "1"
-  process_id = "${octopusdeploy_process.process_my_app_provision_environment[0].id}"
-  steps      = ["${octopusdeploy_process_step.process_step_my_app_provision_environment_run_a_script[0].id}"]
+  process_id = "${octopusdeploy_process.process_my_app_my_runbook[0].id}"
+  steps      = ["${octopusdeploy_process_step.process_step_my_app_my_runbook_my_step[0].id}"]
 }
 ```
 * **CRITICAL — a runbook's `octopusdeploy_process` MUST set BOTH `project_id` AND `runbook_id`, never `runbook_id` alone.**
