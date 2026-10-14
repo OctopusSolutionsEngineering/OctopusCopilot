@@ -5864,6 +5864,46 @@ DEPLOYMENT_FREEZE_LOOKUP_REGEX = re.compile(
 )
 
 
+STANDARD_LIFECYCLE_LOOKUPS = {
+    "lifecycle_default_lifecycle": "Default Lifecycle",
+    "system_lifecycle_firstlifecycle": "",
+}
+
+
+def add_missing_standard_lifecycle_lookups(config):
+    """
+    The LLM uses the Default Lifecycle lookup the examples declare, like
+    lifecycle_id = "${length(data.octopusdeploy_lifecycles.lifecycle_default_lifecycle.lifecycles) != 0 ? ... : ...}",
+    without declaring the data source, which fails the plan with:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_lifecycles"
+    "lifecycle_default_lifecycle" definition in the root module.
+    The lookups the examples always declare, the Default Lifecycle and the first lifecycle in the space, are added when
+    they are referenced but not declared. Other undeclared lookups are left alone, because their names are unknown.
+    """
+
+    if not config or "data.octopusdeploy_lifecycles." not in config:
+        return config
+
+    missing = []
+    for label, partial_name in STANDARD_LIFECYCLE_LOOKUPS.items():
+        referenced = re.search(rf"(?<![\w.])data\.octopusdeploy_lifecycles\.{label}\b", config)
+        declared = re.search(rf'data\s+"octopusdeploy_lifecycles"\s+"{label}"\s*\{{', config)
+        if referenced and not declared:
+            missing.append(
+                f'data "octopusdeploy_lifecycles" "{label}" {{\n'
+                f"  ids          = null\n"
+                f'  partial_name = "{partial_name}"\n'
+                f"  skip         = 0\n"
+                f"  take         = 1\n"
+                f"}}\n"
+            )
+
+    if not missing:
+        return config
+
+    return config.rstrip("\n") + "\n" + "".join(missing)
+
+
 def fix_undeclared_deployment_freeze_lookup(config):
     """
     A freeze link references the freeze through the usual lookup-or-create ternary but the data source is never

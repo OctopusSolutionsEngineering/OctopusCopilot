@@ -184,6 +184,7 @@ from domain.sanitizers.terraform import (
     remove_undeclared_depends_on_references,
     remove_unreferenced_data_sources,
     remove_duplicate_data_sources,
+    add_missing_standard_lifecycle_lookups,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
     remove_undeclared_resource_fallbacks,
@@ -1097,6 +1098,8 @@ def sanitize_configuration(configuration):
     configuration = remove_runbooks_data_source(configuration)
     # A placeholder data source or resource with count = 0 that nothing uses may not even be a real type
     configuration = remove_unreferenced_zero_count_blocks(configuration)
+    # The Default Lifecycle lookup the examples declare must be declared wherever it is referenced
+    configuration = add_missing_standard_lifecycle_lookups(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
     # partial_name is a substring match, so other lookups must also be filtered to the exact name
     configuration = enforce_exact_name_matches(configuration)
