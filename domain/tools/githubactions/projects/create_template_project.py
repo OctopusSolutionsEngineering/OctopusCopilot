@@ -185,6 +185,7 @@ from domain.sanitizers.terraform import (
     remove_unreferenced_data_sources,
     remove_duplicate_data_sources,
     add_missing_standard_lifecycle_lookups,
+    add_missing_default_machine_policy_lookup,
     add_fallback_to_bare_worker_pool_lookups,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
@@ -1101,6 +1102,8 @@ def sanitize_configuration(configuration):
     configuration = remove_unreferenced_zero_count_blocks(configuration)
     # The Default Lifecycle lookup the examples declare must be declared wherever it is referenced
     configuration = add_missing_standard_lifecycle_lookups(configuration)
+    # The default machine policy lookup the instructions declare must be declared wherever it is referenced
+    configuration = add_missing_default_machine_policy_lookup(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
     # partial_name is a substring match, so other lookups must also be filtered to the exact name
     configuration = enforce_exact_name_matches(configuration)

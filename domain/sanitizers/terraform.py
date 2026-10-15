@@ -5904,6 +5904,37 @@ def add_missing_standard_lifecycle_lookups(config):
     return config.rstrip("\n") + "\n" + "".join(missing)
 
 
+DEFAULT_MACHINE_POLICY_DATA = """data "octopusdeploy_machine_policies" "default_machine_policy" {
+  ids          = null
+  partial_name = "Default Machine Policy"
+  skip         = 0
+  take         = 1
+}
+"""
+
+
+def add_missing_default_machine_policy_lookup(config):
+    """
+    The LLM gives a target the default machine policy through the lookup the instructions declare, like
+    machine_policy_id = "${data.octopusdeploy_machine_policies.default_machine_policy.machine_policies[0].id}",
+    without declaring the data source, which fails the plan with:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_machine_policies"
+    "default_machine_policy" definition in the root module.
+    The lookup from the instructions is added when it is referenced but not declared.
+    """
+
+    if not config or "data.octopusdeploy_machine_policies.default_machine_policy" not in config:
+        return config
+
+    if re.search(r'data\s+"octopusdeploy_machine_policies"\s+"default_machine_policy"\s*\{', config):
+        return config
+
+    if not re.search(r"(?<![\w.])data\.octopusdeploy_machine_policies\.default_machine_policy\b", config):
+        return config
+
+    return config.rstrip("\n") + "\n" + DEFAULT_MACHINE_POLICY_DATA
+
+
 BARE_WORKER_POOL_LOOKUP_REGEX = re.compile(
     r'(?P<head>(?<![\w.])(?:worker_pool_id|value)\s*=\s*")\$\{\s*'
     r"(?:data\.octopusdeploy_worker_pools\.(?P<data>\w+)\.worker_pools|local\.(?P<local>\w+)_worker_pools_matches)"
