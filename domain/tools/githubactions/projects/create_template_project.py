@@ -186,6 +186,7 @@ from domain.sanitizers.terraform import (
     remove_duplicate_data_sources,
     add_missing_standard_lifecycle_lookups,
     add_missing_default_machine_policy_lookup,
+    remove_unlabelled_blocks,
     add_fallback_to_bare_worker_pool_lookups,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
@@ -970,6 +971,8 @@ def sanitize_configuration(configuration):
     # Project groups the configuration creates must not be looked up with a postcondition
     configuration = remove_postcondition_from_created_project_groups(configuration)
     # Fix up invalid resource and data names
+    # A data source or resource without a name label fails the whole file, and other sanitizers expect two labels
+    configuration = remove_unlabelled_blocks(configuration)
     configuration = replace_resource_names_with_digit(configuration)
     # Deal with the LLM returning code in markdown code blocks
     configuration = remove_markdown_code_block(configuration)

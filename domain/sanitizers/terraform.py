@@ -5904,6 +5904,35 @@ def add_missing_standard_lifecycle_lookups(config):
     return config.rstrip("\n") + "\n" + "".join(missing)
 
 
+UNLABELLED_BLOCK_HEADER_REGEX = re.compile(r'(?m)^[ \t]*(?:data|resource)\s+"[\w-]+"\s*\{')
+
+
+def remove_unlabelled_blocks(config):
+    """
+    The LLM sometimes emits a data source or resource with only its type and no name, like
+    data "octopusdeploy_channel" {}, which fails the whole file with:
+    Error: Missing name for data ... All data blocks must have 2 labels (type, name).
+    A block with one label can not be referenced, so it is removed.
+    """
+
+    if not config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = UNLABELLED_BLOCK_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+        if result[end : end + 1] == "\n":
+            end += 1
+        result = result[: header.start()] + result[end:]
+        position = header.start()
+
+
 DEFAULT_MACHINE_POLICY_DATA = """data "octopusdeploy_machine_policies" "default_machine_policy" {
   ids          = null
   partial_name = "Default Machine Policy"
