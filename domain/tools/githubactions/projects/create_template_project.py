@@ -187,6 +187,8 @@ from domain.sanitizers.terraform import (
     add_missing_standard_lifecycle_lookups,
     add_missing_default_machine_policy_lookup,
     remove_unlabelled_blocks,
+    join_block_header_braces,
+    remove_duplicate_resources,
     add_fallback_to_bare_worker_pool_lookups,
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
@@ -972,7 +974,11 @@ def sanitize_configuration(configuration):
     configuration = remove_postcondition_from_created_project_groups(configuration)
     # Fix up invalid resource and data names
     # A data source or resource without a name label fails the whole file, and other sanitizers expect two labels
+    # A block whose opening bracket is on the line after its header fails the whole file
+    configuration = join_block_header_braces(configuration)
     configuration = remove_unlabelled_blocks(configuration)
+    # A resource declared twice with different content fails the whole file
+    configuration = remove_duplicate_resources(configuration)
     configuration = replace_resource_names_with_digit(configuration)
     # Deal with the LLM returning code in markdown code blocks
     configuration = remove_markdown_code_block(configuration)

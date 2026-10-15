@@ -5933,6 +5933,66 @@ def remove_unlabelled_blocks(config):
         position = header.start()
 
 
+SPLIT_BLOCK_HEADER_REGEX = re.compile(
+    r'(?m)^(?P<header>[ \t]*(?:resource|data)\s+"[\w-]+"\s+"[\w-]+")[ \t]*\n[ \t]*\{'
+)
+
+
+def join_block_header_braces(config):
+    """
+    The LLM sometimes puts the opening bracket of a block on the line after its header, like
+    resource "octopusdeploy_lifecycle" "lifecycle_hotfix"
+      {
+    which fails the whole file with:
+    Error: Invalid block definition ... A block definition must have block content delimited by "{" and "}",
+    starting on the same line as the block header.
+    The bracket is moved onto the header line.
+    """
+
+    if not config:
+        return config
+
+    return SPLIT_BLOCK_HEADER_REGEX.sub(lambda match: match.group("header") + " {", config)
+
+
+RESOURCE_HEADER_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"(?P<type>\w+)"\s+"(?P<label>\w+)"\s*\{')
+
+
+def remove_duplicate_resources(config):
+    """
+    The LLM declares the same resource twice with different content, so remove_duplicate_definitions does not see
+    them as copies and the whole file fails with:
+    Error: Duplicate resource "octopusdeploy_lifecycle" configuration ... A octopusdeploy_lifecycle resource named
+    "lifecycle_hotfix" was already declared at terraformInput.tf:247,1-54.
+    A resource with the same type and label as an earlier one is removed, keeping the first, as
+    remove_duplicate_data_sources does for data sources.
+    """
+
+    if not config or "resource" not in config:
+        return config
+
+    seen = set()
+    result = config
+    position = 0
+    while True:
+        header = RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        key = (header.group("type"), header.group("label"))
+        if key in seen:
+            if result[end : end + 1] == "\n":
+                end += 1
+            result = result[: header.start()] + result[end:]
+            position = header.start()
+        else:
+            seen.add(key)
+            position = end
+
+
 DEFAULT_MACHINE_POLICY_DATA = """data "octopusdeploy_machine_policies" "default_machine_policy" {
   ids          = null
   partial_name = "Default Machine Policy"
