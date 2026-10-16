@@ -3,6 +3,7 @@ import hashlib
 import re
 import unicodedata
 import uuid
+from collections import defaultdict
 
 from lxml.html.diff import fixup_ins_del_tags
 
@@ -914,6 +915,19 @@ def fix_container_registry_acquisition_options(config):
 
     return _set_feed_acquisition_options(
         config, CONTAINER_REGISTRY_FEED_RESOURCES, '["ExecutionTarget", "NotAcquired"]'
+    )
+
+
+def fix_helm_feed_acquisition_options(config):
+    """
+    Octopus stores the package acquisition locations of a Helm feed as ExecutionTarget, Server and NotAcquired. The
+    LLM copies the Maven/NuGet value ["Server", "ExecutionTarget"], and the apply fails with:
+    When applying changes to octopusdeploy_helm_feed.feed_llm_charts[0], provider ... produced an unexpected new value:
+    .package_acquisition_location_options[0]: was cty.StringVal("Server"), but now cty.StringVal("ExecutionTarget").
+    """
+
+    return _set_feed_acquisition_options(
+        config, ["octopusdeploy_helm_feed"], '["ExecutionTarget", "Server", "NotAcquired"]'
     )
 
 
@@ -6025,7 +6039,7 @@ def add_missing_default_machine_policy_lookup(config):
 
 
 BARE_WORKER_POOL_LOOKUP_REGEX = re.compile(
-    r'(?P<head>(?<![\w.])(?:worker_pool_id|value)\s*=\s*")\$\{\s*'
+    r'(?P<head>(?<![\w.])(?:(?:default_)?worker_pool_id|value)\s*=\s*")\$\{\s*'
     r"(?:data\.octopusdeploy_worker_pools\.(?P<data>\w+)\.worker_pools|local\.(?P<local>\w+)_worker_pools_matches)"
     r'\[0\]\.id\s*\}"'
 )
@@ -6313,6 +6327,14 @@ def configuration_has_octopus_resources(configuration):
     "Resources: 0 added", and the user is told their resources were created.
     """
     return bool(configuration and OCTOPUS_RESOURCE_REGEX.search(configuration))
+
+
+def count_octopus_resources(configuration):
+    """
+    The number of octopusdeploy resources the configuration declares. Used to detect a second pass LLM response that
+    returned only the blocks it changed rather than the complete configuration.
+    """
+    return len(OCTOPUS_RESOURCE_REGEX.findall(configuration)) if configuration else 0
 
 
 STEP_PROPERTY_MAP_REGEX = re.compile(r"(?m)^[ \t]*(?:execution_properties|properties)[ \t]*=[ \t]*\{[ \t]*\n")
@@ -6682,3 +6704,604 @@ def remove_glob_from_argocd_input_path(config):
         return match.group(0)
 
     return ARGOCD_INPUT_PATH_REGEX.sub(fix, config)
+
+
+EXCLUDED_ENVIRONMENTS_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)excluded_environments[ \t]*=[ \t]*\[")
+QUOTED_STRING_REGEX = re.compile(r'"(?:[^"\\\n]|\\.)*"')
+ENVIRONMENT_REFERENCE_REGEX = re.compile(
+    r"(?<![\w.])(?:(?P<data>data)\.)?(?P<type>octopusdeploy_environments|octopusdeploy_environment)\.(?P<label>\w+)"
+)
+LOCAL_REFERENCE_REGEX = re.compile(r"(?<![\w.])local\.(?P<name>\w+)")
+LOCALS_BLOCK_REGEX = re.compile(r"(?m)^[ \t]*locals\s*\{")
+LOCAL_DEFINITION_REGEX = re.compile(r"(?m)^[ \t]*(?P<name>\w+)[ \t]*=")
+
+
+def declared_local_names(config):
+    """
+    The names of the local values defined in the configuration's locals blocks.
+    """
+
+    names = set()
+    for block in LOCALS_BLOCK_REGEX.finditer(config):
+        end = find_block_end(config, block.end())
+        if end is None:
+            continue
+        names.update(match.group("name") for match in LOCAL_DEFINITION_REGEX.finditer(config[block.end() : end]))
+    return names
+
+
+def remove_undeclared_excluded_environments(config):
+    """
+    The LLM keeps the example steps' excluded_environments entry for the Security environment after dropping that
+    environment's lookup, like
+    excluded_environments = ["${data.octopusdeploy_environments.environment_security.environments[0].id}"]
+    or excluded_environments = ["${local.environment_security_matches[0].id}"]
+    which fails the whole plan with:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_environments"
+    "environment_security" definition in the root module.
+    or: Error: Reference to undeclared local value ... "environment_security_matches" has not been declared.
+    An environment that is not declared is not part of the configuration, so excluding it does nothing. The entry is
+    removed, and the attribute is removed if no entries remain. The environments attribute is left alone, because
+    removing an entry from it would widen the step's scope.
+    """
+
+    if not config or "excluded_environments" not in config:
+        return config
+
+    declared_data = {match.group("label") for match in DATA_HEADER_REGEX.finditer(config)
+                     if match.group("type") == "octopusdeploy_environments"}
+    declared_resources = {match.group("label") for match in ANY_RESOURCE_HEADER_REGEX.finditer(config)
+                          if match.group("type") == "octopusdeploy_environment"}
+
+    declared_locals = declared_local_names(config)
+
+    def is_declared(reference):
+        if reference.group("data"):
+            return reference.group("type") == "octopusdeploy_environments" and reference.group("label") in declared_data
+        return reference.group("type") == "octopusdeploy_environment" and reference.group("label") in declared_resources
+
+    result = config
+    position = 0
+    while True:
+        attribute = EXCLUDED_ENVIRONMENTS_REGEX.search(result, position)
+        if not attribute:
+            return result
+
+        # Find the closing bracket of the list, skipping brackets inside quoted strings
+        index = attribute.end()
+        depth = 1
+        while index < len(result) and depth:
+            quoted = QUOTED_STRING_REGEX.match(result, index)
+            if quoted:
+                index = quoted.end()
+                continue
+            if result[index] == "[":
+                depth += 1
+            elif result[index] == "]":
+                depth -= 1
+            index += 1
+        if depth:
+            return result
+
+        list_body = result[attribute.end() : index - 1]
+        entries = QUOTED_STRING_REGEX.findall(list_body)
+        kept = [
+            entry
+            for entry in entries
+            if all(is_declared(reference) for reference in ENVIRONMENT_REFERENCE_REGEX.finditer(entry))
+            and all(reference.group("name") in declared_locals for reference in LOCAL_REFERENCE_REGEX.finditer(entry))
+        ]
+
+        if len(kept) == len(entries):
+            position = index
+            continue
+
+        line_end = result.find("\n", index)
+        line_end = len(result) if line_end == -1 else line_end + 1
+        if kept:
+            replacement = attribute.group("indent") + "excluded_environments = [" + ", ".join(kept) + "]\n"
+        else:
+            replacement = ""
+        result = result[: attribute.start()] + replacement + result[line_end:]
+        position = attribute.start() + len(replacement)
+
+
+CONTAINER_MAP_REGEX = re.compile(r"(?m)^[ \t]*container[ \t]*=[ \t]*\{")
+CONTAINER_EMPTY_IMAGE_REGEX = re.compile(r'(?P<key>\bimage\s*=\s*)""')
+CONTAINER_DOCKERFILE_REGEX = re.compile(r'\bdockerfile\s*=\s*"(?P<value>(?:[^"\\\n]|\\.)*)"')
+CONTAINER_FEED_ID_REGEX = re.compile(r'(?P<key>\bfeed_id\s*=\s*)(?P<value>"(?:[^"\\\n]|\\.)*")')
+DOCKERFILE_FROM_REGEX = re.compile(r"(?i)(?:^|\\n|\n)\s*FROM\s+(?:--\S+\s+)*(?P<image>[^\s\\\"]+)")
+
+
+def fix_empty_container_image(config):
+    """
+    A step container with a feed but an empty image, like
+    container = { dockerfile = "FROM python:3.12-slim\\nRUN pip install boto3", feed_id = "${...}", git_url = null, image = "" }
+    passes the plan but fails the apply with:
+    Octopus API error: ... [A step that is configured to run inside a container, must have a container image if there
+    is a container feed id]
+    A container built from an inline Dockerfile uses the Dockerfile's base image (the first FROM line), which the API
+    accepts. Without a Dockerfile there is no image to run, so the feed is cleared instead.
+    """
+
+    if not config or "container" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        container = CONTAINER_MAP_REGEX.search(result, position)
+        if not container:
+            return result
+        end = find_block_end(result, container.end())
+        if end is None:
+            return result
+
+        body = result[container.end() : end]
+        position = end
+        if not CONTAINER_EMPTY_IMAGE_REGEX.search(body):
+            continue
+
+        dockerfile = CONTAINER_DOCKERFILE_REGEX.search(body)
+        base_image = DOCKERFILE_FROM_REGEX.search(dockerfile.group("value")) if dockerfile else None
+        if base_image:
+            new_body = CONTAINER_EMPTY_IMAGE_REGEX.sub(
+                lambda match: match.group("key") + '"' + base_image.group("image") + '"', body, count=1
+            )
+        else:
+            feed_id = CONTAINER_FEED_ID_REGEX.search(body)
+            if not feed_id or feed_id.group("value") == '""':
+                continue
+            new_body = CONTAINER_FEED_ID_REGEX.sub(lambda match: match.group("key") + "null", body, count=1)
+
+        result = result[: container.end()] + new_body + result[end:]
+        position = container.end() + len(new_body)
+
+
+BLOCK_HEADER_REGEX = re.compile(r'(?m)^[ \t]*(?:resource|data)\s+"\w+"\s+"\w+"\s*\{')
+DEPENDS_ON_START_REGEX = re.compile(r"(?m)^[ \t]*depends_on[ \t]*=[ \t]*\[")
+DEPENDS_ON_ITEM_REGEX = re.compile(r"(?:data\.)?\w+\.\w+")
+
+
+def merge_duplicate_depends_on(config):
+    """
+    The LLM sometimes writes depends_on twice in the same block, like a step that depends on the previous step
+    followed by a second list adding the tag sets its tenant_tags use:
+    depends_on = [octopusdeploy_process_step.build_layer]
+    ...
+    depends_on = [octopusdeploy_process_step.build_layer, octopusdeploy_tag_set.tagset_tier]
+    which fails tofu init, and so the whole configuration, with:
+    Error: Attribute redefined ... The argument "depends_on" was already set at ... Each argument may be set only once.
+    The lists are merged, without duplicates, into the first depends_on, and the others are removed.
+    """
+
+    if not config or config.count("depends_on") < 2:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = BLOCK_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        # Only depends_on attributes of the block itself count, not ones in nested blocks
+        attributes = []
+        for match in DEPENDS_ON_START_REGEX.finditer(body):
+            prefix = body[: match.start()]
+            if prefix.count("{") - prefix.count("}") != 0:
+                continue
+            close = body.find("]", match.end())
+            if close == -1:
+                break
+            line_end = body.find("\n", close)
+            line_end = len(body) if line_end == -1 else line_end + 1
+            attributes.append((match.start(), line_end, body[match.end() : close]))
+
+        if len(attributes) < 2:
+            position = end
+            continue
+
+        items = []
+        for _, _, item_text in attributes:
+            for item in DEPENDS_ON_ITEM_REGEX.findall(item_text):
+                if item not in items:
+                    items.append(item)
+
+        indent = re.match(r"[ \t]*", body[attributes[0][0] :]).group(0)
+        new_body = body
+        # Remove the later attributes from the end backwards so earlier offsets stay valid
+        for start, line_end, _ in reversed(attributes[1:]):
+            new_body = new_body[:start] + new_body[line_end:]
+        first_start, first_end, _ = attributes[0]
+        new_body = new_body[:first_start] + indent + "depends_on = [" + ", ".join(items) + "]\n" + new_body[first_end:]
+
+        result = result[: header.end()] + new_body + result[end:]
+        position = header.end() + len(new_body)
+
+
+HEREDOC_REGEX = re.compile(r"(?m)(<<-?(?P<tag>\w+)[ \t]*\n)(?P<content>.*?)(^[ \t]*(?P=tag)[ \t]*$)", re.DOTALL)
+
+
+def escape_template_directives_in_heredocs(config):
+    """
+    Heredoc values hold text for another tool, like an inline Terraform template in a variable value or step property,
+    a Kubernetes manifest or a script, so a percent sign followed by a brace in them is never a directive for this
+    configuration. escape_invalid_template_directives leaves real directive keywords alone, and a Terraform template
+    calling templatefile with "%{ for s in subnets }$${s}%{ endfor }" then fails the plan with:
+    Error: Invalid reference ... A reference to a resource type must be followed by at least one attribute access
+    Every unescaped percent-brace inside a heredoc is escaped to %%{.
+    """
+
+    if not config or "%{" not in config or "<<" not in config:
+        return config
+
+    def escape(match):
+        content = UNESCAPED_PERCENT_BRACE_REGEX.sub("%%{", match.group("content"))
+        return match.group(1) + content + match.group(4)
+
+    return HEREDOC_REGEX.sub(escape, config)
+
+
+QUOTED_LINE_STRING_REGEX = re.compile(r'"(?:[^"\\\n]|\\.)*"')
+DIRECTIVE_KEYWORD_REGEX = re.compile(r"(?<!%)%\{~?\s*(?P<keyword>if|endif|for|endfor)\b")
+
+
+def escape_unbalanced_template_directives(config):
+    """
+    escape_invalid_template_directives leaves real directive keywords alone, but prose that mentions one, like a step
+    note saying 'the %{if} directive has no ARM-template equivalent', is an if without an endif, and tofu init fails
+    for the whole file with:
+    Error: Unexpected end of template ... The if directive ... is missing its corresponding endif directive.
+    In a quoted string whose if/endif or for/endfor directives do not pair up, every unescaped percent-brace is
+    escaped to %%{. Balanced directives are left alone.
+    """
+
+    if not config or "%{" not in config:
+        return config
+
+    def escape(match):
+        text = match.group(0)
+        keywords = [keyword.group("keyword") for keyword in DIRECTIVE_KEYWORD_REGEX.finditer(text)]
+        if not keywords:
+            return text
+        if keywords.count("if") == keywords.count("endif") and keywords.count("for") == keywords.count("endfor"):
+            return text
+        return UNESCAPED_PERCENT_BRACE_REGEX.sub("%%{", text)
+
+    return QUOTED_LINE_STRING_REGEX.sub(escape, config)
+
+
+STEP_OR_CHILD_HEADER_REGEX = re.compile(
+    r'(?m)^[ \t]*resource\s+"octopusdeploy_process(?:_templated)?(?:_child)?_step"\s+"\w+"\s*\{'
+)
+STEP_NAME_ATTRIBUTE_REGEX = re.compile(r'(?m)^(?P<head>[ \t]*name[ \t]*=[ \t]*")(?P<name>[^"\n]*)(?P<tail>")')
+STEP_SLUG_ATTRIBUTE_REGEX = re.compile(r'(?m)^(?P<head>[ \t]*slug[ \t]*=[ \t]*")(?P<slug>[^"\n]*)(?P<tail>")')
+STEP_PROCESS_ID_ATTRIBUTE_REGEX = re.compile(r'(?m)^[ \t]*process_id[ \t]*=[ \t]*(?P<value>.+?)[ \t]*$')
+
+
+def dedupe_case_insensitive_step_names(config):
+    """
+    Octopus compares step names without case, so a prompt step "Smoke Test" kept next to the example's "Smoke test" in
+    the same process passes the plan but fails the apply with:
+    Octopus API error: ... [Action name 'Smoke Test' is already in use by another action in this deployment process.
+    Action names must be unique. Step name 'Smoke test' is already in use in this deployment process.]
+    Every later step whose name matches an earlier one in the same process, ignoring case, gets a numbered suffix on
+    its name and slug.
+    """
+
+    if not config or "octopusdeploy_process" not in config:
+        return config
+
+    seen = {}
+    result = config
+    position = 0
+    while True:
+        header = STEP_OR_CHILD_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        name = STEP_NAME_ATTRIBUTE_REGEX.search(body)
+        process = STEP_PROCESS_ID_ATTRIBUTE_REGEX.search(body)
+        if not name or not process:
+            position = end
+            continue
+
+        names = seen.setdefault(process.group("value"), set())
+        key = name.group("name").strip().lower()
+        if key not in names:
+            names.add(key)
+            position = end
+            continue
+
+        number = 2
+        while f"{key} {number}" in names:
+            number += 1
+        names.add(f"{key} {number}")
+        body = STEP_NAME_ATTRIBUTE_REGEX.sub(
+            lambda match: match.group("head") + f"{match.group('name')} {number}" + match.group("tail"), body, count=1
+        )
+        body = STEP_SLUG_ATTRIBUTE_REGEX.sub(
+            lambda match: match.group("head") + f"{match.group('slug')}-{number}" + match.group("tail"), body, count=1
+        )
+        result = result[: header.end()] + body + result[end:]
+        position = header.end() + len(body)
+
+
+VERSIONING_STRATEGY_ID_REFERENCE_REGEX = re.compile(
+    r"(?<![\w.])octopusdeploy_project_versioning_strategy\.(?P<label>\w+)(?P<index>\[0\])?\.id\b"
+)
+
+
+def fix_versioning_strategy_id_references(config):
+    """
+    A project and its versioning strategy share a label, and the LLM sometimes takes the project id from the wrong one:
+    project_id = "${... : octopusdeploy_project_versioning_strategy.project_r17_edge_gateway[0].id}"
+    The versioning strategy has no id, so the plan fails with:
+    Error: Unsupported attribute ... This object has no argument, nested block, or exported attribute named "id".
+    When the project with the same label is declared, the reference is pointed at the project.
+    """
+
+    if not config or "octopusdeploy_project_versioning_strategy." not in config:
+        return config
+
+    projects = {
+        match.group("label")
+        for match in ANY_RESOURCE_HEADER_REGEX.finditer(config)
+        if match.group("type") == "octopusdeploy_project"
+    }
+
+    def replace(match):
+        if match.group("label") not in projects:
+            return match.group(0)
+        return f"octopusdeploy_project.{match.group('label')}{match.group('index') or ''}.id"
+
+    return VERSIONING_STRATEGY_ID_REFERENCE_REGEX.sub(replace, config)
+
+
+GHCR_FEED_LOOKUP = """data "octopusdeploy_feeds" "feed_github_container_registry" {
+  feed_type    = "Docker"
+  ids          = null
+  partial_name = "GitHub Container Registry"
+  skip         = 0
+  take         = 1
+}
+"""
+
+GHCR_FEED_RESOURCE = """resource "octopusdeploy_docker_container_registry" "feed_github_container_registry" {
+  count       = "${length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? 0 : 1}"
+  name        = "GitHub Container Registry"
+  feed_uri    = "https://ghcr.io"
+  api_version = "v2"
+  username    = null
+  password    = null
+  package_acquisition_location_options = ["ExecutionTarget", "NotAcquired"]
+  lifecycle {
+    ignore_changes  = [password]
+    prevent_destroy = true
+  }
+}
+"""
+
+# Only a lookup that is the whole interpolation is bare; one inside a ternary already has its fallback
+BARE_GHCR_FEED_LOOKUP_REGEX = re.compile(
+    r"\$\{\s*data\.octopusdeploy_feeds\.feed_github_container_registry\.feeds\[0\]\.id\s*\}"
+)
+GHCR_FEED_TERNARY = (
+    "length(data.octopusdeploy_feeds.feed_github_container_registry.feeds) != 0 ? "
+    "data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id : "
+    "octopusdeploy_docker_container_registry.feed_github_container_registry[0].id"
+)
+
+
+def add_missing_github_container_registry_feed(config):
+    """
+    Steps take their worker-tools container from the GitHub Container Registry feed, and the LLM sometimes references
+    its lookup without declaring the lookup or the feed:
+    feed_id = "${data.octopusdeploy_feeds.feed_github_container_registry.feeds[0].id}"
+    which fails the plan with:
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_feeds"
+    "feed_github_container_registry" definition in the root module.
+    Neither block is declared, so the canonical lookup and feed from the instructions are added, and the bare lookup,
+    which would also fail in a space without the feed, is replaced with the lookup-or-create ternary.
+    """
+
+    if not config or "feed_github_container_registry" not in config:
+        return config
+
+    if not re.search(r"(?<![\w.])data\.octopusdeploy_feeds\.feed_github_container_registry\b", config):
+        return config
+
+    data_declared = re.search(r'data\s+"octopusdeploy_feeds"\s+"feed_github_container_registry"\s*\{', config)
+    resource_declared = re.search(
+        r'resource\s+"octopusdeploy_docker_container_registry"\s+"feed_github_container_registry"\s*\{', config
+    )
+    if data_declared or resource_declared:
+        return config
+
+    result = BARE_GHCR_FEED_LOOKUP_REGEX.sub(lambda match: "${" + GHCR_FEED_TERNARY + "}", config)
+    return result.rstrip("\n") + "\n" + GHCR_FEED_LOOKUP + GHCR_FEED_RESOURCE
+
+
+DEGENERATE_WORKER_POOL_TERNARY_REGEX = re.compile(
+    r"length\(\s*(?P<lookup>local\.\w+_worker_pools_matches|data\.octopusdeploy_worker_pools\.\w+\.worker_pools)\s*\)"
+    r"\s*!=\s*0\s*\?\s*(?P=lookup)\[0\]\.id\s*:\s*(?P=lookup)\[0\]\.id"
+)
+
+
+def fix_degenerate_worker_pool_ternary(config):
+    """
+    The LLM sometimes writes a worker pool lookup-or-fallback ternary whose fallback is the same lookup, like
+    default_worker_pool_id = "${length(local.workerpool_default_worker_pool_worker_pools_matches) != 0 ?
+    local.workerpool_default_worker_pool_worker_pools_matches[0].id : local.workerpool_default_worker_pool_worker_pools_matches[0].id}"
+    In a space without that pool both branches index an empty list, and the plan fails with:
+    Error: Invalid index ... local.workerpool_default_worker_pool_worker_pools_matches is empty tuple
+    Like add_fallback_to_bare_worker_pool_lookups, the lookup falls back to an empty string, which selects the default
+    worker pool of the space.
+    """
+
+    if not config or "worker_pools" not in config:
+        return config
+
+    return DEGENERATE_WORKER_POOL_TERNARY_REGEX.sub(lambda match: f'try({match.group("lookup")}[0].id, "")', config)
+
+
+SELF_ENDPOINT_TARGET_HEADER_REGEX = re.compile(
+    r'(?m)^[ \t]*resource\s+"octopusdeploy_(?:cloud_region|offline_package_drop)_deployment_target"\s+"\w+"\s*\{'
+)
+ENDPOINT_BLOCK_START_REGEX = re.compile(r"(?m)^[ \t]*endpoint[ \t]*\{")
+
+
+def remove_endpoint_from_self_endpoint_targets(config):
+    """
+    Cloud region and offline package drop targets build their endpoint from their own attributes, so an endpoint block
+    is at best ignored. The LLM adds one because every other target needs it, and the plan fails with:
+    expected communication_style to be one of [...], got CloudRegion
+    or, for endpoint { communication_style = "OfflineDrop" }, the provider crashes during the apply with:
+    panic: runtime error: index out of range [0] with length 0 ... expandOfflinePackageDropDestination
+    The endpoint block is removed from these two target types.
+    """
+
+    if not config or "endpoint" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = SELF_ENDPOINT_TARGET_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        body = result[header.end() : end]
+        endpoint = ENDPOINT_BLOCK_START_REGEX.search(body)
+        # Only an endpoint block of the target itself, not one nested in another block
+        if endpoint and body[: endpoint.start()].count("{") == body[: endpoint.start()].count("}"):
+            endpoint_end = find_block_end(body, endpoint.end())
+            if endpoint_end is not None:
+                line_end = body.find("\n", endpoint_end)
+                line_end = len(body) if line_end == -1 else line_end + 1
+                body = body[: endpoint.start()] + body[line_end:]
+                result = result[: header.end()] + body + result[end:]
+                end = header.end() + len(body)
+        position = end
+
+
+STEPS_ORDER_PROCESS_REGEX = re.compile(r'^\s*process_id\s*=.*?octopusdeploy_process\.(\w+)', re.MULTILINE)
+STEPS_ORDER_STEP_REFERENCE_REGEX = re.compile(r'octopusdeploy_process_(?:templated_)?step\.(\w+)')
+STEP_PROCESS_ID_LINE_REGEX = re.compile(r'^(\s*process_id\s*=.*)$', re.MULTILINE)
+
+
+def _step_order_owner(step_label, order_labels):
+    """
+    Pick the steps order a step belongs to when several list it. Labels share the project and runbook prefix, e.g. the
+    step process_step_x_deploy_release_sleep belongs to process_step_order_x_deploy_release rather than
+    process_step_order_x. The order whose suffix is the longest prefix of the step's suffix wins; None when no order
+    matches or the best match is ambiguous.
+    """
+    step_suffix = step_label.removeprefix("process_step_")
+    matches = []
+    for order_label in order_labels:
+        order_suffix = order_label.removeprefix("process_step_order_")
+        if step_suffix == order_suffix or step_suffix.startswith(order_suffix + "_"):
+            matches.append((len(order_suffix), order_label))
+    if not matches:
+        return None
+    matches.sort(reverse=True)
+    if len(matches) > 1 and matches[0][0] == matches[1][0]:
+        return None
+    return matches[0][1]
+
+
+def fix_step_process_ids_from_steps_order(config):
+    """
+    The LLM sometimes copies the deployment process id into a runbook step, while listing the step in the runbook's
+    octopusdeploy_process_steps_order (and sometimes the deployment's too). The step is created in the wrong process
+    and the apply fails with:
+    Error: Ordered step with id '%s' is not part of the process
+    A step listed by exactly one steps order is pointed at that order's process. A step listed by several orders is
+    assigned to the order whose label matches the step's label, pointed at its process, and removed from the others.
+    """
+
+    if not config or 'resource "octopusdeploy_process_steps_order"' not in config:
+        return config
+
+    # Map each step label to the steps orders that list it, and each steps order to its process
+    step_orders = defaultdict(set)
+    order_process = {}
+
+    def collect(resource_lines):
+        header = ANY_RESOURCE_HEADER_REGEX.match(resource_lines[0])
+        if header and header.group("type") == "octopusdeploy_process_steps_order":
+            body = "\n".join(resource_lines)
+            process = STEPS_ORDER_PROCESS_REGEX.search(body)
+            steps_start = body.find("steps")
+            if process and steps_start != -1:
+                order_process[header.group("label")] = process.group(1)
+                for step in STEPS_ORDER_STEP_REFERENCE_REGEX.findall(body[steps_start:]):
+                    step_orders[step].add(header.group("label"))
+        return resource_lines
+
+    process_resource_blocks(config, collect)
+
+    # The process each step must belong to, and the orders it must be removed from
+    step_process = {}
+    remove_from = defaultdict(set)
+    for step, orders in step_orders.items():
+        if len(orders) == 1:
+            step_process[step] = order_process[next(iter(orders))]
+            continue
+        owner = _step_order_owner(step, orders)
+        if owner:
+            step_process[step] = order_process[owner]
+            for order in orders - {owner}:
+                remove_from[order].add(step)
+
+    if not step_process:
+        return config
+
+    changed = []
+
+    def fix(resource_lines):
+        header = ANY_RESOURCE_HEADER_REGEX.match(resource_lines[0])
+        if not header:
+            return resource_lines
+        label = header.group("label")
+
+        if header.group("type") == "octopusdeploy_process_steps_order" and label in remove_from:
+            body = "\n".join(resource_lines)
+            for step in remove_from[label]:
+                body = re.sub(
+                    r'\s*"\$\{[^"]*octopusdeploy_process_(?:templated_)?step\.' + re.escape(step) + r'\b[^"]*\}"\s*,?',
+                    "",
+                    body,
+                )
+            body = re.sub(r",(\s*)\]", r"\1]", body)
+            fixed_lines = body.split("\n")
+        elif header.group("type") in ("octopusdeploy_process_step", "octopusdeploy_process_templated_step") and label in step_process:
+            expected = step_process[label]
+            fixed_lines = [
+                re.sub(r"octopusdeploy_process\.(\w+)", f"octopusdeploy_process.{expected}", line)
+                if STEP_PROCESS_ID_LINE_REGEX.match(line)
+                else line
+                for line in resource_lines
+            ]
+        else:
+            return resource_lines
+
+        if fixed_lines != resource_lines:
+            changed.append(label)
+        return fixed_lines
+
+    result = process_resource_blocks(config, fix)
+    return result if changed else config

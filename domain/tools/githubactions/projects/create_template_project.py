@@ -59,6 +59,7 @@ from domain.sanitizers.terraform import (
     fix_bad_maven_feed_resource,
     fix_maven_feed_acquisition_options,
     fix_container_registry_acquisition_options,
+    fix_helm_feed_acquisition_options,
     add_missing_project_description_default,
     fix_bare_data_lookup_reference,
     fix_created_worker_pool_fallback,
@@ -173,6 +174,7 @@ from domain.sanitizers.terraform import (
     remove_git_triggers_without_git_dependency,
     enforce_exact_name_matches,
     configuration_has_octopus_resources,
+    count_octopus_resources,
     remove_empty_action_properties,
     fix_invalid_slugs,
     convert_numeric_version_channel_tags,
@@ -193,6 +195,17 @@ from domain.sanitizers.terraform import (
     remove_runbooks_data_source,
     remove_unreferenced_zero_count_blocks,
     remove_undeclared_resource_fallbacks,
+    remove_undeclared_excluded_environments,
+    fix_empty_container_image,
+    merge_duplicate_depends_on,
+    escape_template_directives_in_heredocs,
+    escape_unbalanced_template_directives,
+    dedupe_case_insensitive_step_names,
+    fix_versioning_strategy_id_references,
+    add_missing_github_container_registry_feed,
+    fix_degenerate_worker_pool_ternary,
+    remove_endpoint_from_self_endpoint_targets,
+    fix_step_process_ids_from_steps_order,
     fix_null_process_id_for_runbook_steps,
     remove_index_from_single_instance_resource_references,
 )
@@ -820,6 +833,8 @@ def generate_retry_messages(base_messages, configuration, errors):
         "user",
         "Based on the errors above, fix the Previous Terraform Configuration and return a new Terraform configuration that will not produce the same errors. "
         + "You must return the fixed Terraform HCL configuration without any additional explanation or text. "
+        + "You must return the COMPLETE configuration, including every unchanged variable, locals, data and resource block from the Previous Terraform Configuration. "
+        + "You will be penalized for returning only the blocks you changed. "
         + "You will be penalized for describing the errors or returning the same configuration again. ",
     )
 
@@ -865,6 +880,8 @@ async def retry_terraform_plan(
 
     new_messages = generate_retry_messages(base_messages, configuration, error)
 
+    previous_resource_count = count_octopus_resources(configuration)
+
     configuration = remove_markdown_code_block(
         llm_message_query(
             new_messages,
@@ -878,6 +895,15 @@ async def retry_terraform_plan(
     # The second pass output has the same problems as the first (masked values like slug = "02-ledger-*****",
     # placeholder credentials, and so on), so it must go through the same sanitization.
     configuration = sanitize_configuration(configuration)
+
+    # A second pass that returns only the blocks it changed (observed: a lone process step, or only a locals block)
+    # drops most of the project, and applies "successfully" with few or no resources, hiding the original plan
+    # failure. Report the original failure instead.
+    if (
+        not configuration_has_octopus_resources(configuration)
+        or count_octopus_resources(configuration) * 2 < previous_resource_count
+    ):
+        raise SpaceBuilderRequestFailed(error)
 
     configuration = configure_mock_git_server(configuration)
 
@@ -976,6 +1002,8 @@ def sanitize_configuration(configuration):
     # A data source or resource without a name label fails the whole file, and other sanitizers expect two labels
     # A block whose opening bracket is on the line after its header fails the whole file
     configuration = join_block_header_braces(configuration)
+    # A depends_on set twice in one block fails tofu init for the whole file
+    configuration = merge_duplicate_depends_on(configuration)
     configuration = remove_unlabelled_blocks(configuration)
     # A resource declared twice with different content fails the whole file
     configuration = remove_duplicate_resources(configuration)
@@ -1034,6 +1062,8 @@ def sanitize_configuration(configuration):
     configuration = fix_maven_feed_acquisition_options(configuration)
     # Container registry feeds only support the ExecutionTarget and NotAcquired acquisition locations
     configuration = fix_container_registry_acquisition_options(configuration)
+    # Octopus stores a Helm feed's acquisition locations as ExecutionTarget, Server and NotAcquired
+    configuration = fix_helm_feed_acquisition_options(configuration)
     # Project default_guided_failure_mode only accepts EnvironmentDefault, On, or Off
     configuration = fix_default_guided_failure_mode(configuration)
     # The project description variable needs a default, even when the LLM only wrote a description
@@ -1081,6 +1111,10 @@ def sanitize_configuration(configuration):
     configuration = fix_donor_package_attribute(configuration)
     configuration = escape_invalid_template_directives(configuration)
     configuration = escape_template_directives_in_script_bodies(configuration)
+    # Heredoc values are text for another tool, so their percent-braces are never directives here
+    configuration = escape_template_directives_in_heredocs(configuration)
+    # Prose mentioning a directive, like an if with no endif, fails tofu init for the whole file
+    configuration = escape_unbalanced_template_directives(configuration)
     configuration = add_run_on_server_to_worker_pool_steps(configuration)
     configuration = trim_name_variable_defaults(configuration)
     configuration = replace_template_characters_in_step_names(configuration)
@@ -1111,6 +1145,8 @@ def sanitize_configuration(configuration):
     configuration = remove_unreferenced_zero_count_blocks(configuration)
     # The Default Lifecycle lookup the examples declare must be declared wherever it is referenced
     configuration = add_missing_standard_lifecycle_lookups(configuration)
+    # A step container referencing the GitHub Container Registry lookup needs the canonical lookup and feed
+    configuration = add_missing_github_container_registry_feed(configuration)
     # The default machine policy lookup the instructions declare must be declared wherever it is referenced
     configuration = add_missing_default_machine_policy_lookup(configuration)
     configuration = enforce_exact_environment_name_matches(configuration)
@@ -1217,13 +1253,27 @@ def sanitize_configuration(configuration):
     configuration = remove_non_octopus_data_sources(configuration)
     # Fix stale references to an example file's generic project label left undeclared
     configuration = fix_stale_project_resource_label(configuration)
+    # A versioning strategy has no id, so a project id taken from it is pointed at the project with the same label
+    configuration = fix_versioning_strategy_id_references(configuration)
     # A lookup-or-create ternary must not fall back to a resource that was never declared
     configuration = remove_undeclared_resource_fallbacks(configuration)
+    # Excluding an environment the configuration never declared does nothing, and the reference fails the plan
+    configuration = remove_undeclared_excluded_environments(configuration)
+    # A step container with a feed must name an image, which an inline Dockerfile provides with its base image
+    configuration = fix_empty_container_image(configuration)
+    # Octopus compares step names without case, so "Smoke Test" and "Smoke test" in one process fail the apply
+    configuration = dedupe_case_insensitive_step_names(configuration)
     # A runbook process exists whenever its project does, so its steps must not get a null process_id
     configuration = fix_null_process_id_for_runbook_steps(configuration)
     # A resource without count or for_each must not be referenced with an index
     configuration = remove_index_from_single_instance_resource_references(configuration)
     # A bare worker pool lookup fails in a space without that pool, so it falls back to the space's default pool
+    # A worker pool ternary that falls back to its own lookup fails in a space without that pool
+    configuration = fix_degenerate_worker_pool_ternary(configuration)
+    # Cloud region and offline package drop targets build their own endpoint, and an endpoint block breaks them
+    configuration = remove_endpoint_from_self_endpoint_targets(configuration)
+    # A runbook step listed in the runbook's steps order must belong to the runbook's process
+    configuration = fix_step_process_ids_from_steps_order(configuration)
     configuration = add_fallback_to_bare_worker_pool_lookups(configuration)
     # A data source nothing references does nothing, and may not even be a real type
     configuration = remove_unreferenced_data_sources(configuration)

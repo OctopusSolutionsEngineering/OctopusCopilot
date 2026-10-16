@@ -1,6 +1,6 @@
 import unittest
 
-from domain.sanitizers.terraform import configuration_has_octopus_resources
+from domain.sanitizers.terraform import configuration_has_octopus_resources, count_octopus_resources
 
 ONLY_VARIABLES = """variable "octopus_space_id" {
   type = string
@@ -30,3 +30,14 @@ class TestConfigurationHasOctopusResources(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+    def test_count_resources(self):
+        config = (
+            ONLY_VARIABLES
+            + 'resource "octopusdeploy_project" "p" {\n  name = "X"\n}\n'
+            + 'data "octopusdeploy_feeds" "f" {\n}\n'
+            + 'resource "octopusdeploy_environment" "e" {\n  name = "Dev"\n}\n'
+        )
+        self.assertEqual(2, count_octopus_resources(config))
+        self.assertEqual(0, count_octopus_resources(ONLY_VARIABLES))
+        self.assertEqual(0, count_octopus_resources(None))

@@ -60,6 +60,19 @@ class TestAddFallbackToBareWorkerPoolLookups(unittest.TestCase):
         self.assertIn('value = "${try(local.workerpool_hosted_ubuntu_worker_pools_matches[0].id, "")}"',
                       add_fallback_to_bare_worker_pool_lookups(config))
 
+    def test_target_default_worker_pool_is_fixed(self):
+        # Observed: a cloud region target's default worker pool used a bare lookup of a pool the space lacked
+        config = (
+            LOOKUPS
+            + 'resource "octopusdeploy_cloud_region_deployment_target" "target_hr_cloud" {\n'
+            + '  default_worker_pool_id            = "${local.workerpool_default_worker_pool_worker_pools_matches[0].id}"\n'
+            + "}\n"
+        )
+        result = add_fallback_to_bare_worker_pool_lookups(config)
+        self.assertIn('default_worker_pool_id            = "${try(', result)
+        self.assertIn('workerpool_default_worker_pool', result)
+        self.assertIn(', "")}"', result)
+
     def test_none_and_empty(self):
         self.assertIsNone(add_fallback_to_bare_worker_pool_lookups(None))
         self.assertEqual("", add_fallback_to_bare_worker_pool_lookups(""))
