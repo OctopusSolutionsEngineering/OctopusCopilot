@@ -6730,6 +6730,36 @@ def declared_local_names(config):
     return names
 
 
+def find_list_end(config, index):
+    """
+    The index just past the bracket that closes a list whose opening bracket ends just before index, skipping
+    brackets inside quoted strings, or None if the list is not closed.
+    """
+
+    depth = 1
+    while index < len(config) and depth:
+        quoted = QUOTED_STRING_REGEX.match(config, index)
+        if quoted:
+            index = quoted.end()
+            continue
+        if config[index] == "[":
+            depth += 1
+        elif config[index] == "]":
+            depth -= 1
+        index += 1
+    return None if depth else index
+
+
+def is_declared_environment_reference(reference, declared_data, declared_resources):
+    """
+    Whether an environment reference points at a declared data source or resource.
+    """
+
+    if reference.group("data"):
+        return reference.group("type") == "octopusdeploy_environments" and reference.group("label") in declared_data
+    return reference.group("type") == "octopusdeploy_environment" and reference.group("label") in declared_resources
+
+
 def remove_undeclared_excluded_environments(config):
     """
     The LLM keeps the example steps' excluded_environments entry for the Security environment after dropping that
@@ -6755,10 +6785,11 @@ def remove_undeclared_excluded_environments(config):
 
     declared_locals = declared_local_names(config)
 
-    def is_declared(reference):
-        if reference.group("data"):
-            return reference.group("type") == "octopusdeploy_environments" and reference.group("label") in declared_data
-        return reference.group("type") == "octopusdeploy_environment" and reference.group("label") in declared_resources
+    def is_declared_entry(entry):
+        return all(
+            is_declared_environment_reference(reference, declared_data, declared_resources)
+            for reference in ENVIRONMENT_REFERENCE_REGEX.finditer(entry)
+        ) and all(reference.group("name") in declared_locals for reference in LOCAL_REFERENCE_REGEX.finditer(entry))
 
     result = config
     position = 0
@@ -6767,30 +6798,13 @@ def remove_undeclared_excluded_environments(config):
         if not attribute:
             return result
 
-        # Find the closing bracket of the list, skipping brackets inside quoted strings
-        index = attribute.end()
-        depth = 1
-        while index < len(result) and depth:
-            quoted = QUOTED_STRING_REGEX.match(result, index)
-            if quoted:
-                index = quoted.end()
-                continue
-            if result[index] == "[":
-                depth += 1
-            elif result[index] == "]":
-                depth -= 1
-            index += 1
-        if depth:
+        index = find_list_end(result, attribute.end())
+        if index is None:
             return result
 
         list_body = result[attribute.end() : index - 1]
         entries = QUOTED_STRING_REGEX.findall(list_body)
-        kept = [
-            entry
-            for entry in entries
-            if all(is_declared(reference) for reference in ENVIRONMENT_REFERENCE_REGEX.finditer(entry))
-            and all(reference.group("name") in declared_locals for reference in LOCAL_REFERENCE_REGEX.finditer(entry))
-        ]
+        kept = [entry for entry in entries if is_declared_entry(entry)]
 
         if len(kept) == len(entries):
             position = index
