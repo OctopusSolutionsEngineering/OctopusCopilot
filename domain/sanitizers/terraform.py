@@ -7472,3 +7472,21 @@ def unwrap_quoted_terraform_init_params(config):
     return WRAPPED_INIT_PARAMS_REGEX.sub(
         lambda match: match.group("head") + match.group("value") + match.group("tail"), config
     )
+
+
+EMPTY_CUSTOM_FIELD_DEFINITIONS_LINE_REGEX = re.compile(r'(?m)^[ \t]*custom_field_definitions[ \t]*=[ \t]*\[[ \t]*\][ \t]*\n?')
+
+
+def remove_empty_custom_field_definitions(config):
+    """
+    The provider reads an empty custom_field_definitions list back as null, so the apply aborts after the channel is
+    created:
+    Error: Provider produced inconsistent result after apply ... .custom_field_definitions: was
+    cty.ListValEmpty(...), but now null.
+    An empty list means the same as no custom fields, so the attribute is removed.
+    """
+
+    if not config or "custom_field_definitions" not in config:
+        return config
+
+    return EMPTY_CUSTOM_FIELD_DEFINITIONS_LINE_REGEX.sub("", config)

@@ -210,6 +210,7 @@ from domain.sanitizers.terraform import (
     close_unbalanced_version_ranges,
     serialize_tags_in_same_tag_set,
     unwrap_quoted_terraform_init_params,
+    remove_empty_custom_field_definitions,
     fix_null_process_id_for_runbook_steps,
     remove_index_from_single_instance_resource_references,
 )
@@ -1286,6 +1287,8 @@ def sanitize_configuration(configuration):
     configuration = serialize_tags_in_same_tag_set(configuration)
     # Quotes copied from the prompt around the init parameters turn them into one argument
     configuration = unwrap_quoted_terraform_init_params(configuration)
+    # The provider reads an empty custom field list back as null, which aborts the apply
+    configuration = remove_empty_custom_field_definitions(configuration)
     configuration = add_fallback_to_bare_worker_pool_lookups(configuration)
     # A data source nothing references does nothing, and may not even be a real type
     configuration = remove_unreferenced_data_sources(configuration)
