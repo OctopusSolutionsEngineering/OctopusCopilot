@@ -197,6 +197,8 @@ from domain.sanitizers.terraform import (
     remove_undeclared_resource_fallbacks,
     remove_undeclared_excluded_environments,
     fix_empty_container_image,
+    fix_container_null_feed_id,
+    fix_misplaced_octostache_else,
     merge_duplicate_depends_on,
     escape_template_directives_in_heredocs,
     escape_unbalanced_template_directives,
@@ -1266,6 +1268,10 @@ def sanitize_configuration(configuration):
     configuration = remove_undeclared_excluded_environments(configuration)
     # A step container with a feed must name an image, which an inline Dockerfile provides with its base image
     configuration = fix_empty_container_image(configuration)
+    # The provider reads a container feed and image back as strings, so a null fails the apply
+    configuration = fix_container_null_feed_id(configuration)
+    # Octostache has no #{/else}, the else goes inside the if block
+    configuration = fix_misplaced_octostache_else(configuration)
     # Octopus compares step names without case, so "Smoke Test" and "Smoke test" in one process fail the apply
     configuration = dedupe_case_insensitive_step_names(configuration)
     # A runbook process exists whenever its project does, so its steps must not get a null process_id

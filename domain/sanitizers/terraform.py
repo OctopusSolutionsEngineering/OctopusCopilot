@@ -7490,3 +7490,71 @@ def remove_empty_custom_field_definitions(config):
         return config
 
     return EMPTY_CUSTOM_FIELD_DEFINITIONS_LINE_REGEX.sub("", config)
+
+
+CONTAINER_NULL_FEED_ID_REGEX = re.compile(r"(?P<key>\bfeed_id\s*=\s*)null\b")
+CONTAINER_NULL_IMAGE_REGEX = re.compile(r"(?P<key>\bimage\s*=\s*)null\b")
+CONTAINER_NON_NULL_VALUE_REGEX = re.compile(r'\b(?:dockerfile|image|git_url)\s*=\s*(?!null\b)\S')
+
+
+def fix_container_null_feed_id(config):
+    """
+    A step container built from an inline Dockerfile, like
+    container = { dockerfile = "FROM amazon/aws-cli:2.15.0\\nRUN yum install -y jq", feed_id = null, git_url = null, image = "amazon/aws-cli:2.15.0" }
+    is created, but the provider always reads the feed and image back as strings, so the apply fails with:
+    Error: Provider produced inconsistent result after apply ... .container.feed_id: was null, but now cty.StringVal("").
+    An empty string is what Octopus stores for a container with no feed, so null is replaced with it. A null image
+    becomes the Dockerfile's base image, or an empty string when there is no Dockerfile.
+    """
+
+    if not config or "container" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        container = CONTAINER_MAP_REGEX.search(result, position)
+        if not container:
+            return result
+        end = find_block_end(result, container.end())
+        if end is None:
+            return result
+
+        body = result[container.end() : end]
+        position = end
+        if not CONTAINER_NON_NULL_VALUE_REGEX.search(body):
+            continue
+
+        new_body = CONTAINER_NULL_FEED_ID_REGEX.sub(lambda match: match.group("key") + '""', body, count=1)
+        if CONTAINER_NULL_IMAGE_REGEX.search(new_body):
+            dockerfile = CONTAINER_DOCKERFILE_REGEX.search(new_body)
+            base_image = DOCKERFILE_FROM_REGEX.search(dockerfile.group("value")) if dockerfile else None
+            image = base_image.group("image") if base_image else ""
+            new_body = CONTAINER_NULL_IMAGE_REGEX.sub(
+                lambda match: match.group("key") + '"' + image + '"', new_body, count=1
+            )
+
+        result = result[: container.end()] + new_body + result[end:]
+        position = container.end() + len(new_body)
+
+
+MISPLACED_ELSE_BLOCK_REGEX = re.compile(
+    r"#\{/(?P<block>if|unless)\}#\{else\}(?P<body>(?:(?!#\{/else\}).)*?)#\{/else\}", re.DOTALL
+)
+
+
+def fix_misplaced_octostache_else(config):
+    """
+    The LLM writes an Octostache else as its own block after the closing if, like
+    #{if Wave.SkipSmokeTests == "True"}false#{/if}#{else}true#{/else}
+    Octostache has no #{/else}: the else belongs inside the if block, as in
+    #{if Wave.SkipSmokeTests == "True"}false#{else}true#{/if}
+    so the malformed run condition never evaluates as intended.
+    """
+
+    if not config or "#{/else}" not in config:
+        return config
+
+    return MISPLACED_ELSE_BLOCK_REGEX.sub(
+        lambda match: "#{else}" + match.group("body") + "#{/" + match.group("block") + "}", config
+    )
