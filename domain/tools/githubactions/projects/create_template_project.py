@@ -206,6 +206,10 @@ from domain.sanitizers.terraform import (
     fix_degenerate_worker_pool_ternary,
     remove_endpoint_from_self_endpoint_targets,
     fix_step_process_ids_from_steps_order,
+    remove_script_syntax_from_git_scripts,
+    close_unbalanced_version_ranges,
+    serialize_tags_in_same_tag_set,
+    unwrap_quoted_terraform_init_params,
     fix_null_process_id_for_runbook_steps,
     remove_index_from_single_instance_resource_references,
 )
@@ -1274,6 +1278,14 @@ def sanitize_configuration(configuration):
     configuration = remove_endpoint_from_self_endpoint_targets(configuration)
     # A runbook step listed in the runbook's steps order must belong to the runbook's process
     configuration = fix_step_process_ids_from_steps_order(configuration)
+    # A script from Git takes its syntax from the file, and the API rejects a step that also sets one
+    configuration = remove_script_syntax_from_git_scripts(configuration)
+    # A version range copied from the prompt without its closing bracket is rejected by the API
+    configuration = close_unbalanced_version_ranges(configuration)
+    # Tags update their whole tag set, so tags of one tag set created in parallel crash the provider
+    configuration = serialize_tags_in_same_tag_set(configuration)
+    # Quotes copied from the prompt around the init parameters turn them into one argument
+    configuration = unwrap_quoted_terraform_init_params(configuration)
     configuration = add_fallback_to_bare_worker_pool_lookups(configuration)
     # A data source nothing references does nothing, and may not even be a real type
     configuration = remove_unreferenced_data_sources(configuration)

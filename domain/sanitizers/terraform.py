@@ -7319,3 +7319,156 @@ def fix_step_process_ids_from_steps_order(config):
 
     result = process_resource_blocks(config, fix)
     return result if changed else config
+
+
+GIT_SCRIPT_SOURCE_REGEX = re.compile(r'"Octopus\.Action\.Script\.ScriptSource"\s*=\s*"GitRepository"')
+SCRIPT_SYNTAX_LINE_REGEX = re.compile(r'^\s*"Octopus\.Action\.Script\.Syntax"\s*=\s*"[^"]*"\s*,?\s*$')
+
+
+def remove_script_syntax_from_git_scripts(config):
+    """
+    A script from a Git repository takes its syntax from the file extension, and the API rejects a step that also
+    sets one:
+    Octopus API error: There was a problem with your request. [Providing a script syntax is not valid for scripts
+    from a git repository.]
+    The Octopus.Action.Script.Syntax property is removed from steps whose script source is GitRepository.
+    """
+
+    if not config or "GitRepository" not in config or "Octopus.Action.Script.Syntax" not in config:
+        return config
+
+    changed = []
+
+    def process_resource(resource_lines):
+        if not GIT_SCRIPT_SOURCE_REGEX.search("\n".join(resource_lines)):
+            return resource_lines
+        fixed_lines = [line for line in resource_lines if not SCRIPT_SYNTAX_LINE_REGEX.match(line)]
+        if len(fixed_lines) != len(resource_lines):
+            changed.append(resource_lines[0])
+        return fixed_lines
+
+    result = process_resource_blocks(config, process_resource)
+    return result if changed else config
+
+
+VERSION_RANGE_LINE_REGEX = re.compile(r'(?m)^(?P<head>[ \t]*version_range[ \t]*=[ \t]*")(?P<range>[^"\n]*)(?P<tail>"[ \t]*)$')
+
+
+def close_unbalanced_version_ranges(config):
+    """
+    A version range copied from a prompt sometimes lacks its closing or opening bracket, e.g. version_range = "[2.0,3.0".
+    The API rejects the channel with:
+    Octopus API error: There was a problem with your request. [Version specification syntax was invalid.]
+    A range with an opening bracket but no closing bracket is closed with an exclusive ")", and a range with a closing
+    bracket but no opening bracket is opened with an inclusive "[". Bare versions and balanced ranges are unchanged.
+    """
+
+    if not config or "version_range" not in config:
+        return config
+
+    def replace(match):
+        version_range = match.group("range").strip()
+        opens = version_range[:1] in ("[", "(")
+        closes = version_range[-1:] in ("]", ")")
+        if not version_range or opens == closes:
+            return match.group(0)
+        if opens:
+            version_range = version_range + ")"
+        else:
+            version_range = "[" + version_range
+        return match.group("head") + version_range + match.group("tail")
+
+    return VERSION_RANGE_LINE_REGEX.sub(replace, config)
+
+
+TAG_HEADER_REGEX = re.compile(r'^resource\s+"octopusdeploy_tag"\s+"(?P<label>\w+)"\s*\{')
+TAG_SET_ID_LINE_REGEX = re.compile(r'^\s*tag_set_id\s*=\s*(?P<value>.+?)\s*$')
+DEPENDS_ON_LINE_REGEX = re.compile(r'^(?P<head>\s*depends_on\s*=\s*\[)(?P<rest>.*)$')
+
+
+def serialize_tags_in_same_tag_set(config):
+    """
+    Each octopusdeploy_tag is created by updating its whole tag set, so tags of one tag set created in parallel race,
+    one update fails, and the provider crashes on the nil result:
+    panic: runtime error: invalid memory address or nil pointer dereference ... findByIdOrNameAndSetTag
+    Every tag after the first in a tag set gets a depends_on on the tag before it, so the tags are created one at a
+    time.
+    """
+
+    if not config or config.count('resource "octopusdeploy_tag"') < 2:
+        return config
+
+    # Find the tag set of every tag, in the order the tags appear
+    tag_sets = {}
+
+    def collect(resource_lines):
+        header = TAG_HEADER_REGEX.match(resource_lines[0])
+        if header:
+            for line in resource_lines:
+                tag_set = TAG_SET_ID_LINE_REGEX.match(line)
+                if tag_set:
+                    tag_sets[header.group("label")] = tag_set.group("value")
+                    break
+        return resource_lines
+
+    process_resource_blocks(config, collect)
+
+    previous_tag = {}
+    last_in_set = {}
+    for label, tag_set in tag_sets.items():
+        if tag_set in last_in_set:
+            previous_tag[label] = last_in_set[tag_set]
+        last_in_set[tag_set] = label
+
+    if not previous_tag:
+        return config
+
+    changed = []
+
+    def serialize(resource_lines):
+        header = TAG_HEADER_REGEX.match(resource_lines[0])
+        if not header or header.group("label") not in previous_tag:
+            return resource_lines
+
+        reference = f"octopusdeploy_tag.{previous_tag[header.group('label')]}"
+        if any(reference in line for line in resource_lines):
+            return resource_lines
+
+        fixed_lines = list(resource_lines)
+        for index, line in enumerate(fixed_lines):
+            depends_on = DEPENDS_ON_LINE_REGEX.match(line)
+            if depends_on:
+                rest = depends_on.group("rest")
+                separator = "" if rest.lstrip().startswith("]") or not rest.strip() else ", "
+                fixed_lines[index] = depends_on.group("head") + reference + separator + rest
+                break
+        else:
+            fixed_lines.insert(len(fixed_lines) - 1, f"  depends_on = [{reference}]")
+
+        changed.append(header.group("label"))
+        return fixed_lines
+
+    result = process_resource_blocks(config, serialize)
+    return result if changed else config
+
+
+WRAPPED_INIT_PARAMS_REGEX = re.compile(
+    r'(?P<head>"Octopus\.Action\.Terraform\.AdditionalInitParams"\s*=\s*")\\"(?P<value>(?:[^"\\\n]|\\[^"])*)\\"(?P<tail>")'
+)
+
+
+def unwrap_quoted_terraform_init_params(config):
+    """
+    The LLM sometimes copies the prompt's quotation marks into the value of the init parameters:
+    "Octopus.Action.Terraform.AdditionalInitParams" = "\"-backend-config=key=x.tfstate\""
+    Terraform then receives every option as one quoted argument and init fails. A single pair of escaped quotes
+    wrapping the whole value is removed. Values with quotes inside them, such as -backend-config="bucket=x", are left
+    unchanged.
+    """
+
+    if not config or "AdditionalInitParams" not in config:
+        return config
+
+    return WRAPPED_INIT_PARAMS_REGEX.sub(
+        lambda match: match.group("head") + match.group("value") + match.group("tail"), config
+    )
