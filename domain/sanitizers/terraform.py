@@ -7558,3 +7558,72 @@ def fix_misplaced_octostache_else(config):
     return MISPLACED_ELSE_BLOCK_REGEX.sub(
         lambda match: "#{else}" + match.group("body") + "#{/" + match.group("block") + "}", config
     )
+
+
+TOP_LEVEL_BLOCK_START_REGEX = re.compile(r"^\s*(?:resource|data|variable|locals|output|module|terraform|provider)\b")
+UNESCAPED_QUOTE_REGEX = re.compile(r'(?<!\\)(?:\\\\)*"')
+
+
+def close_unterminated_string_before_block(config):
+    """
+    The LLM sometimes gets stuck repeating a character inside a long string, like a 300 character project name of
+    "xxxx...", and moves on to the next block without closing the string or its own block:
+      default     = "xxxxxxxxxxxxxxxxxxxx
+    locals {
+    tofu init then fails for the whole file with Invalid multi-line string and Unterminated template string errors.
+    A line with an unclosed string that is followed by a new top level block has the string closed, and any blocks
+    left open are closed, so the rest of the configuration can be applied.
+    """
+
+    if not config or '"' not in config:
+        return config
+
+    lines = config.split("\n")
+    result = []
+    depth = 0
+    heredoc = None
+    for index, line in enumerate(lines):
+        if heredoc:
+            result.append(line)
+            if line.strip() == heredoc:
+                heredoc = None
+            continue
+        heredoc_match = re.search(r"<<-?\s*([A-Za-z_][A-Za-z0-9_]*)\s*$", line)
+        if heredoc_match:
+            heredoc = heredoc_match.group(1)
+            result.append(line)
+            continue
+
+        quotes = len(UNESCAPED_QUOTE_REGEX.findall(line))
+        next_line = next((candidate for candidate in lines[index + 1 :] if candidate.strip()), "")
+        if quotes % 2 == 1 and depth > 0 and TOP_LEVEL_BLOCK_START_REGEX.match(next_line):
+            line = line + '"'
+            result.append(line)
+            depth += line.count("{") - line.count("}")
+            if depth > 0:
+                result.append("}" * depth)
+            depth = 0
+            continue
+
+        result.append(line)
+        if quotes % 2 == 0:
+            depth += line.count("{") - line.count("}")
+        depth = max(depth, 0)
+    return "\n".join(result)
+
+
+ESCAPED_COMMAND_SUBSTITUTION_REGEX = re.compile(r"(?<!\$)\$\$\(")
+
+
+def unescape_command_substitution(config):
+    """
+    The LLM escapes the shell command substitution in scripts like
+    aws s3 cp report.json "s3://bucket/report-$(date +%Y%m%d).json"
+    as $$(date +%Y%m%d). Terraform only treats $$ as an escape when it is followed by {, so $$( reaches Octopus
+    as is, and bash reads $$ as the process ID followed by (date ...). $( needs no escaping.
+    """
+
+    if not config or "$$(" not in config:
+        return config
+
+    return ESCAPED_COMMAND_SUBSTITUTION_REGEX.sub("$(", config)
