@@ -5872,9 +5872,9 @@ def link_projects_to_existing_deployment_freezes(config):
 
 
 DEPLOYMENT_FREEZE_LOOKUP_REGEX = re.compile(
-    r"length\(data\.octopusdeploy_deployment_freezes\.(?P<data>\w+)\.deployment_freezes\)\s*!=\s*0\s*\?\s*"
+    r"length\(data\.octopusdeploy_deployment_freezes\.(?P<data>[\w-]+)\.deployment_freezes\)\s*!=\s*0\s*\?\s*"
     r"data\.octopusdeploy_deployment_freezes\.(?P=data)\.deployment_freezes\[0\]\.id\s*:\s*"
-    r"(?P<resource>octopusdeploy_deployment_freeze\.\w+\[0\]\.id)"
+    r"(?P<resource>octopusdeploy_deployment_freeze\.[\w-]+\[0\]\.id)"
 )
 
 
@@ -6405,17 +6405,28 @@ def fix_invalid_slugs(config):
     if not config or "slug" not in config:
         return config
 
+    renamed = {}
+
     def fix(match):
         slug = match.group("slug")
-        if not slug or "${" in slug or _slug_is_valid(slug):
+        if not slug or "${" in slug:
+            return match.group(0)
+        # Octopus also rejects doubled, leading and trailing dashes, e.g. "...-number-replace--"
+        if _slug_is_valid(slug) and "--" not in slug and not slug.startswith("-") and not slug.endswith("-"):
             return match.group(0)
         cleaned = "".join(char if _slug_is_valid(char) else ("-" if not _slug_is_valid(char.lower()) else char.lower()) for char in slug)
         cleaned = re.sub(r"-{2,}", "-", cleaned).strip("-")
         if not any(char != "-" for char in cleaned):
             cleaned = "slug-" + hashlib.sha1(slug.encode("utf-8")).hexdigest()[:8]
+        renamed[slug] = cleaned
         return match.group("prefix") + cleaned + match.group("suffix")
 
-    return SLUG_ATTRIBUTE_REGEX.sub(fix, config)
+    result = SLUG_ATTRIBUTE_REGEX.sub(fix, config)
+    for old, new in renamed.items():
+        result = re.sub(
+            r'(deployment_action_slug\s*=\s*")' + re.escape(old) + r'"', lambda m: m.group(1) + new + '"', result
+        )
+    return result
 
 
 CHANNEL_RULE_HEADER_REGEX = re.compile(r"(?m)^[ \t]*rule[ \t]*\{")
@@ -7706,3 +7717,239 @@ def unescape_quotes_in_interpolation(config):
         result.append(config[position:start])
         result.append(config[start:end].replace('\\"', '"'))
         position = end
+
+
+DELETE_MACHINES_BEHAVIOR_REGEX = re.compile(r'(\bdelete_machines_behavior\s*=\s*)"([^"\n]*)"')
+
+
+def fix_delete_machines_behavior(config):
+    """
+    A machine policy asked to delete unavailable machines gets values like
+    delete_machines_behavior = "Delete"
+    which fails the plan with:
+    Error: expected delete_machines_behavior to be one of ["DeleteUnavailableMachines" "DoNotDelete"], got Delete
+    Values that mean deleting become DeleteUnavailableMachines, and every other invalid value becomes DoNotDelete.
+    """
+
+    if not config or "delete_machines_behavior" not in config:
+        return config
+
+    def replace(match):
+        value = match.group(2)
+        if value in ("DeleteUnavailableMachines", "DoNotDelete"):
+            return match.group(0)
+        normalized = value.lower().replace(" ", "").replace("_", "")
+        if normalized.startswith("delete") or normalized in ("remove", "removeunavailablemachines"):
+            return f'{match.group(1)}"DeleteUnavailableMachines"'
+        return f'{match.group(1)}"DoNotDelete"'
+
+    return DELETE_MACHINES_BEHAVIOR_REGEX.sub(replace, config)
+
+
+FREEZE_TENANT_HEADER_REGEX = re.compile(
+    r'(?:^|\n)[ \t]*resource\s+"octopusdeploy_deployment_freeze_tenant"\s+"\w+"\s*\{'
+)
+TENANT_PROJECT_LABEL_REGEX = re.compile(r'(?m)^[ \t]*resource\s+"octopusdeploy_tenant_project"\s+"(\w+)"')
+FREEZE_TENANT_DEPENDS_ON_REGEX = re.compile(r"(?m)^([ \t]*)depends_on\s*=\s*\[([^\]]*)\]")
+
+
+def add_tenant_project_dependency_to_freeze_tenant(config):
+    """
+    A tenant scoped deployment freeze is only accepted once the tenant is connected to the project, but nothing
+    references the octopusdeploy_tenant_project resource, so the freeze can be created first and fails with:
+    Error: error while updating deployment freeze ... Invalid tenant-project-environment combinations:
+    Tenant 'Fabrikam' is not connected to project 'Projects-16813'
+    Every octopusdeploy_deployment_freeze_tenant depends on every octopusdeploy_tenant_project.
+    """
+
+    if not config or "octopusdeploy_deployment_freeze_tenant" not in config:
+        return config
+
+    labels = TENANT_PROJECT_LABEL_REGEX.findall(config)
+    if not labels:
+        return config
+
+    references = [f"octopusdeploy_tenant_project.{label}" for label in labels]
+
+    result = config
+    position = 0
+    while True:
+        header = FREEZE_TENANT_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.end() : end - 1]
+        depends_on = FREEZE_TENANT_DEPENDS_ON_REGEX.search(block)
+        if depends_on:
+            existing = [item.strip() for item in depends_on.group(2).split(",") if item.strip()]
+            merged = existing + [reference for reference in references if reference not in existing]
+            block = (
+                block[: depends_on.start()]
+                + f"{depends_on.group(1)}depends_on = [{', '.join(merged)}]"
+                + block[depends_on.end() :]
+            )
+        else:
+            block = block.rstrip() + f"\n  depends_on = [{', '.join(references)}]\n"
+
+        result = result[: header.end()] + block + result[end - 1 :]
+        position = header.end() + len(block) + 1
+
+
+MERGE_STEPS_ORDER_HEADER_REGEX = re.compile(
+    r'(?:^|\n)[ \t]*resource\s+"octopusdeploy_process_steps_order"\s+"(?P<label>\w+)"\s*\{'
+)
+MERGE_STEPS_ORDER_PROCESS_ID_REGEX = re.compile(r'(?m)^[ \t]*process_id\s*=\s*(?P<value>"(?:[^"\\\n]|\\.)*")[ \t]*$')
+MERGE_STEPS_ORDER_STEPS_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)steps\s*=\s*\[")
+MERGE_STEPS_ORDER_ITEM_REGEX = re.compile(r'"(?:[^"\\]|\\.)*"')
+
+
+def _merge_steps_order_list_end(text, open_bracket_end):
+    """Returns the index just past the ] closing a list whose [ ends at open_bracket_end, ignoring quoted strings."""
+
+    depth = 1
+    index = open_bracket_end
+    in_string = False
+    while index < len(text):
+        char = text[index]
+        if in_string:
+            if char == "\\":
+                index += 1
+            elif char == '"':
+                in_string = False
+        elif char == '"':
+            in_string = True
+        elif char == "[":
+            depth += 1
+        elif char == "]":
+            depth -= 1
+            if depth == 0:
+                return index + 1
+        index += 1
+    return None
+
+
+def merge_duplicate_process_steps_order(config):
+    """
+    The LLM sometimes adds a second octopusdeploy_process_steps_order for a process that already has one, e.g.
+    process_step_order_my_project_updated listing only a step it added later. Both resources set the order of the
+    same process, so whichever is applied last wins and the other steps drop out of the deployment process.
+    The steps of every octopusdeploy_process_steps_order sharing a process_id are merged, in order and without
+    duplicates, into the first one; the others are removed and references to them point at the first one.
+    """
+
+    if not config or config.count('"octopusdeploy_process_steps_order"') < 2:
+        return config
+
+    blocks = []
+    for header in MERGE_STEPS_ORDER_HEADER_REGEX.finditer(config):
+        end = find_block_end(config, header.end())
+        if end is None:
+            return config
+        body = config[header.end() : end - 1]
+        process_id = MERGE_STEPS_ORDER_PROCESS_ID_REGEX.search(body)
+        steps = MERGE_STEPS_ORDER_STEPS_REGEX.search(body)
+        if not process_id or not steps:
+            continue
+        list_end = _merge_steps_order_list_end(body, steps.end())
+        if list_end is None:
+            continue
+        items = MERGE_STEPS_ORDER_ITEM_REGEX.findall(body[steps.end() : list_end - 1])
+        blocks.append(
+            {
+                "label": header.group("label"),
+                "start": header.start() + (1 if config[header.start()] == "\n" else 0),
+                "body_start": header.end(),
+                "end": end,
+                "key": re.sub(r"\s+", "", process_id.group("value")),
+                "steps_start": header.end() + steps.start(),
+                "steps_end": header.end() + list_end,
+                "indent": steps.group("indent"),
+                "items": items,
+            }
+        )
+
+    groups = {}
+    for block in blocks:
+        groups.setdefault(block["key"], []).append(block)
+
+    edits = []
+    renames = {}
+    for group in groups.values():
+        if len(group) < 2:
+            continue
+        keep = group[0]
+        merged = []
+        for block in group:
+            for item in block["items"]:
+                if item not in merged:
+                    merged.append(item)
+        inner = ",\n".join(f'{keep["indent"]}  {item}' for item in merged)
+        edits.append((keep["steps_start"], keep["steps_end"], f'{keep["indent"]}steps = [\n{inner}\n{keep["indent"]}]'))
+        for block in group[1:]:
+            edits.append((block["start"], block["end"], ""))
+            renames[block["label"]] = keep["label"]
+
+    if not edits:
+        return config
+
+    result = config
+    for start, end, replacement in sorted(edits, key=lambda edit: edit[0], reverse=True):
+        result = result[:start] + replacement + result[end:]
+
+    for old, new in renames.items():
+        result = re.sub(
+            rf"\boctopusdeploy_process_steps_order\.{old}\b",
+            f"octopusdeploy_process_steps_order.{new}",
+            result,
+        )
+
+    return result
+
+
+HYPHENATED_LABEL_DECLARATION_REGEX = re.compile(
+    r'(?P<kind>resource|data)(?P<gap1>\s+)"(?P<type>octopusdeploy_\w+)"(?P<gap2>\s+)"(?P<label>[A-Za-z_][\w-]*-[\w-]*)"'
+)
+
+
+def normalize_hyphenated_resource_labels(config):
+    """
+    A prompt-named resource such as the deployment freeze "Q86-R3 Ledger Freeze" can get a label with a dash, like
+    deploymentfreeze_q86-r3_ledger_freeze. Dashes are legal in HCL labels, but the sanitizers match labels with \\w+,
+    so they silently skip such resources and the plan then fails, e.g.
+    Error: Reference to undeclared resource ... There is no data resource "octopusdeploy_deployment_freezes"
+    "deploymentfreeze_q86-r3_ledger_freeze" definition in the root module.
+    Dashes in octopusdeploy resource and data source labels are replaced with underscores, in the declaration and in
+    every reference, before any other sanitizer runs. A label whose underscore form is already taken is left alone.
+    """
+
+    if not config or "-" not in config:
+        return config
+
+    declarations = {
+        (match.group("kind"), match.group("type"), match.group("label"))
+        for match in HYPHENATED_LABEL_DECLARATION_REGEX.finditer(config)
+    }
+    if not declarations:
+        return config
+
+    existing = set(re.findall(r'(resource|data)\s+"(octopusdeploy_\w+)"\s+"([\w-]+)"', config))
+    result = config
+    for kind, resource_type, label in sorted(declarations, key=lambda item: -len(item[2])):
+        new_label = label.replace("-", "_")
+        if (kind, resource_type, new_label) in existing:
+            continue
+        existing.add((kind, resource_type, new_label))
+        result = re.sub(
+            rf'({kind}\s+"{resource_type}"\s+")' + re.escape(label) + r'"',
+            rf"\g<1>{new_label}" + '"',
+            result,
+        )
+        prefix = rf"data\.{resource_type}\." if kind == "data" else rf"(?<![\w.]){resource_type}\."
+        result = re.sub(prefix + re.escape(label) + r"(?![\w-])",
+                        lambda match: match.group(0)[: -len(label)] + new_label, result)
+
+    return result

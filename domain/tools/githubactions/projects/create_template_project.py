@@ -203,6 +203,10 @@ from domain.sanitizers.terraform import (
     unescape_command_substitution,
     fix_aws_script_step_type,
     unescape_quotes_in_interpolation,
+    fix_delete_machines_behavior,
+    add_tenant_project_dependency_to_freeze_tenant,
+    merge_duplicate_process_steps_order,
+    normalize_hyphenated_resource_labels,
     merge_duplicate_depends_on,
     escape_template_directives_in_heredocs,
     escape_unbalanced_template_directives,
@@ -987,6 +991,7 @@ def sanitize_configuration(configuration):
     """Apply all sanitization fixes to a raw LLM-generated Terraform configuration."""
     # A runaway repeated string can be left unclosed before the next block, which fails init for the whole file
     configuration = close_unterminated_string_before_block(configuration)
+    configuration = normalize_hyphenated_resource_labels(configuration)
     configuration = unescape_quotes_in_interpolation(configuration)
     # Replace anything that looks like a password
     configuration = replace_passwords(configuration)
@@ -1282,6 +1287,9 @@ def sanitize_configuration(configuration):
     # Terraform only escapes $${, so a $$( in a script reaches bash as the process ID
     configuration = unescape_command_substitution(configuration)
     configuration = fix_aws_script_step_type(configuration)
+    configuration = fix_delete_machines_behavior(configuration)
+    configuration = add_tenant_project_dependency_to_freeze_tenant(configuration)
+    configuration = merge_duplicate_process_steps_order(configuration)
     # Octopus compares step names without case, so "Smoke Test" and "Smoke test" in one process fail the apply
     configuration = dedupe_case_insensitive_step_names(configuration)
     # A runbook process exists whenever its project does, so its steps must not get a null process_id

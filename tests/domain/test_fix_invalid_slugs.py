@@ -34,6 +34,16 @@ class TestFixInvalidSlugs(unittest.TestCase):
         self.assertEqual(fix_invalid_slugs(""), "")
         self.assertIsNone(fix_invalid_slugs(None))
 
+    def test_trailing_and_doubled_dashes_are_collapsed(self):
+        config = '  slug = "run-job-from-yaml-octopus-release-number-replace--"\n  deployment_action_slug = "run-job-from-yaml-octopus-release-number-replace--"\n'
+        result = fix_invalid_slugs(config)
+        self.assertIn('slug = "run-job-from-yaml-octopus-release-number-replace"', result)
+        self.assertIn('deployment_action_slug = "run-job-from-yaml-octopus-release-number-replace"', result)
+
+    def test_leading_dash_and_double_dash_inside(self):
+        result = fix_invalid_slugs('  slug = "-a--b"\n')
+        self.assertIn('slug = "a-b"', result)
+
 
 if __name__ == "__main__":
     unittest.main()
