@@ -7627,3 +7627,82 @@ def unescape_command_substitution(config):
         return config
 
     return ESCAPED_COMMAND_SUBSTITUTION_REGEX.sub("$(", config)
+
+
+PROCESS_STEP_HEADER_REGEX = re.compile(
+    r'(?:^|\n)[ \t]*resource\s+"octopusdeploy_process_step"\s+"\w+"\s*\{'
+)
+PLAIN_SCRIPT_TYPE_REGEX = re.compile(r'(\n[ \t]*type\s*=\s*)"Octopus\.Script"')
+AWS_ACCOUNT_PROPERTY_REGEX = re.compile(r'"Octopus\.Action\.AwsAccount\.(?:Variable|UseInstanceRole)"\s*=')
+
+
+def fix_aws_script_step_type(config):
+    """
+    The LLM writes an AWS CLI script (e.g. a hand written ECS deployment) as an Octopus.Script step that sets the
+    Octopus.Action.AwsAccount.* properties. Only Octopus.AwsRunScript logs in to AWS with those properties, so the
+    plain script runs the aws CLI without credentials. Such steps are made Octopus.AwsRunScript steps.
+    """
+
+    if not config or "Octopus.Action.AwsAccount." not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = PROCESS_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+
+        end = find_block_end(result, header.end())
+        if end is None:
+            return result
+
+        block = result[header.end() : end]
+        if AWS_ACCOUNT_PROPERTY_REGEX.search(block):
+            block = PLAIN_SCRIPT_TYPE_REGEX.sub(r'\1"Octopus.AwsRunScript"', block, count=1)
+            result = result[: header.end()] + block + result[end:]
+        position = header.end() + len(block)
+
+
+def unescape_quotes_in_interpolation(config):
+    """
+    The LLM wraps an expression in a string and escapes the quotes inside the interpolation, like
+    count = "${length(try([for item in ... : item if item.name == \\"Gold\\"], [])) != 0 ? 0 : 1}"
+    Inside ${...} quotes start nested strings and are never escaped, so init fails with:
+    Error: Invalid character ... This character is not used within the language.
+    The backslashes are removed from quotes inside an interpolation on a single line. $${ is a literal and is skipped.
+    """
+
+    if not config or "${" not in config or '\\"' not in config:
+        return config
+
+    result = []
+    position = 0
+    while True:
+        start = config.find("${", position)
+        if start == -1:
+            result.append(config[position:])
+            return "".join(result)
+
+        if start > 0 and config[start - 1] == "$":
+            result.append(config[position : start + 2])
+            position = start + 2
+            continue
+
+        depth = 1
+        end = start + 2
+        while end < len(config) and depth > 0 and config[end] != "\n":
+            if config[end] == "{":
+                depth += 1
+            elif config[end] == "}":
+                depth -= 1
+            end += 1
+
+        if depth != 0:
+            result.append(config[position : start + 2])
+            position = start + 2
+            continue
+
+        result.append(config[position:start])
+        result.append(config[start:end].replace('\\"', '"'))
+        position = end
