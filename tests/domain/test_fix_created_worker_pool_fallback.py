@@ -63,6 +63,9 @@ from domain.sanitizers.terraform import (
     fix_donor_package_attribute,
     escape_invalid_template_directives,
     escape_template_directives_in_script_bodies,
+    undouble_percent_after_number_in_script_bodies,
+    remove_empty_template_parameters,
+    fix_invalid_tentacle_thumbprints,
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
     remove_default_channel_resources,
@@ -2752,3 +2755,105 @@ class TestWrapBarePostconditionsInLifecycle(unittest.TestCase):
     def test_wrap_is_idempotent(self):
         once = wrap_bare_postconditions_in_lifecycle(self.BARE)
         self.assertEqual(wrap_bare_postconditions_in_lifecycle(once), once)
+
+
+class TestUndoublePercentAfterNumberInScriptBodies(unittest.TestCase):
+    def line(self, body):
+        return f'    "Octopus.Action.Script.ScriptBody" = "{body}"\n'
+
+    def test_undoubles_percent_before_space(self):
+        result = undouble_percent_after_number_in_script_bodies(self.line("Write-Host '100%% healthy, %%{status}'"))
+        self.assertEqual(result, self.line("Write-Host '100% healthy, %%{status}'"))
+
+    def test_undoubles_percent_before_quote(self):
+        result = undouble_percent_after_number_in_script_bodies(self.line("print('recalibrating 100%%')"))
+        self.assertEqual(result, self.line("print('recalibrating 100%')"))
+
+    def test_undoubles_percent_before_escaped_double_quote(self):
+        result = undouble_percent_after_number_in_script_bodies(self.line('echo \\"50%%\\"'))
+        self.assertEqual(result, self.line('echo \\"50%\\"'))
+
+    def test_undoubles_percent_at_end_of_line(self):
+        result = undouble_percent_after_number_in_script_bodies(self.line("echo 75%%"))
+        self.assertEqual(result, self.line("echo 75%"))
+
+    def test_keeps_percent_brace_escape(self):
+        config = self.line("echo 1%%{x}")
+        self.assertEqual(undouble_percent_after_number_in_script_bodies(config), config)
+
+    def test_keeps_printf_escape_before_backslash(self):
+        config = self.line('printf \\"100%%\\n\\"')
+        self.assertEqual(undouble_percent_after_number_in_script_bodies(config), config)
+
+    def test_keeps_printf_escape_after_conversion(self):
+        config = self.line('printf \\"%d%% \\" 5')
+        self.assertEqual(undouble_percent_after_number_in_script_bodies(config), config)
+
+    def test_ignores_other_properties(self):
+        config = '    "Octopus.Action.Manual.Instructions" = "100%% sure"\n'
+        self.assertEqual(undouble_percent_after_number_in_script_bodies(config), config)
+
+    def test_undoubles_in_heredoc_body(self):
+        config = '    "Octopus.Action.Script.ScriptBody" = <<-EOT\nWrite-Host "Done 100%%"\nEOT\n'
+        result = undouble_percent_after_number_in_script_bodies(config)
+        self.assertIn('Write-Host "Done 100%"', result)
+
+
+class TestRemoveEmptyTemplateParameters(unittest.TestCase):
+    STEP = (
+        'resource "octopusdeploy_process_templated_step" "check_targets" {\n'
+        '  name = "Octopus - Check Targets Available"\n'
+        "  parameters = {\n"
+        '    "CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"\n'
+        '    "CheckTargets.Octopus.Role" = ""\n'
+        "  }\n"
+        "}\n"
+    )
+
+    def test_removes_empty_parameter(self):
+        result = remove_empty_template_parameters(self.STEP)
+        self.assertNotIn('"CheckTargets.Octopus.Role"', result)
+        self.assertIn('"CheckTargets.Octopus.Api.Key" = "#{Project.Octopus.Api.Key}"', result)
+
+    def test_keeps_non_empty_parameters(self):
+        config = self.STEP.replace('"CheckTargets.Octopus.Role" = ""', '"CheckTargets.Octopus.Role" = "web"')
+        self.assertEqual(remove_empty_template_parameters(config), config)
+
+    def test_ignores_empty_values_outside_parameters(self):
+        config = 'resource "octopusdeploy_process_step" "s" {\n  properties = {\n    "X" = ""\n  }\n}\n'
+        self.assertEqual(remove_empty_template_parameters(config), config)
+
+    def test_handles_every_templated_step(self):
+        result = remove_empty_template_parameters(self.STEP + self.STEP.replace("check_targets", "check_two"))
+        self.assertNotIn('"CheckTargets.Octopus.Role"', result)
+        self.assertEqual(result.count('"CheckTargets.Octopus.Api.Key"'), 2)
+
+
+class TestFixInvalidTentacleThumbprints(unittest.TestCase):
+    def target(self, kind, thumbprint):
+        return (
+            f'resource "octopusdeploy_{kind}_tentacle_deployment_target" "target_win_edge_02" {{\n'
+            '  name       = "win-edge-02"\n'
+            f'  thumbprint = "{thumbprint}"\n'
+            "}\n"
+        )
+
+    def test_replaces_non_hex_thumbprint(self):
+        result = fix_invalid_tentacle_thumbprints(self.target("listening", "ZZZZ-not-hex"))
+        self.assertIn('thumbprint = "0123456789ABCDEF0123456789ABCDEF01234567"', result)
+
+    def test_replaces_on_polling_target(self):
+        result = fix_invalid_tentacle_thumbprints(self.target("polling", "CHANGEME"))
+        self.assertIn("0123456789ABCDEF0123456789ABCDEF01234567", result)
+
+    def test_keeps_hex_thumbprint(self):
+        config = self.target("listening", "96203ED84246201C26A2F4360D7CBC36AC1D232D")
+        self.assertEqual(fix_invalid_tentacle_thumbprints(config), config)
+
+    def test_keeps_interpolated_thumbprint(self):
+        config = self.target("listening", "${var.thumbprint}")
+        self.assertEqual(fix_invalid_tentacle_thumbprints(config), config)
+
+    def test_ignores_cloud_region_target(self):
+        config = 'resource "octopusdeploy_cloud_region_deployment_target" "c" {\n  thumbprint = ""\n}\n'
+        self.assertEqual(fix_invalid_tentacle_thumbprints(config), config)

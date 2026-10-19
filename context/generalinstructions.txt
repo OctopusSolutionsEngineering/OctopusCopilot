@@ -33,6 +33,8 @@ All rules in this file are mandatory; violations are penalized. Rules marked **C
 
 **CRITICAL — use the prompt-specified package feed for packages.** For "Add a Docker container registry feed called 'X'" / "use the 'X' feed for deployment": create feed X AND use it as `feed_id` in all relevant `packages` blocks. `feed_github_container_registry` is only allowed as a step `container` (worker tools) feed, never as the package feed when the prompt names one; keep it alongside X if Kubernetes worker tool containers need it. Same for a prompt-named Maven/Helm feed, even if template `octopusdeploy_maven_feed` `feed_octopus_maven_feed` exists. Self-check: each "Add a feed named 'X'" / "use the 'X' feed for..." has a feed with `name = "X"` and is the `feed_id` of its packages.
 
+**CRITICAL — the Progressive Deployment template's `Deploy App` step is a placeholder `Octopus.Script` (`echo "Deploying app"`).** When the prompt names a container image, an image feed or a target tag for the deployment (e.g. `use it for the container image "acme/checkout-api"`, `Create targets with the target tag "checkout-k8s"`), replace that placeholder with an `Octopus.KubernetesDeployRawYaml` step of the same name: a `packages` block on the prompt's feed and image, `Octopus.Action.TargetRoles` = the prompt's target tag, and a Deployment manifest referencing the package. Keep `Simulate Failure`, `Run Octopus Deploy Runbook` and `Sleep`. Leaving the placeholder orphans the feed and the targets.
+
 **CRITICAL — a prompt-named feed MUST actually be referenced.** Templates that hardcode the image inline (`image: octopussamples/randomquotes`, `Packages: []` — Progressive Deployment, canary and wave templates; the Kubernetes template already does it right) have no `feed_id` to check, so the feed ends up orphaned. When the prompt names a feed for an image (e.g. `Create a Docker container registry feed called "Commerce Registry" ... and use it for the container image "octopussamples/randomquotes" in the Kubernetes deployment step`), ADD a `packages` block on that feed and reference it in `Octopus.Action.KubernetesContainers.CustomResourceYaml` instead of a literal tag:
 
 ```hcl
@@ -323,10 +325,11 @@ resource "octopusdeploy_community_step_template" "communitysteptemplate_scan_for
 * **A leading list number in a prompt's project name is part of the name, not prompt formatting to strip.** "Create a project called '21. Argo CD Rollouts'" → `name = "21. Argo CD Rollouts"`, never `"Argo CD Rollouts"`. Self-check: if the prompt's project name starts with a number and a period/colon, confirm that exact prefix is still present in the `octopusdeploy_project` `name` value.
 ## Step Execution Order and Parallel Steps
 
-* **Positional wording beats prompt bullet order:** `Add a step "A" before "B"` puts A IMMEDIATELY before B in `octopusdeploy_process_steps_order` (and in the `depends_on` chain) even when A is described after B in the prompt (e.g. "Approve Switch" before "Switch Load Balancer" → `..., approve_switch, switch_load_balancer, ...`); "after B" puts it immediately after B. Unquoted "before the deployment" / "before Production deployment" / "before deploying" means immediately before the main deploy step. With several deploy steps (orchestration `Octopus.DeployRelease` steps, waves, multiple services) it means before the FIRST of them, so an approval gate like "wait for manual approval before deploying to Production" is never placed after the deployments it gates. Resolve vague anchors to a concrete step and honour them even around template steps: "a step after it" → after the step the previous sentence named; "before the Canary-100 deployment" → immediately before the step that performs that deployment.
+* **Positional wording beats prompt bullet order:** `Add a step "A" before "B"` puts A IMMEDIATELY before B in `octopusdeploy_process_steps_order` (and in the `depends_on` chain) even when A is described after B in the prompt (e.g. "Approve Switch" before "Switch Load Balancer" → `..., approve_switch, switch_load_balancer, ...`); "after B" puts it immediately after B. Unquoted "before the deployment" / "before Production deployment" / "before deploying" means immediately before the main deploy step. With several deploy steps (orchestration `Octopus.DeployRelease` steps, waves, multiple services) it means before the FIRST of them, so an approval gate like "wait for manual approval before deploying to Production" is never placed after the deployments it gates. **"before deploying to <Environment>" sets BOTH the scope AND the position:** scope the step to that environment AND put it FIRST among the deploy steps (observed: orchestration `CAB Approval` scoped to Production East/West but appended after all three `Octopus.DeployRelease` steps, so it gated nothing; correct order is `cab_approval, deploy_payments_service, deploy_orders_service, ...`). Resolve vague anchors to a concrete step and honour them even around template steps: "a step after it" → after the step the previous sentence named; "before the Canary-100 deployment" → immediately before the step that performs that deployment.
 * **Self-check:** for every "before X" / "after X" in the prompt, confirm the step's neighbour in `steps` is X; a requested step is never appended after the template's remaining steps unless the prompt says "at the end"/"finally".
 * `Set the start trigger to "Run in parallel with the previous step"` → the `octopusdeploy_process_step` / `octopusdeploy_process_templated_step` MUST have `start_trigger = "StartWithPrevious"`.
 * **CRITICAL:** the parallel instruction counts in ANY wording, all producing `StartWithPrevious`: "must run / runs in parallel with the previous step", "at the same time as", "concurrently with <previous step>", "together / simultaneously / side by side", or `... that runs in parallel with "Deploy Left"` (naming the earlier step: the step directly follows it). A numbered item's "…, and must run in parallel with the previous step" is binding; never require the literal `Set the start trigger to ...`.
+* **CRITICAL — "in parallel with the NEXT step":** `Add a step A before B ... and run this step in parallel with the next step` → A stays IMMEDIATELY BEFORE B in `octopusdeploy_process_steps_order` with its normal trigger (`StartAfterPrevious`), and it is B, the step AFTER A, that gets `start_trigger = "StartWithPrevious"`. Never move A after B to make A the `StartWithPrevious` step; that reverses the requested order. "Parallel with the previous step" puts `StartWithPrevious` on the step itself; "parallel with the next step" puts it on the following step.
 * "Deploy A first, then deploy B and C in parallel" → A and B are `StartAfterPrevious` (B waits for A, it opens the group), only C is `StartWithPrevious`; making B `StartWithPrevious` runs it alongside A.
 * Converse wordings mean `StartAfterPrevious` (a convergence step): "must wait for all previous steps to complete before it starts", "wait for all previous steps to complete, then start", "only after the previous steps finish".
 * Self-check: search every step description for "parallel", "concurrently", "at the same time", "simultaneously", "together"; each step using one about the preceding step has `StartWithPrevious` and is consecutive with it in `octopusdeploy_process_steps_order`.
@@ -972,6 +975,7 @@ data "octopusdeploy_tenants" "tenant_australian_office" {
 
 * When the prompt defines project tenant variable values, define the value for all environment unless explicitly instructed otherwise.
 * When the prompt links a tenant to a project, include a "octopusdeploy_tenant_project" resource.
+* **CRITICAL — linking tenants BY TAG filters them:** "Connect the tenants tagged Tier/Gold to the project" → an `octopusdeploy_tenant_project` ONLY for tenants whose `tenant_tags` include `Tier/Gold`. Tenants the prompt creates with other tags (e.g. "Fabrikam" tagged `Tier/Silver`) get NO `octopusdeploy_tenant_project` for this project. Self-check: every `octopusdeploy_tenant_project` tenant carries the named tag.
 * Never define a "octopusdeploy_tags" data source (it does not exist).
 
 ## Tenanted Deployment Participation for New Project Creation Prompts
@@ -1446,6 +1450,7 @@ resource "octopusdeploy_project" "project_deploy_to_production" {
 * NEVER write a block name not seen in this file or the example configurations. The trigger must never be the reason a project fails.
 * `start_time`: ISO 8601 string. `timezone`: a valid "Windows Time Zone Identifier" string. Map IANA names exactly, minding DST: Australia/Sydney, Australia/Melbourne, Australia/Canberra → "AUS Eastern Standard Time"; Australia/Brisbane → "E. Australia Standard Time"; Pacific/Auckland → "New Zealand Standard Time"; Europe/London → "GMT Standard Time"; Europe/Berlin → "W. Europe Standard Time"; America/New_York → "Eastern Standard Time"; UTC → "UTC".
 * `project_id` on a trigger must never be empty.
+* **CRITICAL — tenanted-only projects:** when the project has `tenanted_deployment_participation = "Tenanted"` (so its runbooks are `multi_tenancy_mode = "Tenanted"`), a scheduled trigger with `tenant_ids = []` runs for NO tenants and never executes. Set `tenant_ids` to the ternary IDs of every tenant connected to the project in the trigger's target environment(s) (e.g. tenant "Store 42" connected in Production, trigger runs in Production → `tenant_ids = [<Store 42 id>]`).
 * Trigger for specific tenants (by name or tag, e.g. "against tenants tagged Clinic Tier/Gold") → `tenant_ids` = ternary IDs of every tenant created/looked up in this config that matches (the trigger has no tag filter; resolve tags to those tenants). `tenant_ids = []` only when no tenants are named.
 
 Canonical shape: `projecttrigger_aws_lambda_daily_security_scan` in awslambda.tf (`count`, ternary `project_id`, `tenant_ids = []`, `once_daily_schedule` with `start_time` + `days_of_week`, `deploy_latest_release_action` with ternary environment ids, `should_redeploy = true`).
@@ -1741,6 +1746,7 @@ Version-range example: `rule { action_package { deployment_action = "Deploy a He
 ## Octopus Global Deployment Freeze Instructions
 
 **CRITICAL — a requested deployment freeze MUST be created** as `octopusdeploy_deployment_freeze` ("add a deployment freeze called X", "block deployments to <environment> between <dates>", "freeze deployments over <period>"; observed dropped for `Add a deployment freeze called "Change Freeze" that blocks deployments to "Prod" for the whole of December 2026`). Self-check: for each "freeze", "blackout", "change window" or "no deployments between" in the prompt, confirm a matching `octopusdeploy_deployment_freeze`. Conversely, NEVER emit a freeze without such a phrase.
+* **CRITICAL — NEVER look up a deployment freeze with `data "octopusdeploy_deployment_freezes"`, and never base a freeze's `count` on one.** Freezes are SERVER-wide (not per space) and the lookup matches by PARTIAL name, so "Year End" finds a leftover "Year End Freeze" from another space and the `octopusdeploy_deployment_freeze_project` link then fails (observed: `One or more referenced projects do not exist: "Projects-16649" provided for ProjectEnvironmentScope`). Duplicate freeze names are allowed: base the freeze's `count` on the PROJECT data source like every other project-owned resource (`length(data.octopusdeploy_projects.<project>.projects) != 0 ? 0 : 1`) and reference it directly as `octopusdeploy_deployment_freeze.<name>[0].id`.
 * **CRITICAL — there is NO `project_scope` block.** `octopusdeploy_deployment_freeze` accepts only `name`, `start`, `end`; never `description` or `space_id`. Scope with one `octopusdeploy_deployment_freeze_project` per named project; an unscoped freeze applies to everything.
 * **CRITICAL — NEVER set `recurring_schedule`** on `octopusdeploy_deployment_freeze`: the deployed provider fails at PLAN with "Value Conversion Error ... Struct defines fields not found in object: utc_offset_in_minutes". For a repeating freeze ("every Friday 16:00-23:59", "second Tuesday monthly"), create ONE freeze for the first occurrence and state the requested recurrence in the project `description`.
 
@@ -2597,6 +2603,7 @@ resource "octopusdeploy_variable" "easy_mode_mcp_projectname_1" {
 ```
 
 * resource "octopusdeploy_variable" "type" must be one of "AmazonWebServicesAccount", "AzureAccount", "GoogleCloudAccount", "UsernamePasswordAccount", "Certificate", "Sensitive", "String", "WorkerPool"; never "Token".
+* "Value X scoped to Prod and Y otherwise" / "Y everywhere else" / "Y by default" → the Y variable is UNSCOPED (no `scope` block), not scoped to the remaining environments; Octopus prefers the more specific scoped value, and an unscoped default also covers environments added later.
 * "name" + "scope" must be unique across "octopusdeploy_variable" resources. **Two variables with the SAME name but DIFFERENT scopes are valid and MUST BOTH be created** (e.g. `Maintenance.Window` = "02:00" unscoped AND `Maintenance.Window` = "04:00" scoped to Production, or the same name scoped to two different environments) — never drop the second or claim Octopus forbids it. Only an identical name AND identical scope is merged (see the "Same NAME + identical SCOPE" rule below).
 * "is_sensitive" "true" requires "type" "Sensitive". Sensitive variables set "sensitive_value" to "Change Me!" (nothing else) and never define "value"; never set both "value" and "sensitive_value".
 * **CRITICAL:** every `octopusdeploy_variable` MUST include (both entries required):
@@ -2823,6 +2830,7 @@ data "octopusdeploy_machine_policies" "default_machine_policy" {
 "Octopus.Action.WindowsService.CustomAccountName"     = "#{Project.Service.Runner.Account.Username}"
 "Octopus.Action.WindowsService.CustomAccountPassword" = "#{Project.Service.Runner.Account.Password}"
 ```
+* **CRITICAL — never reuse an unrelated secret as a credential:** a credential property (`Octopus.Action.WindowsService.CustomAccountPassword`, Tomcat/IIS/SQL passwords, API keys, tokens) may only reference a variable the prompt ties to THAT credential. A sensitive variable the prompt defines for another purpose (e.g. `Ledger.DbPassword`, a database password, an API key) MUST NOT be wired into it just because it is the only secret available. When the prompt names a service user (`running as the user "svc_ledger"`) but no password and no username/password account, set `CustomAccountName = "svc_ledger"` and create a dedicated sensitive project variable `Project.WindowsService.CustomAccountPassword` (`is_sensitive = true`, `sensitive_value = "CHANGEME"`) and set `CustomAccountPassword = "#{Project.WindowsService.CustomAccountPassword}"`.
 * `Octopus.Action.WindowsService.StartMode` values: Automatic → `auto`, Automatic (Delayed) → `delayed-auto`, Manual → `demand`, Disabled → `disabled`.
 
 ```hcl
@@ -2898,8 +2906,10 @@ variable "octopus_space_id" {
   curl -w \"%%{http_code}\" http://example.org
 EOT
 ```
+* **CRITICAL — never change the sigil while escaping:** each `${` stays a `$` and each `%{` stays a `%`. A script mixing both, `kubectl rollout undo deployment/${APP_NAME} -n %{namespace}`, becomes `deployment/$${APP_NAME} -n %%{namespace}`; writing `-n $${namespace}` (observed) silently changes the script. Escaping is per occurrence, not per string: in `Write-Host '100% healthy, %{status}'` only the brace form doubles → `'100% healthy, %%{status}'`; writing `100%%` (observed) prints `100%%`.
 * Define "Octopus.Action.TargetRoles" in "properties" for steps that deploy to targets, including "Octopus.TentaclePackage", "Octopus.TomcatDeploy", "Octopus.AzureAppService", "Octopus.IIS", "Octopus.WindowsService", "Octopus.AzureWebApp", "Octopus.JavaArchive", "Octopus.HelmChartUpgrade", "Octopus.KubernetesDeployRawYaml", "Octopus.Kubernetes.Kustomize", "Octopus.TransferPackage".
 * A requested Kubernetes Secret ("Secret ledger-db with key url from sensitive variable Ledger.DbUrl") is a `kind: Secret` manifest (`stringData: { url: "#{Ledger.DbUrl}" }`) in the EARLIEST step that uses it (a pre-deploy Job's step, not the later Deployment's); referencing it in `secretRef`/`secretKeyRef` without creating it is a silent drop.
+* **CRITICAL — a certificate variable in a Kubernetes TLS manifest:** `#{Chatbot.Ingress.Cert}` resolves to the Octopus certificate ID, never to a Kubernetes secret name, so `secretName: "#{Chatbot.Ingress.Cert}"` (observed) points the Ingress at a secret that does not exist. Emit a `kind: Secret` with `type: kubernetes.io/tls` and `stringData: { tls.crt: "#{Chatbot.Ingress.Cert.CertificatePem}", tls.key: "#{Chatbot.Ingress.Cert.PrivateKeyPem}" }` in the same manifest, and set the Ingress `tls[].secretName` to that Secret's `metadata.name`.
 * Prompt-supplied script text is copied VERBATIM: same commands, same line breaks; never rewrite constructs (e.g. `$(seq 1 10)` → `{1..10}`) or split a one-line script onto several lines.
 * Take EXTREME CARE escaping quotes; escape every inner quote **when that quote belongs to a literal value being reproduced verbatim** (SpEL expressions, JSON snippets, script text) inside a larger string such as `ssn_Message`, `notes`, or a script body:
  ```
@@ -3548,7 +3558,9 @@ A trigger's `description` doesn't change its behaviour; the resource (and schedu
 
 # Bash Instructions
 
-* Use this loop form, never `for i in $(seq 1 30); do`:
+**These style rules apply ONLY to Bash you write yourself.** A script the prompt supplies is copied verbatim (keep its `$(seq 1 10)`, its `$` variables and its single line); never "fix" it with the rules below (observed: a prompt's one-line `for i in $(seq 1 10); do ...; done` rewritten to a multi-line `{1..10}` loop).
+
+* In your own scripts, use this loop form, never `for i in $(seq 1 30); do`:
 
 ```
 for i in {1..5}; do
@@ -3556,7 +3568,7 @@ for i in {1..5}; do
 done
 ```
 
-* Avoid the dollar sign `$` (e.g. bash variables) in simple bash scripts — hard to escape in Terraform.
+* In your own simple bash scripts, avoid the dollar sign `$` (e.g. bash variables) — hard to escape in Terraform.
 
 # Patterns
 

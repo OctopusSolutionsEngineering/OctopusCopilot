@@ -94,6 +94,7 @@ from domain.sanitizers.terraform import (
     fix_donor_package_attribute,
     escape_invalid_template_directives,
     escape_template_directives_in_script_bodies,
+    undouble_percent_after_number_in_script_bodies,
     add_run_on_server_to_worker_pool_steps,
     add_steps_order_dependency_to_channels_with_rules,
     add_child_steps_order_dependency_to_channels_with_rules,
@@ -122,6 +123,8 @@ from domain.sanitizers.terraform import (
     disable_version_controlled_projects,
     remove_template_parameters_from_execution_properties,
     remove_action_properties_from_template_parameters,
+    remove_empty_template_parameters,
+    fix_invalid_tentacle_thumbprints,
     fix_aws_ecr_feed_attributes,
     add_missing_terraform_template,
     remove_duplicate_lifecycle_phases,
@@ -1132,6 +1135,8 @@ def sanitize_configuration(configuration):
     configuration = fix_donor_package_attribute(configuration)
     configuration = escape_invalid_template_directives(configuration)
     configuration = escape_template_directives_in_script_bodies(configuration)
+    # A lone %% is never an escape, so "100%%" in a script prints both percent signs
+    configuration = undouble_percent_after_number_in_script_bodies(configuration)
     # Heredoc values are text for another tool, so their percent-braces are never directives here
     configuration = escape_template_directives_in_heredocs(configuration)
     # Prose mentioning a directive, like an if with no endif, fails tofu init for the whole file
@@ -1153,6 +1158,10 @@ def sanitize_configuration(configuration):
     configuration = remove_type_from_templated_steps(configuration)
     configuration = remove_template_parameters_from_execution_properties(configuration)
     configuration = remove_action_properties_from_template_parameters(configuration)
+    # An empty step template parameter is discarded by Octopus and then reported as vanished
+    configuration = remove_empty_template_parameters(configuration)
+    # Octopus rejects a tentacle thumbprint that is not hex
+    configuration = fix_invalid_tentacle_thumbprints(configuration)
     configuration = remove_named_packages_from_package_deploy_steps(configuration)
     configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
     # An unscoped variable must not have a scope block, or the apply fails with a changed block count

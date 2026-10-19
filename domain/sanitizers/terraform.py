@@ -2906,6 +2906,31 @@ def escape_template_directives_in_script_bodies(config):
     return SCRIPT_BODY_HEREDOC_REGEX.sub(escape_heredoc, result)
 
 
+DOUBLED_PERCENT_AFTER_NUMBER_REGEX = re.compile(r"(?<=\d)%%(?=['\"\s),;]|\\\"|$)", re.MULTILINE)
+
+
+def undouble_percent_after_number_in_script_bodies(config):
+    """
+    HCL only treats %% as an escape when a brace follows, so a lone %% stays doubled in the saved script. The LLM
+    keeps doubling the percent in text like "100% healthy" or print('recalibrating 100%'), and the script then
+    prints "100%%". In a ScriptBody, a %% that follows a digit and comes before a quote, bracket, punctuation,
+    whitespace or the end of the line is reduced to %. A %% before anything else, such as printf "100%%\n",
+    is left alone.
+    """
+
+    def undouble(match):
+        return match.group(1) + DOUBLED_PERCENT_AFTER_NUMBER_REGEX.sub("%", match.group(2)) + match.group(3)
+
+    def undouble_heredoc(match):
+        return match.group(1) + DOUBLED_PERCENT_AFTER_NUMBER_REGEX.sub("%", match.group(3)) + match.group(4)
+
+    if not config or "%%" not in config:
+        return config
+
+    result = SCRIPT_BODY_LINE_REGEX.sub(undouble, config)
+    return SCRIPT_BODY_HEREDOC_REGEX.sub(undouble_heredoc, result)
+
+
 WORKER_POOL_ATTRIBUTE_REGEX = re.compile(r"(?m)^[ \t]*worker_pool_(?:variable|id)[ \t]*=")
 RUN_ON_SERVER_PROPERTY_REGEX = re.compile(r'"Octopus\.Action\.RunOnServer"')
 
@@ -4641,6 +4666,90 @@ def remove_action_properties_from_template_parameters(config):
                         continue
                     kept.append(line)
                 block = block[: parameters.end()] + "".join(kept) + block[parameters_end:]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+EMPTY_PARAMETER_LINE_REGEX = re.compile(r'(?m)^[ \t]*"[^"\n]+"[ \t]*=[ \t]*""[ \t]*,?[ \t]*\n')
+
+
+def remove_empty_template_parameters(config):
+    """
+    Octopus discards a step template parameter with an empty value, so a `"CheckTargets.Octopus.Role" = ""` entry in
+    the parameters of an octopusdeploy_process_templated_step fails the apply with:
+    Provider produced inconsistent result after apply ... .parameters: element "CheckTargets.Octopus.Role" has
+    vanished.
+    Entries of parameters with an empty string value are removed, so the template default applies.
+    """
+
+    if not config or "octopusdeploy_process_templated_step" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        parameters = TEMPLATED_STEP_PARAMETERS_BLOCK_REGEX.search(block)
+        if parameters:
+            parameters_end = find_block_end(block, parameters.end() - 1)
+            if parameters_end:
+                body = EMPTY_PARAMETER_LINE_REGEX.sub("", block[parameters.end() : parameters_end])
+                block = block[: parameters.end()] + body + block[parameters_end:]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
+PLACEHOLDER_TENTACLE_THUMBPRINT = "0123456789ABCDEF0123456789ABCDEF01234567"
+TENTACLE_TARGET_HEADER_REGEX = re.compile(
+    r'resource\s+"octopusdeploy_(?:listening|polling)_tentacle_deployment_target"\s+"[^"]+"\s*\{'
+)
+TENTACLE_THUMBPRINT_REGEX = re.compile(r'(?m)^([ \t]*thumbprint[ \t]*=[ \t]*")([^"\n]*)(")')
+HEX_THUMBPRINT_REGEX = re.compile(r"^[0-9A-Fa-f]+$")
+
+
+def fix_invalid_tentacle_thumbprints(config):
+    """
+    Octopus only accepts a hex tentacle thumbprint, so a prompt-supplied value like "ZZZZ-not-hex" copied into an
+    octopusdeploy_listening_tentacle_deployment_target fails the apply with:
+    Octopus API error: There was a problem with your request. [Thumbprints must only contain letters A to F and
+    numbers.]
+    A non-hex thumbprint on a listening or polling tentacle target is replaced with a placeholder. Interpolated
+    values are left alone.
+    """
+
+    if not config or "tentacle_deployment_target" not in config:
+        return config
+
+    def fix(match):
+        value = match.group(2)
+        if "${" in value or HEX_THUMBPRINT_REGEX.match(value):
+            return match.group(0)
+        return match.group(1) + PLACEHOLDER_TENTACLE_THUMBPRINT + match.group(3)
+
+    result = config
+    position = 0
+    while True:
+        header = TENTACLE_TARGET_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = TENTACLE_THUMBPRINT_REGEX.sub(fix, result[header.start() : end])
         result = result[: header.start()] + block + result[end:]
         position = header.start() + len(block)
 
