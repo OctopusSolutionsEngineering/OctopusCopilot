@@ -7503,6 +7503,63 @@ def remove_empty_custom_field_definitions(config):
     return EMPTY_CUSTOM_FIELD_DEFINITIONS_LINE_REGEX.sub("", config)
 
 
+CHANNEL_PARENT_ENVIRONMENT_LINE_REGEX = re.compile(r"(?m)^[ \t]*parent_environment_id[ \t]*=")
+CHANNEL_LIFECYCLE_ID_LINE_REGEX = re.compile(r"(?m)^[ \t]*lifecycle_id[ \t]*=")
+CHANNEL_TYPE_LINE_REGEX = re.compile(r'(?m)^(?P<indent>[ \t]*)type[ \t]*=[ \t]*"(?P<type>[^"]*)"[ \t]*$')
+CHANNEL_NAME_LINE_REGEX = re.compile(r"(?m)^(?P<indent>[ \t]*)name[ \t]*=.*$")
+
+
+def add_ephemeral_environment_channel_type(config):
+    """
+    A channel with a parent_environment_id is an ephemeral environment channel, but the type defaults to Lifecycle
+    when it is omitted (observed: the "Features" channel had parent_environment_id, ephemeral_environment_name_template
+    and custom_field_definitions, but no type), so the apply fails with:
+    Octopus API error: There was a problem with your request. [A parent environment must not be provided for a
+    Lifecycle channel.]
+    A channel with a parent_environment_id and no lifecycle_id is given type = "EphemeralEnvironment".
+    """
+
+    if not config or "octopusdeploy_channel" not in config or "parent_environment_id" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = CHANNEL_RESOURCE_HEADER_REGEX.search(result, position)
+        if not header:
+            return result
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        new_block = block
+        if CHANNEL_PARENT_ENVIRONMENT_LINE_REGEX.search(block) and not CHANNEL_LIFECYCLE_ID_LINE_REGEX.search(block):
+            channel_type = CHANNEL_TYPE_LINE_REGEX.search(block)
+            if channel_type:
+                if channel_type.group("type") != "EphemeralEnvironment":
+                    new_block = (
+                        block[: channel_type.start()]
+                        + f'{channel_type.group("indent")}type = "EphemeralEnvironment"'
+                        + block[channel_type.end() :]
+                    )
+            else:
+                name = CHANNEL_NAME_LINE_REGEX.search(block)
+                if name:
+                    new_block = (
+                        block[: name.end()]
+                        + f'\n{name.group("indent")}type = "EphemeralEnvironment"'
+                        + block[name.end() :]
+                    )
+                else:
+                    header_end = header.end() - header.start()
+                    new_block = block[:header_end] + '\n  type = "EphemeralEnvironment"' + block[header_end:]
+
+        result = result[: header.start()] + new_block + result[end:]
+        position = header.start() + len(new_block)
+
+
 CONTAINER_NULL_FEED_ID_REGEX = re.compile(r"(?P<key>\bfeed_id\s*=\s*)null\b")
 CONTAINER_NULL_IMAGE_REGEX = re.compile(r"(?P<key>\bimage\s*=\s*)null\b")
 CONTAINER_NON_NULL_VALUE_REGEX = re.compile(r'\b(?:dockerfile|image|git_url)\s*=\s*(?!null\b)\S')
