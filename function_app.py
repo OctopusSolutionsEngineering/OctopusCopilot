@@ -45,6 +45,7 @@ from domain.requests.github.copilot_request_context import (
     get_github_user_from_form,
     build_form_tools,
     get_region_from_headers,
+    get_api_key_and_url,
 )
 from domain.response.copilot_response import CopilotResponse
 from domain.sanitizers.sanitize_logs import sanitize_message
@@ -71,7 +72,12 @@ from infrastructure.codefresh import get_codefresh_user
 from infrastructure.github import get_github_user, exchange_github_code
 from infrastructure.http_pool import http
 from infrastructure.llm import llm_tool_query, NO_FUNCTION_RESPONSE
-from infrastructure.octopus import get_current_user, create_limited_api_key, get_version
+from infrastructure.octopus import (
+    get_current_user,
+    create_limited_api_key,
+    get_version,
+    get_spaces_generator,
+)
 from infrastructure.terraform_context import delete_old_cached_items
 from infrastructure.users import (
     delete_old_user_details,
@@ -407,6 +413,41 @@ def query_form(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         handle_error(e)
         return func.HttpResponse("Failed to read form HTML", status_code=500)
+
+
+@app.route(route="spaces", auth_level=func.AuthLevel.ANONYMOUS)
+def spaces(req: func.HttpRequest) -> func.HttpResponse:
+    # Splitting the logic out makes testing easier, as the decorator attached to this function
+    # makes it difficult to test.
+    return spaces_internal(req)
+
+
+def spaces_internal(req: func.HttpRequest) -> func.HttpResponse:
+    """
+    Lists the names of the spaces in the Octopus instance linked to the current user. This
+    populates the space selector in the query form.
+    :param req: The HTTP request
+    :return: A JSON array of space names
+    """
+    try:
+        api_key, url = get_api_key_and_url(req)
+        space_names = [space["Name"] for space in get_spaces_generator(api_key, url)]
+        return func.HttpResponse(
+            json.dumps(space_names), headers={"Content-Type": "application/json"}
+        )
+    except (UserNotLoggedIn, UserNotConfigured, OctopusApiKeyInvalid):
+        return func.HttpResponse(
+            json.dumps([]),
+            status_code=401,
+            headers={"Content-Type": "application/json"},
+        )
+    except Exception as e:
+        handle_error(e)
+        return func.HttpResponse(
+            json.dumps([]),
+            status_code=500,
+            headers={"Content-Type": "application/json"},
+        )
 
 
 @app.route(route="octopus_login_submit", auth_level=func.AuthLevel.ANONYMOUS)

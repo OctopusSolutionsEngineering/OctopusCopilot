@@ -151,6 +151,33 @@
             color: var(--text-muted);
         }
 
+        .query-options {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .select-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .space-select {
+            max-width: 280px;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-inset);
+            color: var(--text);
+            font: inherit;
+        }
+
+        .space-select:disabled {
+            color: var(--text-dim);
+        }
+
         .checkbox-label {
             display: inline-flex;
             align-items: center;
@@ -279,10 +306,18 @@
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
-            <label class="checkbox-label help-text">
-                <input type="checkbox" id="autoApprove" name="autoApprove">
-                Auto-approve prompts
-            </label>
+            <div class="query-options help-text">
+                <label class="select-label">
+                    Space
+                    <select id="space" name="space" class="space-select" disabled>
+                        <option value="">Loading spaces...</option>
+                    </select>
+                </label>
+                <label class="checkbox-label">
+                    <input type="checkbox" id="autoApprove" name="autoApprove">
+                    Auto-approve prompts
+                </label>
+            </div>
         </div>
 
         <div class="section">
@@ -364,6 +399,13 @@
     autoApprove.onchange = function () {
         localStorage.setItem("autoApprove", autoApprove.checked)
     }
+
+    // Save the selected space whenever it changes
+    space.onchange = function () {
+        localStorage.setItem("space", space.value)
+    }
+
+    loadSpaces()
 
     // Don't display the confirmation buttons by default. This must happen before
     // checkLogin(), which hides the suggestions and history while they are shown.
@@ -569,6 +611,49 @@
         }
     }
 
+    function setSpaceOptions(names, placeholder) {
+        space.innerHTML = ""
+
+        if (names.length === 0) {
+            const option = document.createElement("option")
+            option.value = ""
+            option.textContent = placeholder
+            space.appendChild(option)
+            space.disabled = true
+            return
+        }
+
+        names.forEach((name) => {
+            const option = document.createElement("option")
+            option.value = name
+            option.textContent = name
+            space.appendChild(option)
+        })
+
+        // Restore the saved space if it still exists, otherwise fall back to the first one
+        const savedSpace = localStorage.getItem("space")
+        if (savedSpace && names.indexOf(savedSpace) !== -1) {
+            space.value = savedSpace
+        }
+        space.disabled = false
+    }
+
+    async function loadSpaces() {
+        if (!loggedIn) {
+            setSpaceOptions([], "Log in to load spaces")
+            return
+        }
+
+        try {
+            const spacesResponse = await fetch("/api/spaces")
+            const names = spacesResponse.ok ? await spacesResponse.json() : []
+            setSpaceOptions(names, "No spaces available")
+        } catch (e) {
+            console.log(e)
+            setSpaceOptions([], "No spaces available")
+        }
+    }
+
     function sanitizeBase64(input) {
         if (!input) {
             return null
@@ -648,6 +733,7 @@
             loggedIn = false
             checkLogin()
             updateHistoryLinkState()
+            loadSpaces()
         }
     }
 
@@ -789,6 +875,10 @@
             return
         }
 
+        // Every prompt is told which space is selected. This is added after the length
+        // limit is applied so it is never truncated.
+        const spaceSuffix = space.value ? "\n\nThe current space is \"" + space.value + "\"" : ""
+
         if (queryHistory.indexOf(sanitized_value) === -1) {
             queryHistory.push(sanitized_value)
             updateHistory()
@@ -798,7 +888,7 @@
         debugging.innerHTML = ""
 
         resetPromptQueue()
-        promptQueue = prompts
+        promptQueue = prompts.map(p => p + spaceSuffix)
         processNextPrompt()
     }
 
