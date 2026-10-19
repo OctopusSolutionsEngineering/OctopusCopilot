@@ -424,25 +424,43 @@
     const PROMPT_SEPARATOR = "\n---\n"
     let promptQueue = []
     let promptIndex = 0
-    // The responses from the prompts that have already completed
-    let completedResponses = []
 
+    function renderMarkdown(text) {
+        markdown.innerHTML = marked.parse(DOMPurify.sanitize(text))
+    }
+
+    function isMultiPrompt() {
+        return promptQueue.length > 1
+    }
+
+    // A single prompt displays its response. When there are multiple prompts only the status is
+    // displayed, and the responses from the individual prompts are not shown.
     function renderResponse(status) {
-        const output = completedResponses.concat(response ? [response] : [])
+        const output = []
+        if (response && !isMultiPrompt()) {
+            output.push(response)
+        }
         if (status) {
             output.push("**" + status + "**")
         }
-        markdown.innerHTML = marked.parse(DOMPurify.sanitize(output.join("\n\n---\n\n")))
+        renderMarkdown(output.join("\n\n---\n\n"))
+    }
+
+    function renderProcessing() {
+        if (isMultiPrompt()) {
+            renderResponse("Processing prompt " + (promptIndex + 1) + " of " + promptQueue.length + "...")
+        } else {
+            renderResponse("Processing...")
+        }
     }
 
     function promptLabel() {
-        return promptQueue.length > 1 ? "Prompt " + (promptIndex + 1) + " of " + promptQueue.length : "The prompt"
+        return isMultiPrompt() ? "Prompt " + (promptIndex + 1) + " of " + promptQueue.length : "The prompt"
     }
 
     function resetPromptQueue() {
         promptQueue = []
         promptIndex = 0
-        completedResponses = []
     }
 
     function handleEventSourceError(startTime, evtSource, event) {
@@ -496,7 +514,14 @@
                 response += "\n"
             }
         })
-        renderResponse()
+        // Multiple prompts only show the response when it needs to be approved, otherwise only the progress is displayed
+        if (!isMultiPrompt()) {
+            renderResponse()
+        } else if (actionPending && !autoApproveId) {
+            renderMarkdown(response)
+        } else {
+            renderProcessing()
+        }
 
         // Send the approval straight away rather than waiting for the Accept button.
         if (autoApproveId) {
@@ -514,28 +539,27 @@
     }
 
     function completePrompt() {
-        if (response) {
-            completedResponses.push(response)
-        }
-        response = ""
         promptIndex++
         processNextPrompt()
     }
 
     function processNextPrompt() {
         if (promptIndex >= promptQueue.length) {
-            const count = promptQueue.length
-            renderResponse(count + (count === 1 ? " prompt" : " prompts") + " processed correctly.")
+            // A single prompt just displays its response, while multiple prompts display a summary
+            if (isMultiPrompt()) {
+                renderResponse(promptQueue.length + " prompts processed correctly.")
+            } else {
+                renderResponse()
+            }
             resetPromptQueue()
             enableInput()
             return
         }
 
-        if (promptQueue.length > 1) {
-            renderResponse("Processing prompt " + (promptIndex + 1) + " of " + promptQueue.length + "...")
-        } else {
-            renderResponse("Processing...")
-        }
+        // The response is cleared when the next prompt starts rather than when the previous prompt
+        // completes, so a single prompt still displays its response alongside the final status.
+        response = ""
+        renderProcessing()
 
         const startTime = new Date().getTime()
 
@@ -582,7 +606,11 @@
         return () => {
             response = ""
             hideConfirmation()
-            renderResponse("Request was approved. Processing...")
+            if (isMultiPrompt()) {
+                renderProcessing()
+            } else {
+                renderResponse("Request was approved. Processing...")
+            }
 
              // Keep the form locked for the duration of the approved prompt so a
              // second query cannot be submitted until this one completes.
@@ -635,7 +663,13 @@
         if (savedSpace && names.indexOf(savedSpace) !== -1) {
             space.value = savedSpace
         }
-        space.disabled = false
+        // Spaces may finish loading while a prompt is being processed, so leave the list locked until it is done
+        space.disabled = processing
+    }
+
+    function hasSpaces() {
+        // The placeholder option shown when no spaces are loaded has an empty value
+        return space.options.length !== 0 && space.options[0].value !== ""
     }
 
     async function loadSpaces() {
@@ -829,6 +863,8 @@
         query.disabled = false
         submit.disabled = false
         github_login.disabled = false
+        space.disabled = !hasSpaces()
+        autoApprove.disabled = false
         processing = false
         updateSuggestionsAndHistory()
     }
@@ -837,6 +873,8 @@
         query.disabled = true
         submit.disabled = true
         github_login.disabled = true
+        space.disabled = true
+        autoApprove.disabled = true
         processing = true
         updateSuggestionsAndHistory()
     }

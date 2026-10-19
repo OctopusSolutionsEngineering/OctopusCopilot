@@ -121,6 +121,7 @@ from domain.sanitizers.terraform import (
     fix_project_description_with_extra_text,
     disable_version_controlled_projects,
     remove_template_parameters_from_execution_properties,
+    remove_action_properties_from_template_parameters,
     fix_aws_ecr_feed_attributes,
     add_missing_terraform_template,
     remove_duplicate_lifecycle_phases,
@@ -1151,6 +1152,7 @@ def sanitize_configuration(configuration):
     configuration = fix_bare_comparison_in_condition_expression(configuration)
     configuration = remove_type_from_templated_steps(configuration)
     configuration = remove_template_parameters_from_execution_properties(configuration)
+    configuration = remove_action_properties_from_template_parameters(configuration)
     configuration = remove_named_packages_from_package_deploy_steps(configuration)
     configuration = remove_duplicate_variables_with_same_name_and_scope(configuration)
     # An unscoped variable must not have a scope block, or the apply fails with a changed block count

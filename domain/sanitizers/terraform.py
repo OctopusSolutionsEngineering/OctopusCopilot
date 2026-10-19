@@ -4593,6 +4593,60 @@ def remove_template_parameters_from_execution_properties(config):
     return result
 
 
+HEREDOC_START_REGEX = re.compile(r"=[ \t]*<<-?(?P<marker>\w+)[ \t]*$")
+
+
+def remove_action_properties_from_template_parameters(config):
+    """
+    The `parameters` of an octopusdeploy_process_templated_step are the parameters defined by the step template, and
+    action settings such as Octopus.Action.Script.ScriptBody are not parameters. LLMs add a script body to the
+    parameters of a community step template step, and the provider drops it, which fails the apply with:
+    Provider produced inconsistent result after apply ... .parameters: element "Octopus.Action.Script.ScriptBody" has
+    vanished.
+    Entries of parameters that are action settings (Octopus.Action.*) are removed.
+    """
+
+    if not config or "octopusdeploy_process_templated_step" not in config:
+        return config
+
+    result = config
+    position = 0
+    while True:
+        header = TEMPLATED_STEP_HEADER_REGEX.search(result, position)
+        if not header:
+            break
+        end = find_block_end(result, header.end())
+        if not end:
+            position = header.end()
+            continue
+
+        block = result[header.start() : end]
+        parameters = TEMPLATED_STEP_PARAMETERS_BLOCK_REGEX.search(block)
+        if parameters:
+            parameters_end = find_block_end(block, parameters.end() - 1)
+            if parameters_end:
+                body = block[parameters.end() : parameters_end]
+                kept = []
+                heredoc_marker = None
+                for line in body.splitlines(keepends=True):
+                    if heredoc_marker:
+                        if line.strip() == heredoc_marker:
+                            heredoc_marker = None
+                        continue
+                    key = PROPERTY_KEY_REGEX.match(line)
+                    if key and key.group("key").startswith(ACTION_PROPERTY_PREFIXES):
+                        heredoc = HEREDOC_START_REGEX.search(line.rstrip("\n"))
+                        if heredoc:
+                            heredoc_marker = heredoc.group("marker")
+                        continue
+                    kept.append(line)
+                block = block[: parameters.end()] + "".join(kept) + block[parameters_end:]
+        result = result[: header.start()] + block + result[end:]
+        position = header.start() + len(block)
+
+    return result
+
+
 PROJECT_HEADER_REGEX = re.compile(r'resource\s+"octopusdeploy_project"\s+"\w+"\s*\{')
 IS_VERSION_CONTROLLED_TRUE_REGEX = re.compile(r"(?m)^([ \t]*is_version_controlled[ \t]*=[ \t]*)true\b")
 GIT_PERSISTENCE_BLOCK_REGEX = re.compile(r"(?m)^[ \t]*git_\w*persistence_settings[ \t]*\{[ \t]*\n")
