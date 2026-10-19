@@ -10,6 +10,36 @@ name: Python Build
   schedule:
     - cron: '0 0 1 * *'
 jobs:
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-26.04
+    outputs:
+      ui_only: ${{ steps.check.outputs.ui_only }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: '0'
+      # The tests are skipped when a push only changes *.html and *.css files. Manual and scheduled runs,
+      # new branches, and force pushes where the previous commit can't be found always run the tests.
+      - id: check
+        name: Check for HTML and CSS only changes
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          AFTER: ${{ github.sha }}
+        run: |
+          ui_only=false
+          if [[ "$EVENT_NAME" == "push" && -n "$BEFORE" && ! "$BEFORE" =~ ^0+$ ]] && git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            changed=$(git diff --name-only "$BEFORE" "$AFTER")
+            echo "Changed files:"
+            echo "$changed"
+            if [[ -n "$changed" ]] && ! grep -qvE '\.(html|css)$' <<< "$changed"; then
+              ui_only=true
+            fi
+          fi
+          echo "HTML and CSS only changes: $ui_only"
+          echo "ui_only=$ui_only" >> "$GITHUB_OUTPUT"
   validate:
     runs-on: ubuntu-26.04
     steps:
@@ -33,7 +63,8 @@ jobs:
     name: Test
     runs-on: ubuntu-26.04
     timeout-minutes: 90
-    needs: validate
+    needs: [ changes, validate ]
+    if: needs.changes.outputs.ui_only != 'true'
     strategy:
       matrix:
         group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ]
@@ -364,9 +395,14 @@ jobs:
 
   build:
     name: Build
-    needs: test-results
+    needs: [ changes, test-results ]
     runs-on: ubuntu-26.04
-    if: github.event_name != 'schedule' && github.ref == 'refs/heads/main'
+    # The tests (and so the test results) are skipped when only *.html and *.css files changed, which must not block the build
+    if: >-
+      !cancelled()
+      && github.event_name != 'schedule'
+      && github.ref == 'refs/heads/main'
+      && (needs.test-results.result == 'success' || (needs.test-results.result == 'skipped' && needs.changes.outputs.ui_only == 'true'))
     steps:
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1

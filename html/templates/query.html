@@ -405,6 +405,8 @@
         localStorage.setItem("space", space.value)
     }
 
+    // True while the list of spaces is being fetched. Queries can't be submitted until the spaces are loaded.
+    let loadingSpaces = false
     loadSpaces()
 
     // Don't display the confirmation buttons by default. This must happen before
@@ -678,6 +680,9 @@
             return
         }
 
+        loadingSpaces = true
+        submit.disabled = true
+
         try {
             const spacesResponse = await fetch("/api/spaces")
             const names = spacesResponse.ok ? await spacesResponse.json() : []
@@ -685,6 +690,9 @@
         } catch (e) {
             console.log(e)
             setSpaceOptions([], "No spaces available")
+        } finally {
+            loadingSpaces = false
+            submit.disabled = processing
         }
     }
 
@@ -861,7 +869,7 @@
 
     function enableInput() {
         query.disabled = false
-        submit.disabled = false
+        submit.disabled = loadingSpaces
         github_login.disabled = false
         space.disabled = !hasSpaces()
         autoApprove.disabled = false
@@ -893,7 +901,7 @@
             return
         }
 
-        if (processing) {
+        if (processing || loadingSpaces) {
             return
         }
 
