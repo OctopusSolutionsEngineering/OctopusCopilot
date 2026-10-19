@@ -151,6 +151,18 @@
             color: var(--text-muted);
         }
 
+        .checkbox-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .checkbox-label input {
+            margin: 0;
+            accent-color: var(--accent-purple);
+        }
+
         #debugging {
             padding: 14px 16px;
             border: 1px solid var(--border-soft);
@@ -267,6 +279,10 @@
             <div class="invalid-feedback">
                 Please provide a valid query.
             </div>
+            <label class="checkbox-label help-text">
+                <input type="checkbox" id="autoApprove" name="autoApprove">
+                Auto-approve prompts
+            </label>
         </div>
 
         <div class="section">
@@ -343,6 +359,12 @@
         updateHistory()
     }
 
+    // Restore the auto-approve setting and save it whenever it changes
+    autoApprove.checked = localStorage.getItem("autoApprove") === "true"
+    autoApprove.onchange = function () {
+        localStorage.setItem("autoApprove", autoApprove.checked)
+    }
+
     // Don't display the confirmation buttons by default. This must happen before
     // checkLogin(), which hides the suggestions and history while they are shown.
     confirmation.style.display = "none"
@@ -355,11 +377,39 @@
     // Track the response stream
     let response = ""
 
+    // A query can hold several prompts separated by "\n---\n". They are sent one at a
+    // time, and each must finish (including any confirmation) before the next starts.
+    const PROMPT_SEPARATOR = "\n---\n"
+    let promptQueue = []
+    let promptIndex = 0
+    // The responses from the prompts that have already completed
+    let completedResponses = []
+
+    function renderResponse(status) {
+        const output = completedResponses.concat(response ? [response] : [])
+        if (status) {
+            output.push("**" + status + "**")
+        }
+        markdown.innerHTML = marked.parse(DOMPurify.sanitize(output.join("\n\n---\n\n")))
+    }
+
+    function promptLabel() {
+        return promptQueue.length > 1 ? "Prompt " + (promptIndex + 1) + " of " + promptQueue.length : "The prompt"
+    }
+
+    function resetPromptQueue() {
+        promptQueue = []
+        promptIndex = 0
+        completedResponses = []
+    }
+
     function handleEventSourceError(startTime, evtSource, event) {
         debugging.innerText = "Event: " + JSON.stringify(event)
         console.log(event)
         evtSource.close()
-        markdown.innerText = "The request resulted in an error."
+        response = ""
+        renderResponse(promptLabel() + " resulted in an error.")
+        resetPromptQueue()
         enableInput()
     }
 
@@ -378,6 +428,7 @@
          */
         let actionPending = false
         let streamStopped = false
+        let autoApproveId = null
 
         event.data.split("\n").forEach((line) => {
             parsedLine = JSON.parse(line)
@@ -385,8 +436,12 @@
             if (parsedLine.type && parsedLine.type === "action") {
                 // Add a newline to separate the actions
                 response += "\n"
-                showConfirmation()
-                accept.onclick = approveConfirmation(parsedLine.confirmation.id)
+                if (autoApprove.checked) {
+                    autoApproveId = parsedLine.confirmation.id
+                } else {
+                    showConfirmation()
+                    accept.onclick = approveConfirmation(parsedLine.confirmation.id)
+                }
                 response += parsedLine.title + "\n\n"
                 response += parsedLine.message
                 actionPending = true
@@ -399,12 +454,66 @@
                 response += "\n"
             }
         })
-        markdown.innerHTML = marked.parse(DOMPurify.sanitize(response));
+        renderResponse()
+
+        // Send the approval straight away rather than waiting for the Accept button.
+        if (autoApproveId) {
+            evtSource.close()
+            approveConfirmation(autoApproveId)()
+            return
+        }
 
          // Keep the form locked while the response is streaming or a confirmation
-         // is pending. Release it only once the stream ends with nothing to act on.
+         // is pending. Move on to the next prompt only once the stream ends with
+         // nothing to act on.
         if (streamStopped && !actionPending) {
+            completePrompt()
+        }
+    }
+
+    function completePrompt() {
+        if (response) {
+            completedResponses.push(response)
+        }
+        response = ""
+        promptIndex++
+        processNextPrompt()
+    }
+
+    function processNextPrompt() {
+        if (promptIndex >= promptQueue.length) {
+            const count = promptQueue.length
+            renderResponse(count + (count === 1 ? " prompt" : " prompts") + " processed correctly.")
+            resetPromptQueue()
             enableInput()
+            return
+        }
+
+        if (promptQueue.length > 1) {
+            renderResponse("Processing prompt " + (promptIndex + 1) + " of " + promptQueue.length + "...")
+        } else {
+            renderResponse("Processing...")
+        }
+
+        const startTime = new Date().getTime()
+
+        // Use the polyfill to get the ability to send headers.
+        var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(promptQueue[promptIndex]), {
+            // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
+            // Increase timeouts as it can take some time to process the request.
+            heartbeatTimeout: 300000,
+        });
+
+        evtSource.onmessage = (event) => {
+            handleEventSourceMessage(startTime, evtSource, event)
+        }
+
+        evtSource.addEventListener("copilot_confirmation", (event) => {
+          handleEventSourceMessage(startTime, evtSource, event)
+        })
+
+        evtSource.onerror = (event) => {
+            handleEventSourceError(startTime, evtSource, event)
         }
     }
 
@@ -421,7 +530,9 @@
     function dismissConfirmation() {
         hideConfirmation()
         response = ""
-        markdown.innerText = "Request was denied."
+        // Cancelling any prompt cancels the remaining prompts too.
+        renderResponse(promptLabel() + " was cancelled.")
+        resetPromptQueue()
         enableInput()
     }
 
@@ -429,7 +540,7 @@
         return () => {
             response = ""
             hideConfirmation()
-            markdown.innerText = "Request was approved. Processing..."
+            renderResponse("Request was approved. Processing...")
 
              // Keep the form locked for the duration of the approved prompt so a
              // second query cannot be submitted until this one completes.
@@ -664,9 +775,17 @@
 
         form.classList.add('was-validated')
 
-        sanitized_value = DOMPurify.sanitize(query.value).substring(0, MAX_QUERY_LENGTH)
+        sanitized_value = DOMPurify.sanitize(query.value)
         query.value = sanitized_value
         if (!form.checkValidity()) {
+            return
+        }
+
+        // The length limit applies to each prompt rather than the query as a whole.
+        const prompts = sanitized_value.split(PROMPT_SEPARATOR)
+            .map(p => p.trim().substring(0, MAX_QUERY_LENGTH))
+            .filter(p => p)
+        if (prompts.length === 0) {
             return
         }
 
@@ -675,30 +794,12 @@
             updateHistory()
         }
 
-        markdown.innerText = "Processing..."
         disableInput()
-
         debugging.innerHTML = ""
-        const startTime = new Date().getTime()
 
-        // Use the polyfill to get the ability to send headers.
-        var evtSource = new EventSourcePolyfill('/api/form_handler?message=' + encodeURIComponent(sanitized_value), {
-            // https://stackoverflow.com/questions/71688537/event-source-timeout-in-45-seconds
-            // Increase timeouts as it can take some time to process the request.
-            heartbeatTimeout: 300000,
-        });
-
-        evtSource.onmessage = (event) => {
-            handleEventSourceMessage(startTime, evtSource, event)
-        }
-
-        evtSource.addEventListener("copilot_confirmation", (event) => {
-          handleEventSourceMessage(startTime, evtSource, event)
-        })
-
-        evtSource.onerror = (event) => {
-            handleEventSourceError(startTime, evtSource, event)
-        }
+        resetPromptQueue()
+        promptQueue = prompts
+        processNextPrompt()
     }
 
     dismiss.onclick = dismissConfirmation
