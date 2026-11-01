@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import glob
 import json
@@ -44,19 +46,52 @@ from domain.tools.wrapper.project_variables import (
     answer_project_variables_wrapper,
     answer_project_variables_usage_wrapper,
 )
+from domain.tools.wrapper.projects.create_argo_cd_modify_manifest_project_wrapper import (
+    create_argocdmodifymanifest_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_argo_cd_rollouts_project_wrapper import (
+    create_argocdrollouts_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_argo_cd_update_image_tags_project_wrapper import (
+    create_argocdimagetag_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_azure_function_project import (
     create_azure_function_project_wrapper,
 )
 from domain.tools.wrapper.projects.create_azure_web_app_project import (
     create_azure_web_app_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_claude_project import (
+    create_claude_project_wrapper,
+)
 from domain.tools.wrapper.projects.create_iis_project import create_iis_project_wrapper
 from domain.tools.wrapper.projects.create_k8s_project import create_k8s_project_wrapper
 from domain.tools.wrapper.projects.create_lambda_project import (
     create_lambda_project_wrapper,
 )
+from domain.tools.wrapper.projects.create_llm_project import create_llm_project_wrapper
 from domain.tools.wrapper.projects.create_orchestration_project import (
     create_orchestration_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_progressive_deployment_project import (
+    create_progressive_deployment_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_project import create_project_wrapper
+from domain.tools.wrapper.projects.create_runbook_wrapper import create_runbook_wrapper
+from domain.tools.wrapper.projects.create_script_project import (
+    create_script_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_terraform_project import (
+    create_terraform_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_tomcat_project_wrapper import (
+    create_tomcat_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_vm_bluegreen_project import (
+    create_vm_blue_green_project_wrapper,
+)
+from domain.tools.wrapper.projects.create_winservice_project import (
+    create_winservice_project_wrapper,
 )
 from domain.tools.wrapper.release_what_changed import release_what_changed_wrapper
 from domain.tools.wrapper.targets_query import answer_machines_wrapper
@@ -209,6 +244,41 @@ def build_tools(tool_query):
         "ephemeral_environments.tf",
     ]
 
+    def template_project(wrapper, project_example, context_name, system_prompt):
+        """
+        Builds a FunctionDefinition that creates a project from a template, matching the
+        configuration used by the web interface in copilot_request_context.py
+        """
+        return FunctionDefinition(
+            wrapper(
+                tool_query,
+                callback=create_template_project_callback(
+                    lambda: (get_api_key(), get_octopus_api()),
+                    get_github_user(),
+                    None,
+                    azurite_connection_string,
+                    log_query,
+                    general_project_examples,
+                    project_example,
+                    context_name,
+                    "generalinstructions.txt",
+                    system_prompt,
+                    None,
+                    None,
+                    ollama_model=None,
+                ),
+                logging=log_query,
+            ),
+            callback=create_template_project_confirm_callback_wrapper(
+                tool_query,
+                get_github_user(),
+                lambda: (get_api_key(), get_octopus_api()),
+                log_query,
+                None,
+                None,
+            ),
+        )
+
     return FunctionDefinitions(
         [
             FunctionDefinition(
@@ -315,173 +385,119 @@ def build_tools(tool_query):
                 )
             ),
             *deployment_functions,
-            FunctionDefinition(
-                create_k8s_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "k8s.tf",
-                        "Kubernetes",
-                        "generalinstructions.txt",
-                        "k8ssystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_k8s_project_wrapper,
+                "k8s.tf",
+                "Kubernetes",
+                "k8ssystemprompt.txt",
             ),
-            FunctionDefinition(
-                create_azure_function_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "azurefunction.tf",
-                        "Azure Function",
-                        "generalinstructions.txt",
-                        "azurefunctionsystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_azure_web_app_project_wrapper,
+                "azurewebapp.tf",
+                "Azure Web App",
+                "azurewebappsystemprompt.txt",
             ),
-            FunctionDefinition(
-                create_lambda_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "awslambda.tf",
-                        "AWS Lambda",
-                        "generalinstructions.txt",
-                        "awslambdaystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_azure_function_project_wrapper,
+                "azurefunction.tf",
+                "Azure Function",
+                "azurefunctionsystemprompt.txt",
             ),
-            FunctionDefinition(
-                create_azure_web_app_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "azurewebapp.tf",
-                        "Azure Web App",
-                        "generalinstructions.txt",
-                        "azurewebappsystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_lambda_project_wrapper,
+                "awslambda.tf",
+                "AWS Lambda",
+                "awslambdaystemprompt.txt",
             ),
-            FunctionDefinition(
-                create_iis_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "windowsiis.tf",
-                        "Windows IIS",
-                        "generalinstructions.txt",
-                        "windowsiissystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_iis_project_wrapper,
+                "windowsiis.tf",
+                "Windows IIS",
+                "windowsiissystemprompt.txt",
             ),
-            FunctionDefinition(
-                create_orchestration_project_wrapper(
-                    tool_query,
-                    callback=create_template_project_callback(
-                        lambda: (get_api_key(), get_octopus_api()),
-                        get_github_user(),
-                        azurite_connection_string,
-                        log_query,
-                        general_project_examples,
-                        "deploymentorchestration.tf",
-                        "Deployment Orchestration",
-                        "generalinstructions.txt",
-                        "deploymentorchestrationsystemprompt.txt",
-                        None,
-                        None,
-                        ollama_model=None,
-                    ),
-                    logging=log_query,
-                ),
-                callback=create_template_project_confirm_callback_wrapper(
-                    tool_query,
-                    get_github_user(),
-                    lambda: (get_api_key(), get_octopus_api()),
-                    log_query,
-                    None,
-                    None,
-                ),
+            template_project(
+                create_winservice_project_wrapper,
+                "windowsservice.tf",
+                "Windows Service",
+                "windowsservicesystemprompt.txt",
+            ),
+            template_project(
+                create_orchestration_project_wrapper,
+                "deploymentorchestration.tf",
+                "Deployment Orchestration",
+                "deploymentorchestrationsystemprompt.txt",
+            ),
+            template_project(
+                create_terraform_project_wrapper,
+                "terraform.tf",
+                "Terraform Deploy",
+                "terraformsystemprompt.txt",
+            ),
+            template_project(
+                create_claude_project_wrapper,
+                "claude.tf",
+                "Claude",
+                "claudesystemprompt.txt",
+            ),
+            template_project(
+                create_progressive_deployment_project_wrapper,
+                "progressive_deployment.tf",
+                "Progressive Deployment",
+                "progressive_deploymentsystemprompt.txt",
+            ),
+            template_project(
+                create_script_project_wrapper,
+                "script.tf",
+                "Script Execution",
+                "scriptsystemprompt.txt",
+            ),
+            template_project(
+                create_project_wrapper,
+                "emptyproject.tf",
+                "Empty",
+                "emptyprojectprompt.txt",
+            ),
+            template_project(
+                create_llm_project_wrapper,
+                "llm.tf",
+                "LLM Kubernetes",
+                "llmsystemprompt.txt",
+            ),
+            template_project(
+                create_vm_blue_green_project_wrapper,
+                "vmbluegreen.tf",
+                "VM Blue/Green",
+                "vmbluegreensystemprompt.txt",
+            ),
+            template_project(
+                create_tomcat_project_wrapper,
+                "apachetomcat.tf",
+                "Apache Tomcat",
+                "tomcatsystemprompt.txt",
+            ),
+            template_project(
+                create_argocdimagetag_project_wrapper,
+                "argoupdatetags.tf",
+                "Argo CD Update Image Tags",
+                "argoupdatetagssystemprompt.txt",
+            ),
+            template_project(
+                create_argocdmodifymanifest_project_wrapper,
+                "argoupdatemanifest.tf",
+                "Argo CD Update Manifest",
+                "argoupdatemanifestsystemprompt.txt",
+            ),
+            template_project(
+                create_argocdrollouts_project_wrapper,
+                "argocdrollouts.tf",
+                "Argo CD Rollouts",
+                "argocdrolloutssystemprompt.txt",
+            ),
+            template_project(
+                create_runbook_wrapper,
+                "runbook.tf",
+                "Runbook",
+                "runbookprompt.txt",
             ),
             FunctionDefinition(
                 spinnaker_wrapper(

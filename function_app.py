@@ -591,9 +591,13 @@ def codefresh_login_submit(req: func.HttpRequest) -> func.HttpResponse:
 
 @app.route(route="form_handler", auth_level=func.AuthLevel.ANONYMOUS)
 def copilot_handler(req: func.HttpRequest) -> func.HttpResponse:
-    # Splitting the logic out makes testing easier, as the decorator attached to this function
-    # makes it difficult to test.
-    return copilot_handler_internal(req)
+    return func.HttpResponse(
+        convert_to_sse_response(
+            "The AI Assistant has been deprecated. "
+            + "The Octopus MCP server is the recommended replacement"
+        ),
+        headers=get_sse_headers(),
+    )
 
 
 def copilot_handler_internal(req: func.HttpRequest) -> func.HttpResponse:
