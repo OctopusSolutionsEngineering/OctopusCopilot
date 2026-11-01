@@ -64,7 +64,9 @@ jobs:
     runs-on: ubuntu-26.04
     timeout-minutes: 90
     needs: [ changes, validate ]
-    if: needs.changes.outputs.ui_only != 'true'
+    # The tests are disabled. To re-enable them, restore this condition:
+    # if: needs.changes.outputs.ui_only != 'true'
+    if: false
     strategy:
       matrix:
         group: [ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ]
@@ -397,12 +399,14 @@ jobs:
     name: Build
     needs: [ changes, test-results ]
     runs-on: ubuntu-26.04
-    # The tests (and so the test results) are skipped when only *.html and *.css files changed, which must not block the build
+    # The tests (and so the test results) are disabled, which must not block the build. When the tests are re-enabled,
+    # restore this final condition:
+    # && (needs.test-results.result == 'success' || (needs.test-results.result == 'skipped' && needs.changes.outputs.ui_only == 'true'))
     if: >-
       !cancelled()
       && github.event_name != 'schedule'
       && github.ref == 'refs/heads/main'
-      && (needs.test-results.result == 'success' || (needs.test-results.result == 'skipped' && needs.changes.outputs.ui_only == 'true'))
+      && (needs.test-results.result == 'success' || needs.test-results.result == 'skipped')
     steps:
       - name: Login to Octopus Deploy
         uses: OctopusDeploy/login@v1

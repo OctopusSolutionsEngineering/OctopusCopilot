@@ -212,31 +212,6 @@ def build_tools(tool_query):
     :return: The OpenAI tools
     """
 
-    help_functions = [
-        FunctionDefinition(tool)
-        for tool in how_to_wrapper(
-            tool_query, how_to_cli_callback(get_github_token(), log_query), log_query
-        )
-    ]
-
-    deployment_functions = [
-        FunctionDefinition(tool)
-        for tool in release_what_changed_wrapper(
-            tool_query,
-            release_what_changed_callback_wrapper(
-                True,
-                get_github_user(),
-                get_github_token(),
-                None,
-                get_zendesk_user(),
-                get_zendesk_token(),
-                lambda: (get_api_key(), get_octopus_api()),
-                log_query,
-            ),
-            log_query,
-        )
-    ]
-
     general_project_examples = [
         "context.tf",
         "everystep.tf",
@@ -384,7 +359,6 @@ def build_tools(tool_query):
                     log_query,
                 )
             ),
-            *deployment_functions,
             template_project(
                 create_k8s_project_wrapper,
                 "k8s.tf",
@@ -507,7 +481,7 @@ def build_tools(tool_query):
                 )
             ),
         ],
-        fallback=FunctionDefinitions(help_functions),
+        fallback=FunctionDefinitions([]),
     )
 
 

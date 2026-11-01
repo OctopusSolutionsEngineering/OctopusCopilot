@@ -1,9 +1,13 @@
 import os
 
+import anthropic
 import ollama
 import openai
 from langchain_anthropic import ChatAnthropic
-from langchain_classic.agents import create_openai_tools_agent
+from langchain_classic.agents import (
+    create_openai_tools_agent,
+    create_tool_calling_agent,
+)
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_ollama import ChatOllama
 from langchain_openai import AzureChatOpenAI, ChatOpenAI
@@ -36,6 +40,16 @@ AZURE_PROJECT_SERVICE = "azure_project"
 AZURE_PROJECT_ANTHROPIC_SERVICE = "azure_project_anthropic"
 OLLAMA_PROJECT_SERVICE = "ollama_project"
 OPENAI_PROJECT_SERVICE = "openai_project"
+ANTHROPIC_PROJECT_SERVICE = "anthropic_project"
+AZURE_FUNCTIONS_SERVICE = "azure_functions"
+ANTHROPIC_FUNCTIONS_SERVICE = "anthropic_functions"
+DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5"
+# Server-side refusal fallbacks are only accepted by these model families
+ANTHROPIC_FALLBACK_MODEL_PREFIXES = (
+    "claude-fable-5-1",
+    "claude-opus-5",
+    "claude-sonnet-5-5",
+)
 AZURE_GENERAL_SERVICE = "azure_general"
 AZURE_GENERAL_QUERY_SMALL_LLM = "azure_general_query_small"
 EUROPE_REGION = "Europe"
@@ -229,6 +243,84 @@ def get_openai_use_responses_api():
     return os.getenv("OPENAI_RESPONSES", "").casefold() == "true"
 
 
+def get_anthropic_api_key():
+    """Get the key used to call the Claude API directly."""
+    return os.environ["ANTHROPIC_API_KEY"]
+
+
+def get_anthropic_model():
+    """Get the Claude model used for project generation, falling back to the default model."""
+    return os.getenv("ANTHROPIC_MODEL") or DEFAULT_ANTHROPIC_MODEL
+
+
+def get_anthropic_functions_model():
+    """Get the Claude model used to select a function, falling back to the project generation model."""
+    return os.getenv("ANTHROPIC_FUNCTIONS_MODEL") or get_anthropic_model()
+
+
+def get_anthropic_effort():
+    """
+    Get the effort used for project generation. Generating Terraform is intelligence-sensitive work,
+    so this defaults to "high" rather than the model default.
+    """
+    return os.getenv("ANTHROPIC_EFFORT", "").strip() or "high"
+
+
+def get_anthropic_functions_effort():
+    """Get the effort used to select a function. This is a simple classification, so it defaults to "low"."""
+    return os.getenv("ANTHROPIC_FUNCTIONS_EFFORT", "").strip() or "low"
+
+
+def get_anthropic_max_tokens():
+    """Get the maximum number of output tokens for project generation, defaulting to 64K."""
+    return string_to_int(os.getenv("ANTHROPIC_MAX_TOKENS", "64000"), 64000)
+
+
+def get_functions_service():
+    """Get the service used to select a function, defaulting to Azure OpenAI."""
+    return os.getenv("FUNCTIONS_SERVICE") or AZURE_FUNCTIONS_SERVICE
+
+
+def build_anthropic_llm(model, effort, max_tokens, streaming):
+    # If a request is declined by the model's safety classifiers, the "default" fallback
+    # reruns it on a suitable model in the same call. Only some models accept the parameter.
+    fallbacks = model.startswith(ANTHROPIC_FALLBACK_MODEL_PREFIXES)
+
+    # Temperature is not passed, as current Claude models reject non-default sampling parameters.
+    # Thinking is left unset, which is adaptive thinking on current models, and the depth is
+    # controlled with the effort.
+    return ChatAnthropic(
+        model=model,
+        api_key=get_anthropic_api_key(),
+        max_tokens=max_tokens,
+        effort=effort,
+        streaming=streaming,
+        betas=["server-side-fallback-2026-07-01"] if fallbacks else None,
+        model_kwargs={"extra_body": {"fallbacks": "default"}} if fallbacks else {},
+    )
+
+
+def build_anthropic_project_llm():
+    # Large max_tokens values require streaming to avoid HTTP timeouts. The streamed
+    # chunks are combined into a single message by invoke().
+    return build_anthropic_llm(
+        get_anthropic_model(),
+        get_anthropic_effort(),
+        get_anthropic_max_tokens(),
+        streaming=True,
+    )
+
+
+def build_anthropic_functions_llm():
+    # Selecting a tool produces a short response, so a non-streaming request is fine.
+    return build_anthropic_llm(
+        get_anthropic_functions_model(),
+        get_anthropic_functions_effort(),
+        16000,
+        streaming=False,
+    )
+
+
 def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     if purpose == AZURE_PROJECT_SERVICE:
         return build_azure_project_llm(region, prompt)
@@ -247,6 +339,10 @@ def build_llm(purpose, region=None, prompt=None, ollama_model=None):
     # An OpenAI-compatible endpoint is configured with a URL, so it has no regional variants.
     if purpose == OPENAI_PROJECT_SERVICE:
         return build_openai_llm()
+
+    # The Claude API is called directly, so it has no regional variants.
+    if purpose == ANTHROPIC_PROJECT_SERVICE:
+        return build_anthropic_project_llm()
 
     return build_azure_general_llm(region)
 
@@ -438,6 +534,26 @@ def build_azure_general_llm(region=None):
     )
 
 
+def build_azure_functions_llm(region=None, use_responses_api=False):
+    # Version comes from https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-ga-api-release
+    # These models support function calling: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling#function-calling-support
+
+    # We can use a specific deployment to select a tool, or fallback to the default
+    deployment = get_functions_deployment(region)
+    endpoint, api_key = get_endpoint_and_key(region)
+    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
+    temperature = os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS_TEMPERATURE") or 0
+
+    return AzureChatOpenAI(
+        temperature=temperature,
+        azure_deployment=deployment,
+        openai_api_key=api_key,
+        azure_endpoint=endpoint,
+        api_version=version,
+        use_responses_api=use_responses_api,
+    )
+
+
 @retry(RateLimitError, tries=3, delay=5)
 def llm_message_query(
     message_prompt, context, log_query=None, purpose=AZURE_GENERAL_SERVICE, region=None, ollama_model=None
@@ -450,15 +566,23 @@ def llm_message_query(
     chain = prompt | llm
 
     try:
-        response = timing_wrapper(
-            lambda: chain.invoke(context).content, "Query with " + purpose
-        )
+        message = timing_wrapper(lambda: chain.invoke(context), "Query with " + purpose)
     except openai.BadRequestError as e:
         # Errors must be raised rather than returned, as callers can't distinguish an error message from a
         # genuine response. For example, project creation would treat the error as a Terraform configuration.
         raise_bad_request_exception(e, log_query)
     except ollama.ResponseError as e:
         raise_ollama_exception(e, log_query)
+    except anthropic.BadRequestError as e:
+        raise_anthropic_exception(e, log_query)
+
+    # Claude reports a request declined by its safety classifiers as a refusal rather than an error.
+    if message.response_metadata.get("stop_reason") == "refusal":
+        if log_query:
+            log_query("Anthropic Refusal", str(message.response_metadata))
+        raise OpenAIContentFilter(message.response_metadata)
+
+    response = message.content
 
     # The response might be text or an array depending on the model and settings. GPT 5 codex for example returns an array of items.
     if isinstance(response, list):
@@ -489,6 +613,19 @@ def raise_bad_request_exception(exception, log_query=None):
     if code == "content_filter":
         raise OpenAIContentFilter(exception)
     if code == "context_length_exceeded" or "maximum context length" in message:
+        raise OpenAITokenLengthExceeded(exception)
+
+    raise OpenAIBadRequest(exception)
+
+
+def raise_anthropic_exception(exception, log_query=None):
+    # The Claude API reports an oversized request with a message like:
+    # prompt is too long: 1050000 tokens > 1000000 maximum
+
+    if log_query:
+        log_query("Anthropic Exception", str(exception))
+
+    if "prompt is too long" in str(exception.message):
         raise OpenAITokenLengthExceeded(exception)
 
     raise OpenAIBadRequest(exception)
@@ -533,24 +670,6 @@ def llm_tool_query(
 
     tools = functions.get_tools()
 
-    # Version comes from https://learn.microsoft.com/en-us/azure/ai-services/openai/api-version-deprecation#latest-ga-api-release
-    # These models support function calling: https://learn.microsoft.com/en-us/azure/ai-services/openai/how-to/function-calling#function-calling-support
-
-    # We can use a specific deployment to select a tool, or fallback to the default
-    deployment = get_functions_deployment(region)
-    endpoint, api_key = get_endpoint_and_key(region)
-    version = os.environ.get("OPENAI_API_DEPLOYMENT_FUNCTIONS_VERSION") or "2024-10-21"
-    temperature = os.environ.get("AISERVICES_DEPLOYMENT_FUNCTIONS_TEMPERATURE") or 0
-
-    llm = AzureChatOpenAI(
-        temperature=temperature,
-        azure_deployment=deployment,
-        openai_api_key=api_key,
-        azure_endpoint=endpoint,
-        api_version=version,
-        use_responses_api=use_responses_api,
-    )
-
     prompt = ChatPromptTemplate.from_messages(
         [
             ("system", "You are a helpful assistant"),
@@ -561,13 +680,22 @@ def llm_tool_query(
     )
 
     try:
-        agent_runnable = create_openai_tools_agent(llm, tools, prompt)
+        if get_functions_service() == ANTHROPIC_FUNCTIONS_SERVICE:
+            agent_runnable = create_tool_calling_agent(
+                build_anthropic_functions_llm(), tools, prompt
+            )
+        else:
+            agent_runnable = create_openai_tools_agent(
+                build_azure_functions_llm(region, use_responses_api), tools, prompt
+            )
         action = agent_runnable.invoke({"input": query, "intermediate_steps": []})
         # Get the last action if there are multiple
         if isinstance(action, list):
             action = action[-1]
     except openai.BadRequestError as e:
         raise_bad_request_exception(e, log_query)
+    except anthropic.BadRequestError as e:
+        raise_anthropic_exception(e, log_query)
     except Exception as e:
         raise e
 
